@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          bos_mws_code: string | null
+          business_center: string | null
+          created_at: string
+          created_by: string | null
+          credit_limit: number | null
+          distributor_type: string | null
+          id: string
+          request_for: string
+          ship_to_party: string | null
+          sold_to_party: string
+          status: string
+          terms: string | null
+          updated_at: string
+        }
+        Insert: {
+          bos_mws_code?: string | null
+          business_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_limit?: number | null
+          distributor_type?: string | null
+          id?: string
+          request_for: string
+          ship_to_party?: string | null
+          sold_to_party: string
+          status?: string
+          terms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bos_mws_code?: string | null
+          business_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_limit?: number | null
+          distributor_type?: string | null
+          id?: string
+          request_for?: string
+          ship_to_party?: string | null
+          sold_to_party?: string
+          status?: string
+          terms?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -56,6 +104,42 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
