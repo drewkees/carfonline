@@ -10,16 +10,15 @@ import { toast } from '@/hooks/use-toast';
 
 interface Customer {
   id: string;
-  request_for: string;
-  bos_mws_code: string;
-  sold_to_party: string;
-  ship_to_party: string;
-  business_center: string;
-  terms: string;
-  credit_limit: number;
-  distributor_type: string;
-  status: string;
-  created_at: string;
+  requestfor: string;
+  boscode: string | null;
+  soldtoparty: string;
+  shiptoparty: string | null;
+  bucenter: string | null;
+  terms: string | null;
+  creditlimit: number | null;
+  custtype: string | null;
+  approvestatus: string | null;
 }
 
 interface CustomerListProps {
@@ -41,9 +40,10 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer }) => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('customers')
+        .from('customerdata')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('approvestatus', 'PENDING')
+        .order('datecreated', { ascending: false });
 
       if (error) {
         throw error;
@@ -62,12 +62,12 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer }) => {
     }
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.sold_to_party.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.ship_to_party?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.business_center?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.bos_mws_code?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+ const filteredCustomers = customers.filter(c =>
+  (c.soldtoparty ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (c.shiptoparty ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (c.bucenter ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+  (c.boscode ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -145,29 +145,29 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer }) => {
                   >
                     <TableCell>
                       <Badge variant="secondary" className="bg-muted text-muted-foreground">
-                        {customer.request_for}
+                        {customer.requestfor}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {customer.bos_mws_code || '-'}
+                      {customer.boscode || '-'}
                     </TableCell>
                     <TableCell className="text-foreground font-medium">
-                      {customer.sold_to_party}
+                      {customer.soldtoparty}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {customer.ship_to_party || customer.sold_to_party}
+                      {customer.shiptoparty || customer.soldtoparty}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {customer.business_center}
+                      {customer.bucenter}
                     </TableCell>
                     <TableCell className="text-foreground">
                       {customer.terms}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {formatCurrency(customer.credit_limit)}
+                      {formatCurrency(customer.creditlimit)}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {customer.distributor_type}
+                      {customer.custtype}
                     </TableCell>
                   </TableRow>
                 ))}

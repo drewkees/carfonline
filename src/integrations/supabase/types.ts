@@ -14,132 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      customers: {
+      customerdata: {
         Row: {
-          bos_mws_code: string | null
-          business_center: string | null
-          created_at: string
-          created_by: string | null
-          credit_limit: number | null
-          distributor_type: string | null
+          boscode: string | null
+          bucenter: string | null
+          creditlimit: number | null
+          custtype: string | null
           id: string
-          request_for: string
-          ship_to_party: string | null
-          sold_to_party: string
-          status: string
+          requestfor: string
+          shiptoparty: string | null
+          soldtoparty: string
+          approvestatus: string
           terms: string | null
-          updated_at: string
         }
         Insert: {
-          bos_mws_code?: string | null
-          business_center?: string | null
-          created_at?: string
-          created_by?: string | null
-          credit_limit?: number | null
-          distributor_type?: string | null
-          id?: string
-          request_for: string
-          ship_to_party?: string | null
-          sold_to_party: string
-          status?: string
-          terms?: string | null
-          updated_at?: string
+          boscode: string | null
+          bucenter: string | null
+          creditlimit: number | null
+          custtype: string | null
+          id: string
+          requestfor: string
+          shiptoparty: string | null
+          soldtoparty: string
+          approvestatus: string
+          terms: string | null
         }
         Update: {
-          bos_mws_code?: string | null
-          business_center?: string | null
-          created_at?: string
-          created_by?: string | null
-          credit_limit?: number | null
-          distributor_type?: string | null
-          id?: string
-          request_for?: string
-          ship_to_party?: string | null
-          sold_to_party?: string
-          status?: string
-          terms?: string | null
-          updated_at?: string
+          boscode: string | null
+          bucenter: string | null
+          creditlimit: number | null
+          custtype: string | null
+          id: string
+          requestfor: string
+          shiptoparty: string | null
+          soldtoparty: string
+          approvestatus: string
+          terms: string | null
         }
         Relationships: []
-      }
-      profiles: {
+      },
+      users: {
         Row: {
-          avatar_url: string | null
-          created_at: string
-          emergency_contact: string | null
+          userid: string
+          email: string
+          fullname: string | null
+        }
+        Insert: {
+          userid?: string
+          email: string
+          fullname?: string | null
+        }
+        Update: {
+          userid?: string
+          email?: string
           full_name: string | null
-          id: string
-          join_date: string | null
-          membership_status: string | null
-          membership_type: string | null
-          phone: string | null
-          role: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          emergency_contact?: string | null
-          full_name?: string | null
-          id?: string
-          join_date?: string | null
-          membership_status?: string | null
-          membership_type?: string | null
-          phone?: string | null
-          role?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          emergency_contact?: string | null
-          full_name?: string | null
-          id?: string
-          join_date?: string | null
-          membership_status?: string | null
-          membership_type?: string | null
-          phone?: string | null
-          role?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
-      }
-      tickets: {
+      },
+      employees: {
         Row: {
-          assigned_to: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          priority: string
-          status: string
-          title: string
-          updated_at: string
+          employeeno: string
+          employeename: string
+          employeetype: string 
         }
         Insert: {
-          assigned_to?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          priority?: string
-          status?: string
-          title: string
-          updated_at?: string
+          employeeno: string
+          employeename: string
+          employeetype: string 
         }
         Update: {
-          assigned_to?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          priority?: string
-          status?: string
-          title?: string
-          updated_at?: string
+          employeeno: string
+          employeename: string
+          employeetype: string 
         }
         Relationships: []
       }
