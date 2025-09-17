@@ -54,10 +54,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      });
+
+      const redirectUrl =
+      process.env.NODE_ENV === 'production'
+        ? 'hhttps://carf-eight.vercel.app/'
+        : 'http://localhost:8081';
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl },
+    });
       if (error) throw error;
     } catch (err: any) {
       console.error(err);
