@@ -14,6 +14,7 @@ interface Customer {
 }
 
 interface CustomerListProps {
+  userId: string | null;
   onNewCustomer: () => void;
   onEditCustomer: (customer: Customer) => void;
 }
@@ -27,7 +28,7 @@ type FieldType = {
   truncatecolumn: boolean;
 };
 
-const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer, onEditCustomer }) => {
+const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,9 +107,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer, onEditCustom
       setLoading(true);
 
 
-      const userid = (window as any).getGlobal?.('userid');
-      if (!userid) {
-        console.error('User ID not found in global');
+      // const userid = window.getGlobal('userid');
+      if (!userId) {
+        console.error('User ID not found in globalsss');
         toast({
           title: "Error",
           description: "User session not found. Please refresh the page.",
@@ -121,7 +122,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer, onEditCustom
       const { data: userData, error: userError } = await supabase
         .from('users')
        .select('allaccess,allcompanyaccess,company')
-        .eq('userid', userid)
+        .eq('userid', userId)
         .single();
 
       if (userError) {
@@ -161,7 +162,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ onNewCustomer, onEditCustom
 
       if (!hasAllAccess) {
         filteredCustomers = filteredCustomers.filter((customer) => 
-          customer.maker === userid
+          customer.maker === userId
         );
       }
 

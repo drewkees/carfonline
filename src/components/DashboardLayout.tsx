@@ -33,10 +33,11 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface DashboardLayoutProps {
   userEmail: string;
+  userId: string | null;
   onLogout: () => void;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, onLogout }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail,  userId, onLogout }) => {
   const [activeTab, setActiveTab] = useState('customer-list');
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   const [showSubmitTicketForm, setShowSubmitTicketForm] = useState(false);
@@ -202,7 +203,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, onLogout }
       case 'customerlist':
       default:
         return (
-          <CustomerList onNewCustomer={handleNewCustomer} onEditCustomer={handleEditCustomer} />
+          <CustomerList userId={userId} onNewCustomer={handleNewCustomer} onEditCustomer={handleEditCustomer} />
         );
     }
   };

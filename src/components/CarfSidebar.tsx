@@ -182,7 +182,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       style={{ width: '300px', backgroundColor: '#343a40' }}
     >
       {/* Hidden userId */}
-      <div id="hidden-userid" data-userid={userId} className="hidden"></div>
+      {/* <div id="hidden-userid" data-userid={userId} className="hidden"></div> */}
 
       {/* Header with Logo */}
       <div className="border-b border-gray-700 flex flex-col items-center py-3">
