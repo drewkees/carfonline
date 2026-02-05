@@ -26,7 +26,7 @@ const ApprovedCustomerList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const itemsPerPage = 25;
 
   useEffect(() => {
     fetchApprovedCustomers();
@@ -35,10 +35,12 @@ const ApprovedCustomerList: React.FC = () => {
   const fetchApprovedCustomers = async () => {
     try {
       setLoading(true);
+
       const { data, error } = await supabase
         .from('customerdata')
         .select('*')
-        .eq('approvestatus', 'APPROVED') // Only approved
+        .eq('approvestatus', 'PENDING')
+        .ilike('nextapprover', `%${window.getGlobal?.("userid")}%`)
         .order('datecreated', { ascending: false });
       if (error) throw error;
 
@@ -84,30 +86,33 @@ const ApprovedCustomerList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-3">
-        <User className="h-6 w-6 text-foreground" />
-        <h2 className="text-xl font-semibold text-foreground">APPROVED CUSTOMERS</h2>
-      </div>
+    <div className="space-y-6 pb-24">
+      <div className='flex items-center justify-between'>
+        {/* Header */}
+        <div className="flex items-center space-x-3">
+          <User className="h-6 w-6 text-foreground" />
+          <h2 className="text-xl font-semibold text-foreground">FOR APPROVAL</h2>
+        </div>
 
-      {/* Search */}
-      <div className="flex items-center space-x-4 mt-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-64 bg-input border-border"
-          />
+        {/* Search */}
+        <div className="flex items-center space-x-4 mt-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
+            />
+          </div>
         </div>
       </div>
+      
 
       {/* Table */}
       <Card className="bg-card border-border mt-4">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="no-scrollbar overflow-y-auto relative" style={{ maxHeight: 'calc(100vh - 280px)' }}>
             <Table>
               <TableHeader>
                 <TableRow className="border-border">

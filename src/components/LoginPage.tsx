@@ -33,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           .select('*')
           .eq('email', userEmail)
           .single();
-
+        // alert(data);
         if (fetchError && fetchError.code !== 'PGRST116') {
           setError('Failed to fetch user data');
           console.error(fetchError);
@@ -58,7 +58,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       const redirectUrl =
       process.env.NODE_ENV === 'production'
         ? 'hhttps://carf-eight.vercel.app/'
-        : 'http://localhost:8081';
+        : 'http://localhost:8080';
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',

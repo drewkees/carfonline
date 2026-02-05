@@ -12,7 +12,7 @@ interface CarfSidebarProps {
   onTabChange: (tab: string) => void;
   userEmail: string;
   onLogout: () => void;
-  onUserId?: (id: string) => void; // optional callback if needed elsewhere
+  onUserId?: (id: string) => void; // optional callback
 }
 
 const CarfSidebar: React.FC<CarfSidebarProps> = ({ 
@@ -25,11 +25,13 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
   const [fullName, setFullName] = useState('');
   const [userId, setUserId] = useState<string>('');
+  const [navigationItems, setNavigationItems] = useState<any[]>([]);
 
   const toggleMenu = (id: string) => {
     setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Fetch user full name
   useEffect(() => {
     const fetchFullName = async () => {
       if (!userEmail) return;
@@ -42,43 +44,62 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       if (!error && data) {
         setFullName(data.fullname);
         setUserId(data.userid);
-        if (onUserId) onUserId(data.userid); // send upward if needed
+        if (onUserId) onUserId(data.userid); // optional upward callback
       }
     };
     fetchFullName();
   }, [userEmail, onUserId]);
 
-  const today = new Date().toLocaleDateString('en-PH', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Fetch navigation dynamically
+ useEffect(() => {
+  const fetchNavigation = async () => {
+    const { data, error } = await supabase
+      .from('schemas')
+      .select('*')
+      .order('itemid');
 
-  const navigationItems = [
-    { id: 'for-approval', label: 'For Approval', icon: FileText },
-    { 
-      id: 'customer',
-      label: 'Customer',
-      icon: Users,
-      children: [
-        { id: 'customer-list', label: 'Customer List', icon: Users },
-        { id: 'pending', label: 'Pending', icon: Clock },
-        { id: 'approved', label: 'Approved', icon: CheckCircle },
-        { id: 'return-to-maker', label: 'Return To Maker', icon: RotateCcw },
-        { id: 'cancelled', label: 'Cancelled', icon: XCircle },
-      ]
-    },
-    { 
-      id: 'admin', 
-      label: 'Admin', 
-      icon: Settings,
-      children: [
-        { id: 'employee', label: 'Employee', icon: UserCheck },
-        { id: 'region', label: 'Region', icon: MapPin },
-      ],
-    },
-  ];
+    if (!error && data) {
+      const buildTree = (parentCmd: string | null): any[] => {
+        return data
+          .filter(item => item.menuid === parentCmd || (!parentCmd && !item.menuid))
+          .map(item => {
+            const children = buildTree(item.menucmd);
+            return {
+              id: item.objectcode || item.itemid.toString(),
+              label: item.menuname,
+              icon: mapIcon(item.menuicon),
+              ...(children.length ? { children } : {})
+            };
+          });
+      };
 
+      const navItems = buildTree(null); // Start with root items (menuid null or missing)
+      // console.log(navItems);
+      setNavigationItems(navItems);
+    }
+  };
+
+  fetchNavigation();
+}, []);
+
+
+  // Optional: map string menuicon to actual React icon
+  const mapIcon = (iconName: string) => {
+    switch(iconName) {
+      case 'Users': return Users;
+      case 'UserCheck': return UserCheck;
+      case 'Clock': return Clock;
+      case 'CheckCircle': return CheckCircle;
+      case 'RotateCcw': return RotateCcw;
+      case 'XCircle': return XCircle;
+      case 'Settings': return Settings;
+      case 'MapPin': return MapPin;
+      case 'FileText': return FileText;
+      default: return FileText; // fallback
+    }
+  };
+
+  // Render navigation recursively
   const renderNavItem = (item: any, depth = 0) => {
     const isActive = activeTab === item.id;
     const hasChildren = item.children?.length > 0;
@@ -90,7 +111,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
           variant="ghost"
           className={`w-full justify-start text-left mb-1 flex items-center text-white ${
             depth > 0 ? 'pl-8 py-2 h-auto text-sm' : 'py-3 h-auto'
-          } ${isActive ? 'bg-accent font-medium' : 'hover:bg-gray-700'}`}
+          } ${isActive ? 'bg-accent font-medium' : 'hover:bg-gray-700 hover:text-[#635e5e]'}`}
           onClick={() => {
             if (hasChildren) toggleMenu(item.id);
             else onTabChange(item.id);
@@ -115,14 +136,13 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
 
   return (
     <div
-      className="h-screen border-r border-gray-700 flex flex-col"
+      className="h-full border-r border-gray-700 flex flex-col"
       style={{ width: '300px', backgroundColor: '#343a40' }}
     >
-      {/* Hidden userId if needed in DOM */}
+      {/* Hidden userId */}
       <div id="hidden-userid" data-userid={userId} className="hidden"></div>
 
-
-      {/* Header with Logo and Name */}
+      {/* Header with Logo */}
       <div className="border-b border-gray-700 flex flex-col items-center py-3">
         <img 
           src="https://bounty.com.ph/wp-content/uploads/2022/07/Site-Logo-Bounty.webp" 
@@ -135,7 +155,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4">
         <nav className="space-y-1">
           {navigationItems.map(item => renderNavItem(item))}
         </nav>

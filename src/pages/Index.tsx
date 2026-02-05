@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LoginPage from '@/components/LoginPage';
+import CustomerList from '@/components/list/CustomerList';
 import DashboardLayout from '@/components/DashboardLayout';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,8 +14,27 @@ declare global {
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [currentPath, setCurrentPath] = useState(window.location.hash);
 
-  // ✅ Define the global function once when app mounts
+// Watch for changes in the hash part of the URL
+useEffect(() => {
+  const handleHashChange = () => setCurrentPath(window.location.hash);
+  window.addEventListener('hashchange', handleHashChange);
+  return () => window.removeEventListener('hashchange', handleHashChange);
+}, []);
+
+
+
+  
+
+  // ✅ Listen for URL changes (e.g., user manually changing the URL)
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // ✅ Define global function
   useEffect(() => {
     window.getGlobal = (key: string): string | null => {
       if (key === 'userid') {
@@ -25,7 +45,7 @@ const Index = () => {
     };
   }, []);
 
-  // 🔐 Check for existing session on mount
+  // 🔐 Check for existing session
   useEffect(() => {
     const sessionData = localStorage.getItem('carfSession');
     if (sessionData) {
@@ -36,9 +56,11 @@ const Index = () => {
   }, []);
 
   const handleLogin = (email: string, fullName?: string) => {
+    const userid = window.getGlobal ? window.getGlobal('userid') : null;
     const sessionData = {
       email,
       fullName,
+      userid,
       loginTime: new Date().toISOString(),
     };
 
@@ -66,11 +88,24 @@ const Index = () => {
     });
   };
 
-  if (isLoggedIn) {
+  // // ✅ Check URL and render accordingly
+  // if (currentPath === '/customerlist') {
+  //   return <CustomerList />;
+  // }
+
+  // ✅ Default flow (Dashboard or Login)
+  const forceLogin = true;
+  if (forceLogin) {
     return <DashboardLayout userEmail={userEmail} onLogout={handleLogout} />;
   }
 
-  return <LoginPage onLogin={handleLogin} />;
+  // return <LoginPage onLogin={handleLogin} />;
+  // return isLoggedIn ? (
+  //   <DashboardLayout userEmail={userEmail} onLogout={handleLogout} />
+  // ) : (
+  //   <LoginPage onLogin={handleLogin} />
+  // );
+
 };
 
 export default Index;

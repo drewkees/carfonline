@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -98,7 +100,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 
   /* CARF System Custom Styles */
@@ -119,6 +121,40 @@
     animation: carfPulse 1.5s infinite;
   }
 
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  
+.hide-vertical-scrollbar {
+  overflow-x: auto;    /* horizontal scroll visible */
+  overflow-y: scroll;  /* vertical scroll functional */
+}
+
+/* Hide only the vertical scrollbar (Chrome, Safari, Edge) */
+.hide-vertical-scrollbar::-webkit-scrollbar:vertical {
+  width: 0px;          /* hides vertical scrollbar */
+}
+
+/* Keep horizontal scrollbar visible */
+.hide-vertical-scrollbar::-webkit-scrollbar:horizontal {
+  height: 8px;         /* adjust if you want thicker/thinner scrollbar */
+}
+
+/* Firefox */
+@supports (scrollbar-width: none) {
+  .hide-vertical-scrollbar {
+    scrollbar-width: thin; /* still allows horizontal scrollbar */
+  }
+}
+
+
+
+
   @keyframes carfFadeIn {
     from {
       opacity: 0;
@@ -138,4 +174,32 @@
       transform: scale(1.1);
     }
   }
+
+  
+}
+
+.scroll-wrapper {
+  position: relative;
+  overflow-x: auto; /* enable horizontal scroll */
+  overflow-y: hidden; /* hide vertical scrollbar */
+  padding-bottom: 12px; /* space for floating scrollbar */
+}
+
+.scroll-wrapper::-webkit-scrollbar {
+  height: 0; /* hide default horizontal scrollbar */
+}
+
+.scrollbar-thumb {
+  position: absolute;
+  bottom: 4px; /* floating slightly above bottom */
+  left: 0;
+  height: 6px;
+  border-radius: 3px;
+  background-color: rgba(0,0,0,0.4);
+  transition: background-color 0.2s;
+  pointer-events: none; /* avoid blocking table interactions */
+}
+
+.scroll-wrapper:hover .scrollbar-thumb {
+  background-color: rgba(0,0,0,0.7);
 }

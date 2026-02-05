@@ -114,7 +114,7 @@ const EmployeeDirectory: React.FC = () => {
         </Button>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-y-auto max-h-[400px]">
+        <div className=" no-scrollbar overflow-y-auto relative" style={{ maxHeight: 'calc(95vh - 280px)' }}>
           <Table>
             <TableHeader>
               <TableRow>

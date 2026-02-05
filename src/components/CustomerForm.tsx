@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import type { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import SupportingDocumentsDialog from '@/components/uploading/SupportingDocumentsDialog';
 
 interface CustomerFormData {
   requestfor: string[];
@@ -25,12 +28,12 @@ interface CustomerFormData {
   salesinfosalesorg: string;
   salesinfodistributionchannel: string;
   salesinfodivision: string;
-  checkcapRow1: string;
-  checkcapRow2: string;
-  checkcapRow3: string;
-  checkcapRow4: string;
-  checkcapRow5: string;
-  checkcapRow6: string;
+  checkcaprow1: string;
+  checkcaprow2: string;
+  checkcaprow3: string;
+  checkcaprow4: string;
+  checkcaprow5: string;
+  checkcaprow6: string;
   datestart: string;
   terms: string;
   creditlimit: string;
@@ -46,15 +49,17 @@ interface CustomerFormData {
   lastname: string;
   firstname: string;
   middlename: string;
+  gencode?: string;
 }
 
 interface CustomerFormProps {
   dialogVisible: boolean;
   onClose: () => void;
   onSubmit: (data: CustomerFormData) => void;
+  initialData?: CustomerFormData | null;
 }
 
-const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onSubmit }) => {
+const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onSubmit ,initialData}) => {
   const [formData, setFormData] = useState<CustomerFormData>({
     requestfor: [],
     ismother: [],
@@ -79,12 +84,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
     salesinfosalesorg: '',
     salesinfodistributionchannel: '',
     salesinfodivision: '',
-    checkcapRow1: '',
-    checkcapRow2: '',
-    checkcapRow3: '',
-    checkcapRow4: '',
-    checkcapRow5: '',
-    checkcapRow6: '',
+    checkcaprow1: '',
+    checkcaprow2: '',
+    checkcaprow3: '',
+    checkcaprow4: '',
+    checkcaprow5: '',
+    checkcaprow6: '',
     datestart: new Date().toISOString().split('T')[0],
     terms: '',
     creditlimit: '',
@@ -100,9 +105,48 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
     lastname: '',
     firstname: '',
     middlename: '',
+    
   });
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+  const [bucenterOptions, setBucenterOptions] = useState<string[]>([]);
+  const [custTypeOptions, setCustTypeOptions] = useState<string[]>([]);
+  const [regionOptions, setRegionOptions] = useState<string[]>([]);
 
+  const [salesorgOptions, setSalesOrgOptions] = useState<string[]>([]);
+  const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
+  const [dcOptions, setDCOPtions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [prevRegion, setPrevRegion] = useState<string>('');
+
+  const [hasServerFiles, setHasServerFiles] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState({
+    birBusinessRegistration: null,
+    secRegistration: null,
+    generalInformation: null,
+    boardResolution: null,
+    others: null
+  });
+  
+   useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+      }));
+    }
+  }, [initialData]);
+
+  // When region changes, reset BU center & district
+
+useEffect(() => {
+  setFormData(prev => ({ ...prev, bucenter: prev.bucenter || '', district: prev.district || '' }));
+}, [formData.region]);
+
+// When BU center changes, reset district
+useEffect(() => {
+  setFormData(prev => ({ ...prev, district: prev.district || '' }));
+}, [formData.bucenter]);
 
   const handleCheckboxChange = (field: keyof CustomerFormData, value: string) => {
     setFormData(prev => {
@@ -135,13 +179,225 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
 
   if (!dialogVisible) return null;
 
+  useEffect(() => {
+    // on mount fetch customer type series entries
+    const fetchCustTypes = async () => {
+      const { data, error } = await supabase
+        .from('customertypeseries')
+        .select('carftype')
+        .order('id', { ascending: true });
+      if (error) {
+        console.error('Error fetching customer type series:', error);
+        // optionally toast an error
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.carftype).filter((v): v is string => !!v))
+        );
+        setCustTypeOptions(options);
+      }
+    };
+
+    fetchCustTypes();
+  }, []);
+
+  useEffect(() => {
+    // on mount fetch customer type series entries
+    const fetchRegion = async () => {
+      const { data, error } = await supabase
+        .from('regionbu')
+        .select('region')
+        .order('id', { ascending: true });
+      if (error) {
+        console.error('Error fetching customer type series:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.region).filter((v): v is string => !!v))
+        );
+        setRegionOptions(options);
+      }
+    };
+
+    fetchRegion();
+  }, []);
+
+  useEffect(() => {
+    if (!formData.region) {
+      setBucenterOptions([]);
+      return;
+    }
+    const fetchBUCenter = async () => {
+      const { data, error } = await supabase
+        .from('regionbu')
+        .select('bucenter')
+        .eq('region', formData.region)
+        .order('id', { ascending: true });
+        // console.log(data);
+      if (error) {
+        console.error('Error fetching customer type series:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.bucenter).filter((v): v is string => !!v))
+        );
+        if (formData.bucenter && !options.includes(formData.bucenter)) {
+          options.push(formData.bucenter);
+        }
+        setBucenterOptions(options);
+      }
+    };
+
+    fetchBUCenter();
+  }, [formData.region]);
+
+  useEffect(() => {
+    if (!formData.bucenter) {
+      setDistrictOptions([]);
+      return;
+    }
+    const fetchDistrict = async () => {
+      const { data, error } = await supabase
+        .from('regionbu')
+        .select('district')
+        .eq('bucenter', formData.bucenter)
+        .order('id', { ascending: true });
+        // console.log(data);
+      if (error) {
+        console.error('Error fetching customer type series:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.district).filter((v): v is string => !!v))
+        );
+        setDistrictOptions(options);
+      }
+    };
+
+    fetchDistrict();
+  }, [formData.bucenter]);
+
+  useEffect(() => {
+    // on mount fetch customer type series entries
+    const fetchSalesOrg = async () => {
+      const { data, error } = await supabase
+        .from('salesinfosalesorg')
+        .select('salesorganization')
+        .order('salesorganization', { ascending: true });
+      if (error) {
+        console.error('Error fetching sales organization:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.salesorganization).filter((v): v is string => !!v))
+        );
+        setSalesOrgOptions(options);
+      }
+    };
+
+    fetchSalesOrg();
+  }, []);
+
+
+  useEffect(() => {
+    // on mount fetch customer type series entries
+    const fetchDivision= async () => {
+      const { data, error } = await supabase
+        .from('salesinfodivision')
+        .select('division')
+        .order('division', { ascending: true });
+      if (error) {
+        console.error('Error fetching division:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.division).filter((v): v is string => !!v))
+        );
+        setDivisionOptions(options);
+      }
+    };
+
+    fetchDivision();
+  }, []);
+  
+   useEffect(() => {
+    // on mount fetch customer type series entries
+    const fetchDistributionChannel= async () => {
+      const { data, error } = await supabase
+        .from('salesinfodistributionchannel')
+        .select('distributionchannel')
+        .order('distributionchannel', { ascending: true });
+      if (error) {
+        console.error('Error fetching distribution channel:', error);
+      } else if (data) {
+        // filter out null/empty and maybe unique them
+        const options = Array.from(
+          new Set(data.map((row) => row.distributionchannel).filter((v): v is string => !!v))
+        );
+        setDCOPtions(options);
+      }
+    };
+
+    fetchDistributionChannel();
+  }, []);
+
+  useEffect(() => {
+    const checkForServerFiles = async () => {
+      const gencode = formData.gencode || initialData?.gencode;
+      
+      if (!gencode) {
+        setHasServerFiles(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:3001/api/gencode/${gencode}`);
+        const data = await res.json();
+        
+        // Check if any document type has files
+        const hasAnyFiles = Object.values(data).some(
+          (files: any) => Array.isArray(files) && files.length > 0
+        );
+        
+        setHasServerFiles(hasAnyFiles);
+        
+        // Optionally, update uploadedFiles state to reflect server files
+        if (hasAnyFiles) {
+          const newUploadedFiles: any = {};
+          Object.keys(data).forEach((key) => {
+            if (data[key] && Array.isArray(data[key]) && data[key].length > 0) {
+              // Create placeholder File to indicate server files exist
+              newUploadedFiles[key] = new File([''], 'server-files-exist', { 
+                type: 'application/placeholder' 
+              });
+            }
+          });
+          setUploadedFiles(prev => ({ ...prev, ...newUploadedFiles }));
+        }
+      } catch (err) {
+        console.error('Error checking for server files:', err);
+        setHasServerFiles(false);
+      }
+    };
+
+    if (dialogVisible) {
+      checkForServerFiles();
+    }
+  }, [dialogVisible, formData.gencode, initialData?.gencode]);
+
+  const handleFileUpload = (docType: keyof typeof uploadedFiles, file: File | null) => {
+    setUploadedFiles((prev) => ({ ...prev, [docType]: file }));
+  };
+
+  const hasAnyFiles = hasServerFiles || Object.values(uploadedFiles).some(f => f !== null);
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-gray-100 text-black w-full max-w-7xl rounded-lg shadow-lg overflow-y-auto max-h-[95vh] p-8 m-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
+      <div className="no-scrollbar bg-gray-100 text-black w-full max-w-[75vw] rounded-lg shadow-lg overflow-y-scroll max-h-[100vh] p-20 m-4">
         {/* Header */}
         <div className="flex justify-between items-center pb-2 mb-4">
           <h2 className="text-xl font-bold">📄 CUSTOMER ACTIVATION REQUEST FORM</h2>
-          <button onClick={closeDialog} className="text-gray-500 hover:text-gray-700 text-xl">
+          <button onClick={closeDialog} className="text-gray-500 hover:text-blue-700 text-xl">
             ✕
           </button>
         </div>
@@ -159,13 +415,23 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
               <select
                 value={formData.custtype}
                 onChange={(e) => handleInputChange('custtype', e.target.value)}
-                className="border rounded px-3 py-2 w-80"
+                className="w-[350px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               >
-                <option value="">Select WMS Customer Group</option>
-                <option value="REGULAR">REGULAR</option>
-                <option value="LIVE SALES">LIVE SALES</option>
-                <option value="HIGH RISK ACCOUNTS">HIGH RISK ACCOUNTS</option>
+                <option value="" disabled>
+                  Select WMS Customer Group
+                </option>
+                {custTypeOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.custtype && !custTypeOptions.includes(formData.custtype) && (
+                  <option value={formData.custtype}>{formData.custtype}</option>
+                )}
               </select>
+
             </div>
           </div>
 
@@ -245,72 +511,119 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
 
           {/* Corporation Name Section */}
           {formData.type.includes('CORPORATION') && (
-            <div className="mt-4">
-              <div className="flex items-center text-xl mb-2">
-                <strong>REGISTERED COMPANY NAME (SOLD TO PARTY):</strong>
-                <strong className="ml-[300px]">ID TYPE:</strong>
-                <div className="flex items-center ml-4">
-                  <label className="flex items-center mr-4">
-                    <input
-                      type="radio"
-                      name="idtype"
-                      value="TIN"
-                      checked={formData.idtype === 'TIN'}
-                      onChange={(e) => handleInputChange('idtype', e.target.value)}
-                      className="mr-2"
-                    />
-                    
-                    <span>TIN</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="idtype"
-                      value="OTHERS"
-                      checked={formData.idtype === 'OTHERS'}
-                      onChange={(e) => handleInputChange('idtype', e.target.value)}
-                      className="mr-2"
-                    />
-                    <span>OTHERS</span>
-                  </label>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-xl items-start">
+            {/* LEFT COLUMN */}
+            <div>
+              <label className="block font-semibold mb-2">
+                REGISTERED COMPANY NAME (SOLD TO PARTY):
+              </label>
+              <input
+                type="text"
+                value={formData.soldtoparty}
+                onChange={(e) => handleInputChange('soldtoparty', e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                          focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+              />
+              <i className="text-sm text-gray-600">
+                Name to appear on all Records, Official Receipts, Invoices, Delivery Receipts
+              </i>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div>
+              {/* ID TYPE inline */}
+              <div className="flex items-center space-x-6 mb-2">
+                <label className="font-semibold">ID TYPE:</label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="idtype"
+                    value="TIN"
+                    checked={formData.idtype === 'TIN'}
+                    onChange={(e) => handleInputChange('idtype', e.target.value)}
+                    className="mr-2"
+                  />
+                  <span>TIN</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="idtype"
+                    value="OTHERS"
+                    checked={formData.idtype === 'OTHERS'}
+                    onChange={(e) => handleInputChange('idtype', e.target.value)}
+                    className="mr-2"
+                  />
+                  <span>OTHERS</span>
+                </label>
+                
               </div>
-              
-              <div className="flex items-center space-x-4 mt-2">
-                <input
-                  type="text"
-                  value={formData.soldtoparty}
-                  onChange={(e) => handleInputChange('soldtoparty', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[700px]"
-                className="w-[750px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
-                />
+
+              {/* TIN input */}
+              <div className="flex items-center space-x-2">
                 <strong>{formData.idtype === 'OTHERS' ? 'OTHERS:' : 'TIN:'}</strong>
                 <input
                   type="text"
                   value={formData.tin}
                   onChange={(e) => handleInputChange('tin', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[300px]"
-                className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                 />
               </div>
-              
-              <div className="mt-2">
-                <i className="text-sm">Name to be appeared on all Records, Official Receipts, Invoices, Delivery Receipts</i>
-              </div>
             </div>
+          </div>
           )}
 
           {/* Personal Name Section */}
           {formData.type.includes('PERSONAL') && (
-            <div className="mt-4">
-              <div className="flex items-center text-xl mb-2">
-                <strong className="ml-12">LAST NAME</strong>
-                <strong className="ml-[120px]">FIRST NAME</strong>
-                <strong className="ml-[140px]">MIDDLE NAME</strong>
-                <strong className="ml-[100px]">ID TYPE:</strong>
-                <div className="flex items-center ml-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-xl items-start">
+              {/* LEFT COLUMN – Name Fields */}
+              <div>
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-2 mb-2">
+                  <strong>LAST NAME</strong>
+                  <span></span>
+                  <strong>FIRST NAME</strong>
+                  <span></span>
+                  <strong>MIDDLE NAME</strong>
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-2">
+                  <input
+                    type="text"
+                    value={formData.lastname}
+                    onChange={(e) => handleInputChange('lastname', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                              focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  />
+                  <span className="flex items-center justify-center">/</span>
+                  <input
+                    type="text"
+                    value={formData.firstname}
+                    onChange={(e) => handleInputChange('firstname', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                              focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  />
+                  <span className="flex items-center justify-center">/</span>
+                  <input
+                    type="text"
+                    value={formData.middlename}
+                    onChange={(e) => handleInputChange('middlename', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                              focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  />
+                </div>
+
+                <div className="mt-1">
+                  <i className="text-sm text-gray-600">
+                    Name to appear on all Records, Official Receipts, Invoices, Delivery Receipts
+                  </i>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN – ID Type + TIN */}
+              <div>
+                <div className="flex items-center mb-2">
+                  <strong className="mr-4">ID TYPE:</strong>
                   <label className="flex items-center mr-4">
                     <input
                       type="radio"
@@ -334,49 +647,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                     <span>OTHERS</span>
                   </label>
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={formData.lastname}
-                  onChange={(e) => handleInputChange('lastname', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[230px] ml-2"
-                  className="w-[230px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
-                />
-                <span>/</span>
-                <input
-                  type="text"
-                  value={formData.firstname}
-                  onChange={(e) => handleInputChange('firstname', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[220px]"
-                  className="w-[220px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
-                />
-                <span>/</span>
-                <input
-                  type="text"
-                  value={formData.middlename}
-                  onChange={(e) => handleInputChange('middlename', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[250px]"
-                  className="w-[250px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
-                />
-                <span> </span>
-                <strong className="ml-10">{formData.idtype === 'OTHERS' ? 'OTHERS:' : 'TIN:'}</strong>
-                <input
-                  type="text"
-                  value={formData.tin}
-                  onChange={(e) => handleInputChange('tin', e.target.value)}
-                //   className="border rounded px-3 py-2 w-[300px]"
-                  className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-                  
-                />
-              </div>
-              
-              <div className="mt-2">
-                <i className="text-sm">Name to be appeared on all Records, Official Receipts, Invoices, Delivery Receipts</i>
+
+                <div className="flex items-center space-x-2">
+                  <strong className="whitespace-nowrap">{formData.idtype === 'OTHERS' ? 'OTHERS:' : 'TIN:'}</strong>
+                  <input
+                    type="text"
+                    value={formData.tin}
+                    onChange={(e) => handleInputChange('tin', e.target.value)}
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                              focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -389,38 +670,35 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
               value={formData.billaddress}
               onChange={(e) => handleInputChange('billaddress', e.target.value)}
             //   className="border rounded px-3 py-2 w-full max-w-[1200px]"
-            className="w-[1200px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
             />
           </div>
 
           {/* Branch, Store Code, Trade Name */}
           <div className="mt-8">
-            <div className="flex text-xl mb-2">
+            <div className="grid grid-cols-3 gap-6 text-xl mb-2">
                 <strong className="font-bold">BRANCH (SHIP TO PARTY):</strong>
-                <strong className="ml-[160px] font-bold">STORE CODE:</strong>
-                <strong className="ml-[200px] font-bold">TRADE NAME (BUSINESS STYLE):</strong>
+                <strong className="font-bold">STORE CODE:</strong>
+                <strong className="font-bold">TRADE NAME (BUSINESS STYLE):</strong>
             </div>
-            <div className="flex space-x-6">
+            <div className="grid grid-cols-3 gap-6">
               <input
                 type="text"
                 value={formData.shiptoparty}
                 onChange={(e) => handleInputChange('shiptoparty', e.target.value)}
-                // className="border rounded px-3 py-2 w-[400px]"
-                className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               />
               <input
                 type="text"
                 value={formData.storecode}
                 onChange={(e) => handleInputChange('storecode', e.target.value)}
-                // className="border rounded px-3 py-2 w-[330px]"
-                className="w-[330px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               />
               <input
                 type="text"
                 value={formData.busstyle}
                 onChange={(e) => handleInputChange('busstyle', e.target.value)}
-                // className="border rounded px-3 py-2 w-[450px]"
-                className="w-[450px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               />
             </div>
           </div>
@@ -433,7 +711,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
               value={formData.deladdress}
               onChange={(e) => handleInputChange('deladdress', e.target.value)}
             //   className="border rounded px-3 py-2 w-full max-w-[1200px]"
-            className="w-[1200px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
             />
           </div>
 
@@ -441,49 +719,68 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
           <div className="mt-10 text-xl">
             <div className="font-bold mb-4">Requested By:</div>
             
-            <div className="flex items-center space-x-5 mb-4">
-              <strong>Customer Name:</strong>
-              <input
-                type="text"
-                value={formData.contactperson}
-                onChange={(e) => handleInputChange('contactperson', e.target.value)}
-                // className="border rounded px-3 py-2 w-[430px]"
-                className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-              />
-              <strong>Email Address:</strong>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                // className="border rounded px-3 py-2 w-[400px]"
-                className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-              />
+            <div className="grid grid-cols-2 gap-6 mb-4">
+              <div className="flex items-center space-x-4">
+                <strong className="whitespace-nowrap">Customer Name:</strong>
+                <input
+                  type="text"
+                  value={formData.contactperson}
+                  onChange={(e) => handleInputChange('contactperson', e.target.value)}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-4">
+                <strong className="whitespace-nowrap">Email Address:</strong>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="w-[600px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                />
+              </div>
             </div>
             
-            <div className="flex items-center space-x-5">
-              <strong>Position:</strong>
-              <input
-                type="text"
-                value={formData.position}
-                onChange={(e) => handleInputChange('position', e.target.value)}
-                // className="border rounded px-3 py-2 w-[300px] ml-12"
-                className="w-[300px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-              />
-              <strong>Cellphone No.:</strong>
-              <input
-                type="tel"
-                value={formData.contactnumber}
-                onChange={(e) => handleInputChange('contactnumber', e.target.value)}
-                // className="border rounded px-3 py-2 w-[300px] ml-12"
-                className="w-[300px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
-              />
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex items-center space-x-4">
+                <strong className="whitespace-nowrap">Position:</strong>
+                <input
+                  type="text"
+                  value={formData.position}
+                  onChange={(e) => handleInputChange('position', e.target.value)}
+                  className="w-[600px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-4">
+                <strong className="whitespace-nowrap">Cellphone No.:</strong>
+                <input
+                  type="tel"
+                  value={formData.contactnumber}
+                  onChange={(e) => handleInputChange('contactnumber', e.target.value)}
+                  className="w-[500px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                />
+              </div>
             </div>
             
             <div className="mt-4">
               <strong>Supporting Documents:</strong>
-              <button type="button" className="ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Choose File
-              </button>
+              <button
+              type="button"
+              className={`ml-4 px-4 py-2 rounded ${
+                hasAnyFiles
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+                onClick={() => setDialogOpen(true)}
+            >
+              {hasAnyFiles ? 'VIEW FILES' : 'CHOOSE FILE'}
+            </button>
+              <SupportingDocumentsDialog
+                isOpen={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                uploadedFiles={uploadedFiles}
+                onFileUpload={handleFileUpload}
+                gencode={formData.gencode}
+              />
             </div>
           </div>
 
@@ -498,7 +795,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
           </div>
 
           {/* BOS/WMS Code and Business Center */}
-          <div className="flex items-center space-x-48 mt-8 text-xl">
+          <div className="grid grid-cols-2 gap-6 mb-4 text-xl">
             <div className="flex items-center">
               <strong className="mr-4">BOS/WMS CODE:</strong>
               <input
@@ -516,15 +813,27 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 value={formData.bucenter}
                 onChange={(e) => handleInputChange('bucenter', e.target.value)}
                 // className="border rounded px-3 py-2 w-[300px]"
-                className="w-[300px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                className="w-[400px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               >
-                <option value="">Select Business Center</option>
+                <option value="" disabled>
+                  Select BU Center
+                </option>
+                {bucenterOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.bucenter && !bucenterOptions.includes(formData.bucenter) && (
+                  <option value={formData.bucenter}>{formData.bucenter}</option>
+                )}
               </select>
             </div>
           </div>
 
           {/* Region and District */}
-          <div className="flex items-center space-x-12 mt-4 text-xl">
+          <div className="grid grid-cols-2 gap-6 mb-4 text-xl">
             <div className="flex items-center">
               <strong className="mr-20">REGION:</strong>
               <select
@@ -533,7 +842,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 // className="border rounded px-3 py-2 w-[450px]"
                 className="w-[450px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               >
-                <option value="">Select Region</option>
+                <option value="" disabled>
+                  Select Region
+                </option>
+                {regionOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.region && !regionOptions.includes(formData.region) && (
+                  <option value={formData.region}>{formData.region}</option>
+                )}
               </select>
             </div>
             <div className="flex items-center">
@@ -544,7 +865,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 // className="border rounded px-3 py-2 w-[450px]"
                 className="w-[420px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               >
-                <option value="">Select District</option>
+                <option value="" disabled>
+                  Select District
+                </option>
+                {districtOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.district && !districtOptions.includes(formData.district) && (
+                  <option value={formData.district}>{formData.district}</option>
+                )}
               </select>
             </div>
           </div>
@@ -552,7 +885,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
           {/* Sales Info */}
           <div className="mt-6">
             <div className="text-xl font-bold mb-2">SALES INFO:</div>
-            <div className="flex items-center space-x-12 text-xl">
+            <div className="grid grid-cols-2 gap-6 mb-4 text-xl">
               <div className="flex items-center">
                 <strong className="mr-12">SALES ORG:</strong>
                 <select
@@ -561,7 +894,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 //   className="border rounded px-3 py-2 w-[300px]"
                 className="w-[300px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                 >
-                  <option value="">Select Sales Org</option>
+                  <option value="" disabled>
+                  Select Sales Organization
+                </option>
+                {salesorgOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.salesinfosalesorg && !salesorgOptions.includes(formData.salesinfosalesorg) && (
+                  <option value={formData.salesinfosalesorg}>{formData.salesinfosalesorg}</option>
+                )}
                 </select>
               </div>
               <div className="flex items-center">
@@ -572,7 +917,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 //   className="border rounded px-3 py-2 w-[350px]"
                 className="w-[350px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                 >
-                  <option value="">Select Distribution</option>
+                   <option value="" disabled>
+                  Select Distribution Channel
+                </option>
+                {dcOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {/* Include current value if not in options */}
+                {formData.salesinfodistributionchannel && !dcOptions.includes(formData.salesinfodistributionchannel) && (
+                  <option value={formData.salesinfodistributionchannel}>{formData.salesinfodistributionchannel}</option>
+                )}
                 </select>
               </div>
             </div>
@@ -584,14 +941,25 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 // className="border rounded px-3 py-2 w-[350px]"
                 className="w-[350px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
               >
-                <option value="">Select Division</option>
+                <option value="" disabled>
+                  Select Division
+                </option>
+                {divisionOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+
+                {formData.salesinfodivision && divisionOptions.includes(formData.region) && (
+                  <option value={formData.salesinfodivision} >
+                    {formData.salesinfodivision}
+                  </option>
+                )}
               </select>
             </div>
           </div>
 
-          {/* Truck Capacity Table */}
-          {formData.custtype !== 'HIGH RISK ACCOUNTS' && (
-            <div className="mt-6">
+          <div className="mt-6">
               <table className="w-full border-collapse border border-gray-400">
                 <thead>
                   <tr className="bg-gray-100">
@@ -601,12 +969,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 </thead>
                 <tbody>
                   {[
-                    { label: '2TONNER FRESH3 - 1500kg', field: 'checkcapRow1' },
-                    { label: '2TONNER FROZEN - 1500kg', field: 'checkcapRow2' },
-                    { label: '4TONNER FRESH - 2600kg', field: 'checkcapRow3' },
-                    { label: '4TONNER FROZEN - 2600kg', field: 'checkcapRow4' },
-                    { label: 'FORWARD FRESH - 6000kg', field: 'checkcapRow5' },
-                    { label: 'FORWARD FROZEN - 6000kg', field: 'checkcapRow6' },
+                    { label: '2TONNER FRESH3 - 1500kg', field: 'checkcaprow1' },
+                    { label: '2TONNER FROZEN - 1500kg', field: 'checkcaprow2' },
+                    { label: '4TONNER FRESH - 2600kg', field: 'checkcaprow3' },
+                    { label: '4TONNER FROZEN - 2600kg', field: 'checkcaprow4' },
+                    { label: 'FORWARD FRESH - 6000kg', field: 'checkcaprow5' },
+                    { label: 'FORWARD FROZEN - 6000kg', field: 'checkcaprow6' },
                   ].map((row) => (
                     <tr key={row.field}>
                       <td className="border border-gray-400 p-2 text-center">{row.label}</td>
@@ -614,8 +982,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                         <input
                           type="text"
                           value={formData[row.field as keyof CustomerFormData] as string}
+                          placeholder="Enter truck capacity"
                           onChange={(e) => handleInputChange(row.field as keyof CustomerFormData, e.target.value)}
-                        //   className="w-full border rounded px-2 py-1"
                           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                         />
                       </td>
@@ -624,10 +992,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
                 </tbody>
               </table>
             </div>
-          )}
-
           {/* Date, Terms, Credit Limit */}
-          <div className="flex items-center space-x-8 mt-4 text-xl">
+          <div className="grid grid-cols-3 gap-6 mb-4 text-xl">
             <div className="flex items-center">
               <strong className="mr-8">DATE TO START:</strong>
               <input
@@ -698,52 +1064,62 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ dialogVisible, onClose, onS
           )}
 
           {/* Employee Section */}
-          <div className="mt-4">
-            <div className="flex text-xl font-bold mb-2">
-              <strong className="ml-[220px] font-bold">EMPLOYEE NUMBER</strong>
-              <strong className="ml-[350px] font-bold">NAME</strong>
+          <div className="mt-6">
+            <div className="grid grid-cols-[200px_1fr_1fr] gap-3 text-xl font-bold mb-2">
+              <div></div> {/* Empty for label column */}
+              <div>EMPLOYEE NUMBER</div>
+              <div>NAME</div>
             </div>
-            
+
             {[
               { label: 'EXECUTIVE:', codeField: 'bccode', nameField: 'bcname' },
               { label: 'GM/SAM/AM:', codeField: 'saocode', nameField: 'saoname' },
               { label: 'SAO/SUPERVISOR:', codeField: 'supcode', nameField: 'supname' },
             ].map((row) => (
-              <div key={row.label} className="flex items-center mt-4">
-                <strong className="text-xl w-[200px]">{row.label}</strong>
+              <div key={row.label} className="grid grid-cols-[200px_1fr_1fr] gap-3 items-center mt-3 text-xl">
+                <strong>{row.label}</strong>
                 <select
                   value={formData[row.codeField as keyof CustomerFormData] as string}
                   onChange={(e) => handleInputChange(row.codeField as keyof CustomerFormData, e.target.value)}
-                  className="w-[300px]  mr-8 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                 >
-                  <option value="">Select</option>
+                  <option value="" disabled>
+                    {formData[row.codeField as keyof CustomerFormData]|| 'Select'}
+                  </option>
+                  
                 </select>
                 <select
                   value={formData[row.nameField as keyof CustomerFormData] as string}
                   onChange={(e) => handleInputChange(row.nameField as keyof CustomerFormData, e.target.value)}
-                  className="w-[500px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm"
                 >
-                  <option value="">Select</option>
+                   <option value="" disabled>
+                    {formData[row.nameField as keyof CustomerFormData]|| 'Select'}
+                  </option>
                 </select>
               </div>
             ))}
           </div>
 
+
           {/* Signature Section */}
-          <div className="mt-5">
+          <div className="mt-10 pt-4">
             <div className="flex text-sm mb-2">
               <span>Requested By:</span>
               <span className="ml-[135px]">Processed By:</span>
               <span className="ml-[150px]">Approved By:</span>
             </div>
-            
-            <div className="flex mt-4 mb-2">
+
+            <div className="flex mt-6 mb-2">
               <div className="w-[200px] border-b border-black"></div>
               <div className="w-[200px] border-b border-black ml-10"></div>
               <div className="w-[200px] border-b border-black ml-10"></div>
               <div className="w-[200px] border-b border-black ml-10"></div>
             </div>
           </div>
+
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4 pt-6 mt-8">
