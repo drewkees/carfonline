@@ -8,7 +8,7 @@ import { User, AlertCircle, AtSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface LoginPageProps {
-  onLogin: (email: string, fullName?: string) => void;
+  onLogin: (email: string, fullName: string, userid: string) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
@@ -78,7 +78,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           setIsFirstTimeUser(true); // prompt for full name
         } else {
           // user exists, auto-login
-          onLogin(existingUser.email, existingUser.fullname);
+          onLogin(existingUser.email, existingUser.fullname, existingUser.userid);
         }
       }
     };
@@ -141,7 +141,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       if (insertError) throw insertError;
 
       // Success, proceed
-      onLogin(data.email, data.fullname);
+      onLogin(data.email, data.fullname,data.userid);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to save user data');

@@ -282,7 +282,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
             </button>
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">ONLINE CARF</h2>
+            <h2
+              onClick={() => {
+                setActiveTab('customer-list');
+                setShowNewCustomerForm(false);
+                setShowSubmitTicketForm(false);
+                setEditingCustomer(null);
+              }}
+              className="text-lg sm:text-xl font-semibold text-foreground cursor-pointer hover:opacity-80 transition"
+            >
+              ONLINE CARF
+            </h2>
+
           </div>
           <div className="flex items-center space-x-4 relative">
             {/* Notification Bell with Dropdown */}
