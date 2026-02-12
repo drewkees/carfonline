@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
@@ -9,6 +11,8 @@ export default function EXECEMAIL() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSchema, setEditingSchema] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
   const [newSchema, setNewSchema] = useState<
     Omit<Database['public']['Tables']['execemail']['Insert'], 'ID'>
@@ -22,6 +26,15 @@ export default function EXECEMAIL() {
 
   useEffect(() => {
     fetchSchema();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const fetchSchema = async () => {
@@ -44,11 +57,11 @@ export default function EXECEMAIL() {
   const handleAddSchema = () => {
     setEditingSchema(null);
     setNewSchema({
-        userid: '',
-        email: '',
-        fullname: '',
-        exception: '',
-        allaccess: false,
+      userid: '',
+      email: '',
+      fullname: '',
+      exception: '',
+      allaccess: false,
     });
     setShowModal(true);
   };
@@ -68,8 +81,6 @@ export default function EXECEMAIL() {
   const handleSaveSchema = async () => {
     try {
       if (editingSchema) {
-        // UPDATE
-        // alert(editingSchema.id);
         const { data, error } = await supabase
           .from('execemail')
           .update(newSchema)
@@ -89,7 +100,6 @@ export default function EXECEMAIL() {
           description: 'Schema updated successfully',
         });
       } else {
-        // INSERT
         const { data, error } = await supabase
           .from('execemail')
           .insert([newSchema])
@@ -122,7 +132,7 @@ export default function EXECEMAIL() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this schema?')) {
+    if (confirm('Are you sure you want to delete this executive email?')) {
       const { error } = await supabase.from('execemail').delete().eq('id', id);
       if (error) {
         toast({
@@ -131,99 +141,269 @@ export default function EXECEMAIL() {
           variant: 'destructive',
         });
       } else {
-        setSchemas(schemas.filter((schema) => schema.itemid !== id));
+        setSchemas(schemas.filter((schema) => schema.id !== id));
         toast({ title: 'Deleted', description: 'Schema deleted successfully' });
       }
     }
   };
-  const boolText = (v: boolean) => (v ? 'Yes' : 'No')
-  return (
-    <div className="h-full bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
-        <h2 className="text-xl font-semibold text-foreground">Executive Emails</h2>
-        <button
-          onClick={handleAddSchema}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={20} />
-          Add
-        </button>
-      </div>
 
-      {/* Table */}
-      <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow">
-           <table className="min-w-full table-auto">
-            <thead className="bg-gray-900 sticky top-0 z-10">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">USER</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EMAIL</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">FULL NAME</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EXCEPTIONS</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">ALL ACESS</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {schemas.map((schema) => (
-                <tr key={schema.itemid} className="hover:bg-gray-700 transition-colors">
-                    <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.userid}</td>
-                  <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.email}</td>
-                  <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.fullname}</td>
-                  <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.exception}</td>
-                  <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(schema.allaccess)}</td>
-                  <td className="px-6 py-4 w-32">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(schema)}
-                        className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
-                        title="Edit"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(schema.itemid)}
-                        className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const boolText = (v: boolean) => (v ? 'Yes' : 'No');
+
+  const filteredSchemas = schemas.filter((schema) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      schema.userid?.toLowerCase().includes(q) ||
+      schema.email?.toLowerCase().includes(q) ||
+      schema.fullname?.toLowerCase().includes(q) ||
+      schema.exception?.toLowerCase().includes(q)
+    );
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="h-full bg-background flex flex-col">
+      {isMobile ? (
+        /* Mobile Layout */
+        <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
+          <div className="flex-shrink-0 bg-background border-b border-border">
+            <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
+              <div className="flex items-center justify-between w-full">
+                <h2 className="text-lg font-semibold text-foreground">EXECUTIVE EMAILS</h2>
+                <button
+                  onClick={handleAddSchema}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  <Plus size={18} />
+                  Add
+                </button>
+              </div>
+              <div className="flex items-center gap-2 w-full">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-full bg-input border-border text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto p-4">
+            <div className="space-y-3 pb-6">
+              {filteredSchemas.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No executive emails found
+                </div>
+              ) : (
+                filteredSchemas.map((schema) => (
+                  <Card key={schema.id} className="bg-card border-border">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="text-primary font-semibold text-sm mb-1">
+                            {schema.userid}
+                          </div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            User ID
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(schema)}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schema.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-border my-2"></div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Full Name
+                          </div>
+                          <div className="text-sm text-foreground mt-0.5">
+                            {schema.fullname || '-'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Email
+                          </div>
+                          <div className="text-sm text-foreground mt-0.5">
+                            {schema.email || '-'}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Exception
+                            </div>
+                            <div className="text-sm text-foreground mt-0.5">
+                              {schema.exception || '-'}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              All Access
+                            </div>
+                            <div className={`text-sm mt-0.5 ${schema.allaccess ? 'text-green-500' : 'text-gray-500'}`}>
+                              {boolText(schema.allaccess)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Desktop Layout */
+        <>
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+            <h2 className="text-xl font-semibold text-foreground">Executive Emails</h2>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
+                />
+              </div>
+              <button
+                onClick={handleAddSchema}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={20} />
+                Add
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow">
+              <table className="min-w-full table-auto">
+                <thead className="bg-gray-900 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">USER</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EMAIL</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">FULL NAME</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EXCEPTIONS</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">ALL ACCESS</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredSchemas.map((schema) => (
+                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.userid}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.email}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.fullname}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.exception}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(schema.allaccess)}</td>
+                      <td className="px-6 py-4 w-32">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(schema)}
+                            className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schema.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-gray-800 rounded-lg p-6 w-96 text-white">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
-                {editingSchema ? 'Edit Schema' : 'Add Schema'}
+                {editingSchema ? 'Edit Executive Email' : 'Add Executive Email'}
               </h3>
               <button onClick={() => setShowModal(false)}>
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-3">
-              {['userid','email','fullname','exception','allaccess'].map((field) => (
-                <div key={field} className="flex flex-col">
-                  <label className="text-sm mb-1 capitalize">{field}</label>
+              {[
+                { key: 'userid', label: 'User ID', type: 'text' },
+                { key: 'email', label: 'Email', type: 'email' },
+                { key: 'fullname', label: 'Full Name', type: 'text' },
+                { key: 'exception', label: 'Exception', type: 'text' }
+              ].map(({ key, label, type }) => (
+                <div key={key} className="flex flex-col">
+                  <label className="text-sm mb-1">{label}</label>
                   <input
-                    type="text"
+                    type={type}
                     className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newSchema[field]}
+                    value={newSchema[key]}
                     onChange={(e) =>
-                      setNewSchema({ ...newSchema, [field]: e.target.value })
+                      setNewSchema({ ...newSchema, [key]: e.target.value })
                     }
                   />
                 </div>
               ))}
+
+              {/* All Access Checkbox */}
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="allaccess"
+                  checked={newSchema.allaccess || false}
+                  onChange={(e) =>
+                    setNewSchema({ ...newSchema, allaccess: e.target.checked })
+                  }
+                  className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                />
+                <label htmlFor="allaccess" className="text-sm cursor-pointer">
+                  All Access
+                </label>
+              </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <button

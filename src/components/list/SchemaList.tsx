@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
@@ -9,6 +11,8 @@ export default function SchemaList() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSchema, setEditingSchema] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
   const [newSchema, setNewSchema] = useState<
     Omit<Database['public']['Tables']['schemas']['Insert'], 'itemid'>
@@ -19,11 +23,20 @@ export default function SchemaList() {
     objectcode: '',
     menutype: 'P',
     menuicon: '',
-    udfmaintained:false,
+    udfmaintained: false,
   });
 
   useEffect(() => {
     fetchSchema();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const fetchSchema = async () => {
@@ -66,7 +79,7 @@ export default function SchemaList() {
       objectcode: schema.objectcode || '',
       menutype: schema.menutype || '',
       menuicon: schema.menuicon || '',
-      udfmaintained:schema.udfmaintained || false,
+      udfmaintained: schema.udfmaintained || false,
     });
     setShowModal(true);
   };
@@ -74,7 +87,6 @@ export default function SchemaList() {
   const handleSaveSchema = async () => {
     try {
       if (editingSchema) {
-        // UPDATE
         const { data, error } = await supabase
           .from('schemas')
           .update(newSchema)
@@ -94,7 +106,6 @@ export default function SchemaList() {
           description: 'Schema updated successfully',
         });
       } else {
-        // INSERT
         const { data, error } = await supabase
           .from('schemas')
           .insert([newSchema])
@@ -117,7 +128,7 @@ export default function SchemaList() {
         objectcode: '',
         menutype: 'P',
         menuicon: '',
-        udfmaintained:false,
+        udfmaintained: false,
       });
     } catch (error) {
       toast({
@@ -143,76 +154,247 @@ export default function SchemaList() {
       }
     }
   };
-  const boolText = (v: boolean) => (v ? 'Yes' : 'No')
-  return (
-    <div className="h-full bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
-        <h2 className="text-xl font-semibold text-foreground">CUSTOMER LIST</h2>
-        <button
-          onClick={handleAddSchema}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={20} />
-          Add Schema
-        </button>
-      </div>
 
-      {/* Table */}
-      <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto bg-gray-800 rounded-lg shadow">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-900 sticky top-0 z-10">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 w-32">Menu ID</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Menu Name</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Menu Command</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Object Code</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Menu Type</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Menu Icon</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">UDF Maintained</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 w-32">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {schemas.map((schema) => (
-                <tr key={schema.itemid} className="hover:bg-gray-700 transition-colors">
-                  <td className="px-6 py-4 w-32 text-gray-300">{schema.menuid}</td>
-                  <td className="px-6 py-4 text-gray-200">{schema.menuname}</td>
-                  <td className="px-6 py-4 text-gray-200">{schema.menucmd}</td>
-                  <td className="px-6 py-4 text-gray-200">{schema.objectcode}</td>
-                  <td className="px-6 py-4 text-gray-200">{schema.menutype}</td>
-                  <td className="px-6 py-4 text-gray-200">{schema.menuicon}</td>
-                  <td className="px-6 py-4 text-gray-200">{boolText(schema.udfmaintained)}</td>
-                  <td className="px-6 py-4 w-32">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(schema)}
-                        className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
-                        title="Edit"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(schema.itemid)}
-                        className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const boolText = (v: boolean) => (v ? 'Yes' : 'No');
+
+  const filteredSchemas = schemas.filter((schema) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      schema.menuid?.toLowerCase().includes(q) ||
+      schema.menuname?.toLowerCase().includes(q) ||
+      schema.menucmd?.toLowerCase().includes(q) ||
+      schema.objectcode?.toLowerCase().includes(q) ||
+      schema.menutype?.toLowerCase().includes(q) ||
+      schema.menuicon?.toLowerCase().includes(q)
+    );
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="h-full bg-background flex flex-col">
+      {isMobile ? (
+        /* Mobile Layout */
+        <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
+          <div className="flex-shrink-0 bg-background border-b border-border">
+            <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
+              <div className="flex items-center justify-between w-full">
+                <h2 className="text-lg font-semibold text-foreground">SCHEMA LIST</h2>
+                <button
+                  onClick={handleAddSchema}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  <Plus size={18} />
+                  Add
+                </button>
+              </div>
+              <div className="flex items-center gap-2 w-full">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-full bg-input border-border text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto p-4">
+            <div className="space-y-3 pb-6">
+              {filteredSchemas.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No schemas found
+                </div>
+              ) : (
+                filteredSchemas.map((schema) => (
+                  <Card key={schema.itemid} className="bg-card border-border">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="text-primary font-semibold text-sm mb-1">
+                            {schema.menuid}
+                          </div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Menu ID
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => handleEdit(schema)}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schema.itemid)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-border my-2"></div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Menu Name
+                          </div>
+                          <div className="text-sm text-foreground mt-0.5">
+                            {schema.menuname || '-'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Menu Command
+                          </div>
+                          <div className="text-sm text-foreground mt-0.5">
+                            {schema.menucmd || '-'}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Object Code
+                            </div>
+                            <div className="text-sm text-foreground mt-0.5">
+                              {schema.objectcode || '-'}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Menu Type
+                            </div>
+                            <div className="text-sm text-foreground mt-0.5">
+                              {schema.menutype || '-'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Menu Icon
+                            </div>
+                            <div className="text-sm text-foreground mt-0.5">
+                              {schema.menuicon || '-'}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                              UDF Maintained
+                            </div>
+                            <div className="text-sm text-foreground mt-0.5">
+                              {boolText(schema.udfmaintained)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Desktop Layout */
+        <>
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+            <h2 className="text-xl font-semibold text-foreground">Schema List</h2>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
+                />
+              </div>
+              <button
+                onClick={handleAddSchema}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={20} />
+                Add
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow">
+              <table className="min-w-full table-auto">
+                <thead className="bg-gray-900 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">MENU ID</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">MENU NAME</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">MENU COMMAND</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">OBJECT CODE</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">MENU TYPE</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">MENU ICON</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">UDF MAINTAINED</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredSchemas.map((schema) => (
+                    <tr key={schema.itemid} className="hover:bg-gray-700 transition-colors">
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.menuid}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.menuname}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.menucmd}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.objectcode}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.menutype}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.menuicon}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(schema.udfmaintained)}</td>
+                      <td className="px-6 py-4 w-32">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(schema)}
+                            className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schema.itemid)}
+                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-gray-800 rounded-lg p-6 w-96 text-white">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
                 {editingSchema ? 'Edit Schema' : 'Add Schema'}
@@ -222,17 +404,36 @@ export default function SchemaList() {
               </button>
             </div>
             <div className="space-y-3">
-              {['menuid','menuname','menucmd','objectcode','menutype','menuicon','udfmaintained'].map((field) => (
-                <div key={field} className="flex flex-col">
-                  <label className="text-sm mb-1 capitalize">{field}</label>
-                  <input
-                    type="text"
-                    className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newSchema[field]}
-                    onChange={(e) =>
-                      setNewSchema({ ...newSchema, [field]: e.target.value })
-                    }
-                  />
+              {[
+                { key: 'menuid', label: 'Menu ID', type: 'text' },
+                { key: 'menuname', label: 'Menu Name', type: 'text' },
+                { key: 'menucmd', label: 'Menu Command', type: 'text' },
+                { key: 'objectcode', label: 'Object Code', type: 'text' },
+                { key: 'menutype', label: 'Menu Type', type: 'text' },
+                { key: 'menuicon', label: 'Menu Icon', type: 'text' },
+                { key: 'udfmaintained', label: 'UDF Maintained', type: 'checkbox' },
+              ].map(({ key, label, type }) => (
+                <div key={key} className="flex flex-col">
+                  <label className="text-sm mb-1">{label}</label>
+                  {type === 'checkbox' ? (
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5"
+                      checked={newSchema[key]}
+                      onChange={(e) =>
+                        setNewSchema({ ...newSchema, [key]: e.target.checked })
+                      }
+                    />
+                  ) : (
+                    <input
+                      type={type}
+                      className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newSchema[key]}
+                      onChange={(e) =>
+                        setNewSchema({ ...newSchema, [key]: e.target.value })
+                      }
+                    />
+                  )}
                 </div>
               ))}
             </div>

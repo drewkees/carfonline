@@ -37,6 +37,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
   const itemsPerPage = 25;
   const [udfFields, setUdfFields] = useState<FieldType[]>([]);
   const { customerSource, sheetId, sheetApiKey, sheetRange } = useSystemSettings();
+  const [isMobile, setIsMobile] = useState(false);
   
   // Get the approval functions from useCustomerForm hook
   const { approveForm, cancelForm, returntomakerForm } = useCustomerForm();
@@ -58,6 +59,15 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
       await fetchUdfFields();
     };
     initialize();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -323,7 +333,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         executeCancel();
         break;
       case 'return':
-        executeCancel();
+        executeReturnToMaker();
         break;
     }
   };
@@ -367,12 +377,13 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         return value;
     }
   };
-     const Spinner = () => (
-      <svg className="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-    );
+
+  const Spinner = () => (
+    <svg className="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  );
 
   if (loading) {
     return (
@@ -387,141 +398,292 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6">
-        <div className="space-y-4 sm:space-y-6 pb-24">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <User className="h-5 w-5 sm:h-6 sm:w-6 text-foreground flex-shrink-0" />
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">
-                PENDING LIST
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap mt-2 sm:mt-0">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[120px] sm:min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full sm:w-64 bg-input border-border text-sm sm:text-base"
-                />
+      <main className="flex-1 p-6">
+        {isMobile ? (
+          /* Mobile Layout */
+          <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
+            <div className="flex-shrink-0 bg-background border-b border-border">
+              <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
+                <div className="flex items-center space-x-2 w-full">
+                  <User className="h-5 w-5 text-foreground flex-shrink-0" />
+                  <h2 className="text-lg font-semibold text-foreground truncate">
+                    FOR APPROVAL LIST
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2 w-full">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-full bg-input border-border text-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Table */}
-          <Card className="bg-card border-border overflow-hidden shadow-sm">
-            <CardContent className="p-0">
-              <div className="w-full overflow-x-auto no-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-                <table className="min-w-max w-full border-collapse">
-                  <thead className="sticky top-0 z-10">
-                    <tr className="border-b bg-muted">
-                      {udfFields.filter(f => f.visible).map((field) => (
-                        <th
-                          key={field.fieldid}
-                          className="text-foreground font-medium text-left px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
-                          style={{ minWidth: '120px', width: '150px' }}
-                        >
-                          {field.fieldnames.toUpperCase()}
-                        </th>
-                      ))}
-                      <th
-                        className="text-foreground font-medium text-center px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm sticky right-0 bg-muted"
-                        style={{ minWidth: '300px', width: '300px' }}
+            <div className="flex-1 overflow-auto p-4">
+              <div className="space-y-3 pb-6">
+                {currentCustomers.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No pending customers found
+                  </div>
+                ) : (
+                  currentCustomers.map((customer) => {
+                    const visibleFields = udfFields.filter(f => f.visible);
+                    const primaryFields = visibleFields.slice(0, 4);
+                    const secondaryFields = visibleFields.slice(4, 6);
+
+                    return (
+                      <Card
+                        key={customer.id}
+                        className="bg-card border-border"
                       >
-                        ACTIONS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentCustomers.map((customer) => (
-                      <tr key={customer.id} className="border-b border-border hover:bg-muted/50 cursor-pointer" onDoubleClick={() => onEditCustomer(customer)}>
-                        {udfFields.filter(f => f.visible).map((field) => {
-                          const value = customer[field.fieldid];
-                          return (
-                            <td
-                              key={field.fieldid}
-                              className="relative text-foreground px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm group"
-                            >
-                              <span>{field.truncatecolumn ? truncate(value ?? '') : value ?? '-'}</span>
-                              {field.truncatecolumn && value && (
-                                <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 whitespace-pre">
-                                  {value}
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td className="px-2 sm:px-4 py-1 sm:py-2 sticky right-0 bg-card">
-                          <div className="flex items-center justify-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={(e) => handleApprove(customer, e)}
-                              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs h-8 px-3"
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => handleReturnClick(customer, e)}
-                              className="bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 px-3"
-                            >
-                              <RotateCcw className="h-3 w-3 mr-1" />
-                              Return to Maker
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => handleCancel(customer, e)}
-                              className="bg-red-500 hover:bg-red-600 text-white text-xs h-8 px-3"
-                            >
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Cancel
-                            </Button>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="text-primary font-semibold text-sm cursor-pointer" onClick={() => onEditCustomer(customer)}>
+                              {customer.carfno || customer.id}
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm text-muted-foreground gap-2">
-            <div className="flex items-center space-x-2">
-              <span>Items per page:</span>
-              <span className="font-medium">{itemsPerPage}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span>
-                {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
-              </span>
-              <div className="flex items-center space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  ‹
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  ›
-                </Button>
+                          {primaryFields.map((field) => {
+                            const value = customer[field.fieldid];
+                            if (!value) return null;
+                            return (
+                              <div key={field.fieldid} className="mb-2">
+                                <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  {field.fieldnames}
+                                </div>
+                                <div className="text-sm text-foreground mt-0.5">
+                                  {formatValue(value, field.datatype)}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {secondaryFields.length > 0 && (
+                            <div className="h-px bg-border my-3"></div>
+                          )}
+
+                          {secondaryFields.length > 0 && (
+                            <div className="grid grid-cols-2 gap-3">
+                              {secondaryFields.map((field) => {
+                                const value = customer[field.fieldid];
+                                return (
+                                  <div key={field.fieldid}>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      {field.fieldnames}
+                                    </div>
+                                    <div className="text-sm text-foreground mt-0.5">
+                                      {formatValue(value, field.datatype) || '-'}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Mobile Action Buttons */}
+                          <div className="mt-4 pt-3 border-t border-border">
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleApprove(customer, e)}
+                                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white text-xs h-9"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleReturnClick(customer, e)}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                Return to Maker
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleCancel(customer, e)}
+                                className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-9"
+                              >
+                                <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span className="text-xs">
+                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 px-3 text-xs"
+                    >
+                      ←
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-3 text-xs"
+                    >
+                      →
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Desktop Layout */
+          <div className="space-y-6 pb-24">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <User className="h-6 w-6 text-foreground" />
+                <h2 className="text-xl font-semibold text-foreground">PENDING LIST</h2>
+              </div>
+
+              <div className="flex items-center space-x-4 mt-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card className="bg-card border-border overflow-hidden shadow-sm">
+              <CardContent className="p-0">
+                <div className="w-full overflow-x-auto no-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)', width: '100%' }}>
+                  <table className="min-w-max w-full border-collapse">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="border-b bg-muted">
+                        {udfFields.filter(f => f.visible).map((field) => (
+                          <th
+                            key={field.fieldid}
+                            className="text-foreground font-medium text-left px-4 py-2 whitespace-nowrap text-sm"
+                            style={{ width: '150px', minWidth: '150px' }}
+                          >
+                            {field.fieldnames.toUpperCase()}
+                          </th>
+                        ))}
+                        <th
+                          className="text-foreground font-medium text-center px-4 py-2 whitespace-nowrap text-sm sticky right-0 bg-muted"
+                          style={{ minWidth: '300px', width: '300px' }}
+                        >
+                          ACTIONS
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentCustomers.map((customer) => (
+                        <tr key={customer.id} className="border-b border-border hover:bg-muted/50 cursor-pointer" onDoubleClick={() => onEditCustomer(customer)}>
+                          {udfFields.filter(f => f.visible).map((field) => {
+                            const value = customer[field.fieldid];
+                            return (
+                              <td
+                                key={field.fieldid}
+                                className="relative text-foreground px-4 py-2 whitespace-nowrap text-sm group"
+                                style={{ width: '150px', minWidth: '150px' }}
+                              >
+                                <span>
+                                  {field.truncatecolumn ? truncate(value ?? '') : value ?? '-'}
+                                </span>
+                                {field.truncatecolumn && value && (
+                                  <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 whitespace-pre">
+                                    {value}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-2 sticky right-0 bg-card">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleApprove(customer, e)}
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs h-8 px-3"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleReturnClick(customer, e)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 px-3"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Return to Maker
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => handleCancel(customer, e)}
+                                className="bg-red-500 hover:bg-red-600 text-white text-xs h-8 px-3"
+                              >
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Cancel
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <span>Items per page:</span>
+                <span className="font-medium">{itemsPerPage}</span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span>
+                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                </span>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    ‹
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    ›
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Confirmation Dialog */}
@@ -533,54 +695,55 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         title={
           confirmationDialog.action === 'approve' 
             ? 'Approve Customer Request' 
-            : confirmationDialog.action === 'update'
+            : confirmationDialog.action === 'update' || confirmationDialog.action === 'return'
             ? 'Return to Maker'
             : 'Cancel Customer Request'
         }
         message={
           confirmationDialog.action === 'approve'
             ? 'Are you sure you want to approve this customer activation request? This will move the request forward in the approval chain.'
-            : confirmationDialog.action === 'update'
+            : confirmationDialog.action === 'update' || confirmationDialog.action === 'return'
             ? 'Are you sure you want to return this request to the maker? They will need to review and resubmit.'
             : 'Are you sure you want to cancel this customer request? This action cannot be undone.'
         }
       />
 
+      {/* Return to Maker Dialog */}
       {returnDialog.isOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-              <div className="bg-white rounded-lg shadow-xl p-6 w-[500px]">
-                <h3 className="text-xl text-black font-bold mb-4">Return to Maker</h3>
-                <p className="text-black mb-4">Please provide remarks for returning this form to the maker:</p>
-                
-                <textarea
-                  value={returnDialog.remarks}
-                  onChange={(e) => setReturnDialog(prev => ({ ...prev, remarks: e.target.value }))}
-                  className=" text-gray-900 w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-300 resize-none"
-                  placeholder="Enter your remarks here..."
-                />
-                
-                <div className="flex justify-end space-x-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setReturnDialog({ isOpen: false, remarks: '' })}
-                    disabled={isReturnLoading}
-                    className="px-6 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleReturnSubmit}
-                    disabled={isReturnLoading || !returnDialog.remarks.trim()}
-                    className="px-6 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isReturnLoading && <Spinner />}
-                    {isReturnLoading ? 'Submitting...' : 'Submit'}
-                  </button>
-                </div>
-              </div>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-[90vw] max-w-[500px] mx-4">
+            <h3 className="text-xl text-black font-bold mb-4">Return to Maker</h3>
+            <p className="text-black mb-4">Please provide remarks for returning this form to the maker:</p>
+            
+            <textarea
+              value={returnDialog.remarks}
+              onChange={(e) => setReturnDialog(prev => ({ ...prev, remarks: e.target.value }))}
+              className="text-gray-900 w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-300 resize-none"
+              placeholder="Enter your remarks here..."
+            />
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setReturnDialog({ isOpen: false, remarks: '' })}
+                disabled={isReturnLoading}
+                className="px-6 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReturnSubmit}
+                disabled={isReturnLoading || !returnDialog.remarks.trim()}
+                className="px-6 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isReturnLoading && <Spinner />}
+                {isReturnLoading ? 'Submitting...' : 'Submit'}
+              </button>
             </div>
-          )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
