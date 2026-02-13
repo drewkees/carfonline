@@ -79,33 +79,33 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   const Icon = currentConfig.icon;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-slideUp">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn p-4">
+      <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp">
         {/* Colored header bar */}
-        <div className={`h-2 ${currentConfig.confirmBg}`}></div>
+        <div className={`h-1.5 md:h-2 ${currentConfig.confirmBg}`}></div>
         
         {/* Content */}
-        <div className="p-8">
+        <div className="p-5 md:p-8">
           {/* Icon and Title */}
-          <div className="flex items-center justify-center mb-6">
-            <div className={`${currentConfig.bgColor} ${currentConfig.borderColor} border-2 rounded-full p-4`}>
-              <Icon className={`${currentConfig.iconColor} w-12 h-12`} strokeWidth={2} />
+          <div className="flex items-center justify-center mb-4 md:mb-6">
+            <div className={`${currentConfig.bgColor} ${currentConfig.borderColor} border-2 rounded-full p-3 md:p-4`}>
+              <Icon className={`${currentConfig.iconColor} w-8 h-8 md:w-12 md:h-12`} strokeWidth={2} />
             </div>
           </div>
 
-          <h3 className="text-2xl font-bold text-center text-gray-900 mb-3">
+          <h3 className="text-lg md:text-2xl font-bold text-center text-gray-900 mb-2 md:mb-3">
             {currentConfig.title}
           </h3>
 
-          <p className="text-center text-gray-600 mb-8 leading-relaxed">
+          <p className="text-sm md:text-base text-center text-gray-600 mb-6 md:mb-8 leading-relaxed">
             {currentConfig.message}
           </p>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              className="w-full md:flex-1 px-4 md:px-6 py-2.5 md:py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 active:scale-95 text-sm md:text-base"
             >
               No, Go Back
             </button>
@@ -114,14 +114,13 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                 onConfirm();
                 onClose();
               }}
-              className={`flex-1 px-6 py-3 ${currentConfig.confirmBg} text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg`}
+              className={`w-full md:flex-1 px-4 md:px-6 py-2.5 md:py-3 ${currentConfig.confirmBg} text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg text-sm md:text-base`}
             >
               {currentConfig.confirmText}
             </button>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

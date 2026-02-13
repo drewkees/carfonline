@@ -440,6 +440,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                       <Card
                         key={customer.id}
                         className="bg-card border-border"
+                        onClick={() => onEditCustomer(customer)}
                       >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
