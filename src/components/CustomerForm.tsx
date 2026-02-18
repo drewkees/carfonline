@@ -897,8 +897,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                     : 'bg-blue-500 hover:bg-blue-600 text-white'
                 }`}
                 onClick={() => setDialogOpen(true)}
+                disabled={loading}
             >
-              {hasAnyFiles ? 'VIEW FILES' : 'CHOOSE FILE'}
+              {loading ? 'Loading...' : hasAnyFiles ? 'VIEW FILES' : 'CHOOSE FILE'}
             </button>
               <SupportingDocumentsDialog
                 isOpen={dialogOpen}
@@ -906,6 +907,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 uploadedFiles={uploadedFiles}
                 onFileUpload={handleFileUpload}
                 gencode={formData.gencode}
+                approvestatus={formData.approvestatus} 
               />
             </div>
           </div>

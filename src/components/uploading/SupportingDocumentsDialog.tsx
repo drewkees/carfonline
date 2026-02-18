@@ -16,6 +16,7 @@ interface SupportingDocumentsDialogProps {
   uploadedFiles: UploadedFiles;
   onFileUpload: (docType: keyof UploadedFiles, file: File | null) => void;
   gencode?: string;
+  approvestatus?: string;
 }
 
 const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
@@ -24,6 +25,7 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
   uploadedFiles,
   onFileUpload,
   gencode,
+  approvestatus = '', 
 }) => {
   const [folderFiles, setFolderFiles] = useState<Record<string, DriveFile[]>>({});
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
@@ -145,6 +147,7 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
           isOpen={fileDialogOpen}
           docType={currentDocType}
           gencode={gencode}
+          approvestatus={approvestatus} 
           initialFiles={folderFiles[currentDocType] || []}
           onClose={() => setFileDialogOpen(false)}
           onFileSelect={(files) => {

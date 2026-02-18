@@ -300,7 +300,6 @@ export const useCustomerForm = (
 
   // ==================== INITIALIZE FORM DATA ====================
   useEffect(() => {
-    console.log(initialData);
     if (initialData) {
       setFormData((prev) => ({ ...prev, ...initialData }));
       setIsEditMode(true);
