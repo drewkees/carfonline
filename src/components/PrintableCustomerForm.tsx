@@ -24,6 +24,43 @@ const PrintableCustomerForm: React.FC<PrintableFormProps> = ({
     documentTitle: formData.gencode,
   });
 
+  const handleDownloadPdf = () => {
+    if (!componentRef.current) return;
+
+    const formContent = componentRef.current.innerHTML;
+    const docTitle = formData.gencode || 'CustomerForm';
+
+    const styles = [
+      '@page { size: 8.5in 13in; margin: 0.3in; }',
+      '* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+      'body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 9.5pt; color: #000; line-height: 1.15; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+      '.underline-input { border: none; border-bottom: 1px solid #000; padding: 1px 5px; background: #D9EBD3 !important; outline: none; width: 100%; font-size: inherit; font-family: inherit; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+      '.text-sm { font-size: 0.85em; }',
+      '.text-lg { font-size: 1.1em; }',
+    ].join('\n');
+
+    const html = [
+      '<!DOCTYPE html><html><head>',
+      '<meta charset="utf-8" />',
+      '<title>' + docTitle + '</title>',
+      '<style>' + styles + '</style>',
+      '</head><body>',
+      formContent,
+      '<script>',
+      'window.onload = function() {',
+      '  window.print();',
+      '  window.onafterprint = function() { window.close(); };',
+      '};',
+      '<' + '/script>',
+      '</body></html>',
+    ].join('\n');
+
+    const printWindow = window.open('', '_blank', 'width=900,height=1200');
+    if (!printWindow) return;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -35,6 +72,13 @@ const PrintableCustomerForm: React.FC<PrintableFormProps> = ({
             margin: 0.3in;
           }
           body { margin: 0; padding: 0; }
+
+          /* Force background colors to print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
           .print-container {
             width: 100%;
             max-width: none;
@@ -78,8 +122,8 @@ const PrintableCustomerForm: React.FC<PrintableFormProps> = ({
         }
 
         /* Use these helper classes instead of hardcoded font sizes */
-        .text-sm  { font-size: 0.85em; }   /* slightly smaller, e.g. italic notes  */
-        .text-lg  { font-size: 1.1em;  }   /* slightly larger,  e.g. form title    */
+        .text-sm  { font-size: 0.85em; }
+        .text-lg  { font-size: 1.1em;  }
 
         .modal-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -105,6 +149,8 @@ const PrintableCustomerForm: React.FC<PrintableFormProps> = ({
         }
         .btn-print { background: #22c55e; color: white; margin-right: 8px; }
         .btn-print:hover { background: #16a34a; }
+        .btn-pdf { background: #dc2626; color: white; margin-right: 8px; }
+        .btn-pdf:hover { background: #b91c1c; }
         .btn-close { background: #3b82f6; color: white; }
         .btn-close:hover { background: #2563eb; }
       `}</style>
@@ -118,6 +164,7 @@ const PrintableCustomerForm: React.FC<PrintableFormProps> = ({
             </h3>
             <div>
               <button onClick={handlePrint} className="btn btn-print">Print</button>
+              <button onClick={handleDownloadPdf} className="btn btn-pdf">Download PDF</button>
               <button onClick={onClose} className="btn btn-close">Close</button>
             </div>
           </div>
