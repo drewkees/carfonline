@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Search, User, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -29,6 +27,13 @@ type FieldType = {
   truncatecolumn: boolean;
 };
 
+type TooltipState = {
+  value: string;
+  x: number;
+  y: number;
+  flipUp: boolean;
+} | null;
+
 const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,25 +43,25 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
   const [udfFields, setUdfFields] = useState<FieldType[]>([]);
   const { customerSource, sheetId, sheetApiKey, sheetRange } = useSystemSettings();
   const [isMobile, setIsMobile] = useState(false);
-  
-  // Get the approval functions from useCustomerForm hook
+  const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+
   const { approveForm, cancelForm, returntomakerForm } = useCustomerForm();
-  
-  // Confirmation dialog states
+
   const [confirmationDialog, setConfirmationDialog] = useState({
     isOpen: false,
     action: 'approve' as 'approve' | 'cancel' | 'update' | 'return',
     customer: null as Customer | null,
   });
   const [returnDialog, setReturnDialog] = useState({
-      isOpen: false,
-      remarks: '',
-    });
+    isOpen: false,
+    remarks: '',
+  });
   const [isReturnLoading, setIsReturnLoading] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
-      await fetchUdfFields();
+      await Promise.all([fetchUdfFields(), fetchUsersMap()]);
     };
     initialize();
   }, []);
@@ -79,6 +84,14 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     }
   }, [customerSource, sheetId, sheetApiKey, sheetRange]);
 
+  const fetchUsersMap = async () => {
+    const { data, error } = await supabase.from('users').select('userid,fullname');
+    if (error) { console.error('Error fetching users map:', error); return; }
+    const map: Record<string, string> = {};
+    (data || []).forEach((u) => { map[u.userid] = u.fullname; });
+    setUsersMap(map);
+  };
+
   const fetchUdfFields = async () => {
     try {
       const { data, error } = await supabase
@@ -99,9 +112,9 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
   };
 
   const truncate = (value: any, max = 20) => {
-    if (!value) return "-";
+    if (!value) return '-';
     const str = String(value);
-    return str.length > max ? str.substring(0, max) + "…" : str;
+    return str.length > max ? str.substring(0, max) + '…' : str;
   };
 
   const fetchCustomers = async () => {
@@ -117,9 +130,9 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch customers. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch customers. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -140,29 +153,29 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
       const [headerRow, ...rows] = result.values;
       const sheetCustomers = rows.map((row, idx) => {
         const customer: Customer = { id: idx.toString() };
-        headerRow.forEach((key, i) => {
+        headerRow.forEach((key: string, i: number) => {
           customer[key] = row[i] ?? null;
         });
         return customer;
       });
 
-      const currentUserId = (window.getGlobal('userid') || "")
+      const currentUserId = (window.getGlobal('userid') || '')
         .toString()
         .trim()
         .toLowerCase();
 
       const filteredCustomers = sheetCustomers.filter((customer) => {
-        const status = (customer.approvestatus || "")
+        const status = (customer.approvestatus || '')
           .toString()
           .trim()
           .toUpperCase();
 
-        if (status !== "PENDING") return false;
+        if (status !== 'PENDING') return false;
 
-        const nextApproverRaw = (customer.nextapprover || "").toString();
+        const nextApproverRaw = (customer.nextapprover || '').toString();
         const approvers = nextApproverRaw
-          .split(",")
-          .map(a => a.trim().toLowerCase())
+          .split(',')
+          .map((a: string) => a.trim().toLowerCase())
           .filter(Boolean);
 
         return approvers.includes(currentUserId);
@@ -170,33 +183,46 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
       setCustomers(filteredCustomers);
     } catch (error) {
-      console.error("Error fetching Google Sheet:", error);
+      console.error('Error fetching Google Sheet:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch customers from Google Sheet.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch customers from Google Sheet.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Action handlers - open confirmation dialogs
+  // Smart tooltip: detects right-edge AND bottom-edge overflow and flips accordingly
+  const handleMouseEnter = (e: React.MouseEvent<HTMLTableCellElement>, value: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tooltipMaxWidth = 280;
+    const tooltipMaxHeight = 300;
+    const spaceOnRight = window.innerWidth - rect.left;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    let x = spaceOnRight < tooltipMaxWidth ? rect.right - tooltipMaxWidth : rect.left;
+    x = Math.max(8, x);
+
+    const flipUp = spaceBelow < tooltipMaxHeight;
+    const y = flipUp ? rect.top - 6 : rect.bottom + 6;
+
+    setTooltip({ value, x, y, flipUp });
+  };
+
+  const handleMouseLeave = () => setTooltip(null);
+
   const handleApprove = (customer: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
-    setConfirmationDialog({
-      isOpen: true,
-      action: 'approve',
-      customer,
-    });
+    setConfirmationDialog({ isOpen: true, action: 'approve', customer });
   };
 
   const handleReturnClick = (customer: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
     setReturnDialog({ isOpen: true, remarks: '' });
-    setConfirmationDialog(prev => ({ ...prev, customer })); // save customer for later
+    setConfirmationDialog((prev) => ({ ...prev, customer }));
   };
-
 
   const handleReturnSubmit = async () => {
     if (!returnDialog.remarks.trim()) {
@@ -205,59 +231,33 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     }
     setIsReturnLoading(true);
     try {
-      // open the confirmation dialog for 'return'
-      setConfirmationDialog(prev => ({
+      setConfirmationDialog((prev) => ({
         ...prev,
         isOpen: true,
         action: 'return',
-        remarks: returnDialog.remarks, 
+        remarks: returnDialog.remarks,
       }));
     } finally {
       setIsReturnLoading(false);
     }
   };
 
-  const handleReturnToMaker = (customer: Customer, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setConfirmationDialog({
-      isOpen: true,
-      action: 'update',
-      customer,
-    });
-  };
-
   const handleCancel = (customer: Customer, e: React.MouseEvent) => {
     e.stopPropagation();
-    setConfirmationDialog({
-      isOpen: true,
-      action: 'cancel',
-      customer,
-    });
+    setConfirmationDialog({ isOpen: true, action: 'cancel', customer });
   };
 
-  // Actual action executions after confirmation
   const executeApprove = async () => {
     if (!confirmationDialog.customer) return;
-    
     try {
       setLoading(true);
       const success = await approveForm(confirmationDialog.customer);
-      
       if (success) {
-        // Refresh the list after approval
-        if (customerSource === 'PROD') {
-          await fetchCustomers();
-        } else {
-          await fetchCustomersFromGSheet();
-        }
+        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
       }
     } catch (error) {
       console.error('Error approving customer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve customer.",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to approve customer.', variant: 'destructive' });
     } finally {
       setLoading(false);
       closeConfirmationDialog();
@@ -266,26 +266,15 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   const executeReturnToMaker = async () => {
     if (!confirmationDialog.customer) return;
-    
     try {
       setLoading(true);
-      const success = await returntomakerForm(confirmationDialog.customer, returnDialog.remarks );
-      
+      const success = await returntomakerForm(confirmationDialog.customer, returnDialog.remarks);
       if (success) {
-        // Refresh the list
-        if (customerSource === 'PROD') {
-          await fetchCustomers();
-        } else {
-          await fetchCustomersFromGSheet();
-        }
+        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
       }
     } catch (error) {
       console.error('Error returning to maker:', error);
-      toast({
-        title: "Error",
-        description: "Failed to return customer to maker.",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to return customer to maker.', variant: 'destructive' });
     } finally {
       setLoading(false);
       closeConfirmationDialog();
@@ -294,63 +283,36 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   const executeCancel = async () => {
     if (!confirmationDialog.customer) return;
-    
     try {
       setLoading(true);
       const success = await cancelForm(confirmationDialog.customer);
-      
       if (success) {
-        // Refresh the list
-        if (customerSource === 'PROD') {
-          await fetchCustomers();
-        } else {
-          await fetchCustomersFromGSheet();
-        }
+        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
       }
     } catch (error) {
       console.error('Error cancelling customer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel customer request.",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to cancel customer request.', variant: 'destructive' });
     } finally {
       setLoading(false);
       closeConfirmationDialog();
     }
   };
 
-  // Handle confirmation based on action type
   const handleConfirmAction = () => {
     switch (confirmationDialog.action) {
-      case 'approve':
-        executeApprove();
-        break;
-      case 'update':
-        executeReturnToMaker();
-        break;
-      case 'cancel':
-        executeCancel();
-        break;
-      case 'return':
-        executeReturnToMaker();
-        break;
+      case 'approve': executeApprove(); break;
+      case 'update': executeReturnToMaker(); break;
+      case 'cancel': executeCancel(); break;
+      case 'return': executeReturnToMaker(); break;
     }
   };
 
   const closeConfirmationDialog = () => {
-    setConfirmationDialog({
-      isOpen: false,
-      action: 'approve',
-      customer: null,
-    });
+    setConfirmationDialog({ isOpen: false, action: 'approve', customer: null });
   };
 
-  const filteredCustomers = customers.filter(c =>
-    Object.values(c)
-      .join(' ')
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+  const filteredCustomers = customers.filter((c) =>
+    Object.values(c).join(' ').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
@@ -368,7 +330,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   const formatValue = (value: any, type: string) => {
     if (value === null || value === undefined) return '-';
-    
     switch (type) {
       case 'Decimal':
       case 'Number':
@@ -400,7 +361,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 p-6">
         {isMobile ? (
-          /* Mobile Layout */
+          /* ── Mobile Layout ── */
           <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
             <div className="flex-shrink-0 bg-background border-b border-border">
               <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
@@ -432,7 +393,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                   </div>
                 ) : (
                   currentCustomers.map((customer) => {
-                    const visibleFields = udfFields.filter(f => f.visible);
+                    const visibleFields = udfFields.filter((f) => f.visible);
                     const primaryFields = visibleFields.slice(0, 4);
                     const secondaryFields = visibleFields.slice(4, 6);
 
@@ -444,7 +405,10 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                       >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
-                            <div className="text-primary font-semibold text-sm cursor-pointer" onClick={() => onEditCustomer(customer)}>
+                            <div
+                              className="text-primary font-semibold text-sm cursor-pointer"
+                              onClick={() => onEditCustomer(customer)}
+                            >
                               {customer.carfno || customer.id}
                             </div>
                           </div>
@@ -452,13 +416,15 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                           {primaryFields.map((field) => {
                             const value = customer[field.fieldid];
                             if (!value) return null;
+                            const displayValue =
+                              field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                             return (
                               <div key={field.fieldid} className="mb-2">
                                 <div className="text-xs text-muted-foreground uppercase tracking-wide">
                                   {field.fieldnames}
                                 </div>
                                 <div className="text-sm text-foreground mt-0.5">
-                                  {formatValue(value, field.datatype)}
+                                  {formatValue(displayValue, field.datatype)}
                                 </div>
                               </div>
                             );
@@ -472,13 +438,15 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                             <div className="grid grid-cols-2 gap-3">
                               {secondaryFields.map((field) => {
                                 const value = customer[field.fieldid];
+                                const displayValue =
+                                  field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                                 return (
                                   <div key={field.fieldid}>
                                     <div className="text-xs text-muted-foreground uppercase tracking-wide">
                                       {field.fieldnames}
                                     </div>
                                     <div className="text-sm text-foreground mt-0.5">
-                                      {formatValue(value, field.datatype) || '-'}
+                                      {formatValue(displayValue, field.datatype) || '-'}
                                     </div>
                                   </div>
                                 );
@@ -525,7 +493,8 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
               <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span className="text-xs">
-                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
+                    {filteredCustomers.length}
                   </span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -552,7 +521,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
             </div>
           </div>
         ) : (
-          /* Desktop Layout */
+          /* ── Desktop Layout ── */
           <div className="space-y-6 pb-24">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -575,11 +544,14 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
             <Card className="bg-card border-border overflow-hidden shadow-sm">
               <CardContent className="p-0">
-                <div className="w-full overflow-x-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)', width: '100%' }}>
+                <div
+                  className="w-full overflow-auto custom-scrollbar"
+                  style={{ maxHeight: 'calc(100vh - 300px)' }}
+                >
                   <table className="min-w-max w-full border-collapse">
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-muted">
-                        {udfFields.filter(f => f.visible).map((field) => (
+                        {udfFields.filter((f) => f.visible).map((field) => (
                           <th
                             key={field.fieldid}
                             className="text-foreground font-medium text-left px-4 py-2 whitespace-nowrap text-sm"
@@ -598,23 +570,35 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                     </thead>
                     <tbody>
                       {currentCustomers.map((customer) => (
-                        <tr key={customer.id} className="border-b border-border hover:bg-muted/50 cursor-pointer" onDoubleClick={() => onEditCustomer(customer)}>
-                          {udfFields.filter(f => f.visible).map((field) => {
+                        <tr
+                          key={customer.id}
+                          className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                          onDoubleClick={() => onEditCustomer(customer)}
+                        >
+                          {udfFields.filter((f) => f.visible).map((field) => {
                             const value = customer[field.fieldid];
+                            // Display-only: resolve maker userid → fullname
+                            const displayValue =
+                              field.fieldid === 'maker' && value
+                                ? (usersMap[value] || value)
+                                : value;
+                            const isTruncated = field.truncatecolumn && displayValue;
+
                             return (
                               <td
                                 key={field.fieldid}
-                                className="relative text-foreground px-4 py-2 whitespace-nowrap text-sm group"
+                                className="text-foreground px-4 py-2 whitespace-nowrap text-sm"
                                 style={{ width: '150px', minWidth: '150px' }}
+                                onMouseEnter={
+                                  isTruncated
+                                    ? (e) => handleMouseEnter(e, String(displayValue))
+                                    : undefined
+                                }
+                                onMouseLeave={isTruncated ? handleMouseLeave : undefined}
                               >
-                                <span>
-                                  {field.truncatecolumn ? truncate(value ?? '') : value ?? '-'}
-                                </span>
-                                {field.truncatecolumn && value && (
-                                  <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 whitespace-pre">
-                                    {value}
-                                  </div>
-                                )}
+                                {field.truncatecolumn
+                                  ? truncate(displayValue ?? '')
+                                  : displayValue ?? '-'}
                               </td>
                             );
                           })}
@@ -661,7 +645,8 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
               </div>
               <div className="flex items-center space-x-4">
                 <span>
-                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
+                  {filteredCustomers.length}
                 </span>
                 <div className="flex items-center space-x-1">
                   <Button
@@ -694,8 +679,8 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         onConfirm={handleConfirmAction}
         action={confirmationDialog.action}
         title={
-          confirmationDialog.action === 'approve' 
-            ? 'Approve Customer Request' 
+          confirmationDialog.action === 'approve'
+            ? 'Approve Customer Request'
             : confirmationDialog.action === 'update' || confirmationDialog.action === 'return'
             ? 'Return to Maker'
             : 'Cancel Customer Request'
@@ -715,14 +700,14 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
           <div className="bg-white rounded-lg shadow-xl p-6 w-[90vw] max-w-[500px] mx-4">
             <h3 className="text-xl text-black font-bold mb-4">Return to Maker</h3>
             <p className="text-black mb-4">Please provide remarks for returning this form to the maker:</p>
-            
+
             <textarea
               value={returnDialog.remarks}
-              onChange={(e) => setReturnDialog(prev => ({ ...prev, remarks: e.target.value }))}
+              onChange={(e) => setReturnDialog((prev) => ({ ...prev, remarks: e.target.value }))}
               className="text-gray-900 w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-300 resize-none"
               placeholder="Enter your remarks here..."
             />
-            
+
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 type="button"
@@ -743,6 +728,24 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Smart Edge-Aware Tooltip (fixed, never clipped) ── */}
+      {tooltip && (
+        <div
+          className="fixed bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none break-words"
+          style={{
+            ...(tooltip.flipUp
+              ? { bottom: window.innerHeight - tooltip.y, top: 'auto' }
+              : { top: tooltip.y, bottom: 'auto' }),
+            left: tooltip.x,
+            zIndex: 99999,
+            maxWidth: '280px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {tooltip.value}
         </div>
       )}
     </div>

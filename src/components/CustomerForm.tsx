@@ -1414,7 +1414,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
 
           {/* Employee Section - DESKTOP ORIGINAL LAYOUT */}
           <div className="mt-6">
-            <div className="hidden md:grid md:grid-cols-[200px_1fr_1fr] gap-3 text-xl font-bold mb-2">
+            <div className="hidden md:grid md:grid-cols-[290px_1fr_1fr] gap-3 text-xl font-bold mb-2">
               <div></div>
               <div>EMPLOYEE NUMBER</div>
               <div>NAME</div>
@@ -1451,7 +1451,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
               return (
                 <div key={row.label}>
                   {/* Desktop Layout */}
-                  <div className="hidden md:grid md:grid-cols-[200px_1fr_1fr] gap-3 items-center mt-3 text-xl">
+                  <div className="hidden md:grid md:grid-cols-[290px_1fr_1fr] gap-3 items-center mt-3 text-xl">
                     <strong>{row.label}</strong>
 
                     <select

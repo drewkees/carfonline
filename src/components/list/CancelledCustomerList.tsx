@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +25,13 @@ type FieldType = {
   truncatecolumn: boolean;
 };
 
+type TooltipState = {
+  value: string;
+  x: number;
+  y: number;
+  flipUp: boolean;
+} | null;
+
 const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +43,12 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
   const { customerSource, sheetId, sheetApiKey, sheetRange } = useSystemSettings();
   const [isMobile, setIsMobile] = useState(false);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [usersMap, setUsersMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const initialize = async () => {
-      await fetchUdfFields();
+      await Promise.all([fetchUdfFields(), fetchUsersMap()]);
     };
     initialize();
   }, []);
@@ -63,6 +71,14 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
     }
   }, [customerSource, sheetId, sheetApiKey, sheetRange]);
 
+  const fetchUsersMap = async () => {
+    const { data, error } = await supabase.from('users').select('userid,fullname');
+    if (error) { console.error('Error fetching users map:', error); return; }
+    const map: Record<string, string> = {};
+    (data || []).forEach((u) => { map[u.userid] = u.fullname; });
+    setUsersMap(map);
+  };
+
   const fetchUdfFields = async () => {
     try {
       const { data, error } = await supabase
@@ -72,7 +88,6 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
         .order('id', { ascending: true });
 
       if (error) throw error;
-
       setUdfFields((data || []) as FieldType[]);
     } catch (error) {
       console.error('Error fetching UDF fields:', error);
@@ -85,9 +100,9 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
   };
 
   const truncate = (value: any, max = 20) => {
-    if (!value) return "-";
+    if (!value) return '-';
     const str = String(value);
-    return str.length > max ? str.substring(0, max) + "…" : str;
+    return str.length > max ? str.substring(0, max) + '…' : str;
   };
 
   const fetchCancelledCustomers = async () => {
@@ -100,14 +115,13 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
         .order('datecreated', { ascending: false });
 
       if (error) throw error;
-
       setCustomers(data || []);
     } catch (error) {
       console.error('Error fetching cancelled customers:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch cancelled customers. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch cancelled customers. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -122,9 +136,9 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
       if (!userid) {
         console.error('User ID not found in global');
         toast({
-          title: "Error",
-          description: "User session not found. Please refresh the page.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'User session not found. Please refresh the page.',
+          variant: 'destructive',
         });
         return;
       }
@@ -157,15 +171,15 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
 
       const sheetCustomers = rows.map((row, idx) => {
         const customer: Customer = { id: idx.toString() };
-        headerRow.forEach((key, i) => {
+        headerRow.forEach((key: string, i: number) => {
           customer[key] = row[i] ?? null;
         });
         return customer;
       });
 
       let filteredCustomers = sheetCustomers.filter((customer) => {
-        const status = (customer.approvestatus || "").trim().toUpperCase();
-        return status === "CANCELLED";
+        const status = (customer.approvestatus || '').trim().toUpperCase();
+        return status === 'CANCELLED';
       });
 
       if (!hasAllAccess) {
@@ -180,24 +194,25 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
       });
       setCustomers(sorted);
     } catch (error) {
-      console.error("Error fetching Google Sheet:", error);
+      console.error('Error fetching Google Sheet:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch customers from Google Sheet.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch customers from Google Sheet.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredCustomers = customers.filter(c => {
+  const filteredCustomers = customers.filter((c) => {
     const matchesSearch = Object.values(c)
       .join(' ')
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    const matchesFilter = activeFilter === 'All' ||
+    const matchesFilter =
+      activeFilter === 'All' ||
       (c.requestfor || '').toUpperCase() === activeFilter.toUpperCase();
 
     return matchesSearch && matchesFilter;
@@ -218,7 +233,6 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
 
   const formatValue = (value: any, type: string) => {
     if (value === null || value === undefined) return '-';
-
     switch (type) {
       case 'Decimal':
       case 'Number':
@@ -236,6 +250,25 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
     return 'bg-gray-500 text-white';
   };
 
+  // Smart tooltip: detects right-edge AND bottom-edge overflow and flips accordingly
+  const handleMouseEnter = (e: React.MouseEvent<HTMLTableCellElement>, value: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tooltipMaxWidth = 280;
+    const tooltipMaxHeight = 300;
+    const spaceOnRight = window.innerWidth - rect.left;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    let x = spaceOnRight < tooltipMaxWidth ? rect.right - tooltipMaxWidth : rect.left;
+    x = Math.max(8, x);
+
+    const flipUp = spaceBelow < tooltipMaxHeight;
+    const y = flipUp ? rect.top - 6 : rect.bottom + 6;
+
+    setTooltip({ value, x, y, flipUp });
+  };
+
+  const handleMouseLeave = () => setTooltip(null);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center h-64">
@@ -251,7 +284,7 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 p-6">
         {isMobile ? (
-          /* Mobile Layout */
+          /* ── Mobile Layout ── */
           <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
             <div className="flex-shrink-0 bg-background border-b border-border">
               <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
@@ -278,13 +311,14 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
                 {['All', 'Activation', 'Deactivation', 'Edit'].map((filter) => (
                   <Button
                     key={filter}
-                    variant={activeFilter === filter ? "default" : "outline"}
+                    variant={activeFilter === filter ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setActiveFilter(filter)}
-                    className={`flex-shrink-0 text-xs ${activeFilter === filter
+                    className={`flex-shrink-0 text-xs ${
+                      activeFilter === filter
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-foreground'
-                      }`}
+                    }`}
                   >
                     {filter}
                   </Button>
@@ -300,7 +334,7 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
                   </div>
                 ) : (
                   currentCustomers.map((customer) => {
-                    const visibleFields = udfFields.filter(f => f.visible);
+                    const visibleFields = udfFields.filter((f) => f.visible);
                     const primaryFields = visibleFields.slice(0, 4);
                     const secondaryFields = visibleFields.slice(4, 6);
 
@@ -316,7 +350,11 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
                               {customer.carfno || customer.id}
                             </div>
                             {customer.requestfor && (
-                              <div className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${getStatusBadgeClass(customer.requestfor)}`}>
+                              <div
+                                className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${getStatusBadgeClass(
+                                  customer.requestfor
+                                )}`}
+                              >
                                 {customer.requestfor}
                               </div>
                             )}
@@ -325,13 +363,15 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
                           {primaryFields.map((field) => {
                             const value = customer[field.fieldid];
                             if (!value) return null;
+                            const displayValue =
+                              field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                             return (
                               <div key={field.fieldid} className="mb-2">
                                 <div className="text-xs text-muted-foreground uppercase tracking-wide">
                                   {field.fieldnames}
                                 </div>
                                 <div className="text-sm text-foreground mt-0.5">
-                                  {formatValue(value, field.datatype)}
+                                  {formatValue(displayValue, field.datatype)}
                                 </div>
                               </div>
                             );
@@ -345,13 +385,15 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
                             <div className="grid grid-cols-2 gap-3">
                               {secondaryFields.map((field) => {
                                 const value = customer[field.fieldid];
+                                const displayValue =
+                                  field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                                 return (
                                   <div key={field.fieldid}>
                                     <div className="text-xs text-muted-foreground uppercase tracking-wide">
                                       {field.fieldnames}
                                     </div>
                                     <div className="text-sm text-foreground mt-0.5">
-                                      {formatValue(value, field.datatype) || '-'}
+                                      {formatValue(displayValue, field.datatype) || '-'}
                                     </div>
                                   </div>
                                 );
@@ -368,7 +410,8 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
               <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span className="text-xs">
-                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
+                    {filteredCustomers.length}
                   </span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -395,7 +438,7 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
             </div>
           </div>
         ) : (
-          /* Desktop Layout */
+          /* ── Desktop Layout ── */
           <div className="space-y-6 pb-24">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -418,43 +461,62 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
 
             <Card className="bg-card border-border overflow-hidden shadow-sm">
               <CardContent className="p-0">
-                <div className="w-full overflow-x-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)', width: '100%' }}>
+                <div
+                  className="w-full overflow-auto custom-scrollbar"
+                  style={{ maxHeight: 'calc(100vh - 300px)' }}
+                >
                   <table className="min-w-max w-full border-collapse">
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-muted">
-                        {udfFields.filter(f => f.visible).map((field) => (
-                          <th
-                            key={field.fieldid}
-                            className="text-foreground font-medium text-left px-4 py-2 whitespace-nowrap text-sm"
-                            style={{ width: '150px', minWidth: '150px' }}
-                          >
-                            {field.fieldnames.toUpperCase()}
-                          </th>
-                        ))}
+                        {udfFields
+                          .filter((f) => f.visible)
+                          .map((field) => (
+                            <th
+                              key={field.fieldid}
+                              className="text-foreground font-medium text-left px-4 py-2 whitespace-nowrap text-sm"
+                              style={{ width: '150px', minWidth: '150px' }}
+                            >
+                              {field.fieldnames.toUpperCase()}
+                            </th>
+                          ))}
                       </tr>
                     </thead>
                     <tbody>
                       {currentCustomers.map((customer) => (
-                        <tr key={customer.id} className="border-b border-border hover:bg-muted/50 cursor-pointer" onDoubleClick={() => onEditCustomer(customer)}>
-                          {udfFields.filter(f => f.visible).map((field) => {
-                            const value = customer[field.fieldid];
-                            return (
-                              <td
-                                key={field.fieldid}
-                                className="relative text-foreground px-4 py-2 whitespace-nowrap text-sm group"
-                                style={{ width: '150px', minWidth: '150px' }}
-                              >
-                                <span>
-                                  {field.truncatecolumn ? truncate(value ?? '') : value ?? '-'}
-                                </span>
-                                {field.truncatecolumn && value && (
-                                  <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 whitespace-pre">
-                                    {value}
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
+                        <tr
+                          key={customer.id}
+                          className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                          onDoubleClick={() => onEditCustomer(customer)}
+                        >
+                          {udfFields
+                            .filter((f) => f.visible)
+                            .map((field) => {
+                              const value = customer[field.fieldid];
+                              // Display-only: resolve maker userid → fullname
+                              const displayValue =
+                                field.fieldid === 'maker' && value
+                                  ? (usersMap[value] || value)
+                                  : value;
+                              const isTruncated = field.truncatecolumn && displayValue;
+
+                              return (
+                                <td
+                                  key={field.fieldid}
+                                  className="text-foreground px-4 py-2 whitespace-nowrap text-sm"
+                                  style={{ width: '150px', minWidth: '150px' }}
+                                  onMouseEnter={
+                                    isTruncated
+                                      ? (e) => handleMouseEnter(e, String(displayValue))
+                                      : undefined
+                                  }
+                                  onMouseLeave={isTruncated ? handleMouseLeave : undefined}
+                                >
+                                  {field.truncatecolumn
+                                    ? truncate(displayValue ?? '')
+                                    : displayValue ?? '-'}
+                                </td>
+                              );
+                            })}
                         </tr>
                       ))}
                     </tbody>
@@ -470,7 +532,8 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
               </div>
               <div className="flex items-center space-x-4">
                 <span>
-                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
+                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
+                  {filteredCustomers.length}
                 </span>
                 <div className="flex items-center space-x-1">
                   <Button
@@ -495,6 +558,24 @@ const CancelledCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) 
           </div>
         )}
       </main>
+
+      {/* ── Smart Edge-Aware Tooltip (fixed, never clipped) ── */}
+      {tooltip && (
+        <div
+          className="fixed bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none break-words"
+          style={{
+            ...(tooltip.flipUp
+              ? { bottom: window.innerHeight - tooltip.y, top: 'auto' }
+              : { top: tooltip.y, bottom: 'auto' }),
+            left: tooltip.x,
+            zIndex: 99999,
+            maxWidth: '280px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {tooltip.value}
+        </div>
+      )}
     </div>
   );
 };
