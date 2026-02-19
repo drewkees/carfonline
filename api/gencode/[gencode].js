@@ -28,6 +28,7 @@ export default async function handler(req, res) {
     if (!folderRes.data.files || folderRes.data.files.length === 0) {
       return res.json({
         birBusinessRegistration: [],
+        sp2GovernmentId: [],
         secRegistration: [],
         generalInformation: [],
         boardResolution: [],
