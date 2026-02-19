@@ -151,7 +151,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     }
     setShowNotifications(false);
     if (notification.gencode) {
-      console.log('Navigate to form:', notification.gencode);
+      // console.log('Navigate to form:', notification.gencode);
     }
   };
 

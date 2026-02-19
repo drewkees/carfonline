@@ -205,7 +205,7 @@ export default function FileUploadDialog({
         throw new Error('Invalid response from server');
       }
 
-      console.log('Upload successful:', result);
+      // console.log('Upload successful:', result);
 
       setProgress(100);
 

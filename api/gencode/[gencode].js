@@ -46,6 +46,7 @@ export default async function handler(req, res) {
     // Map SP folders to document keys
     const folderMapping = {
       SP1: 'birBusinessRegistration',
+      SP2: 'sp2GovernmentId',
       SP3: 'secRegistration',
       SP4: 'generalInformation',
       SP5: 'boardResolution',

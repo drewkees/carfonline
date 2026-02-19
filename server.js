@@ -88,7 +88,7 @@ const createGencodeStructure = async (gencode) => {
   const gencodeFolderId = await findOrCreateFolder(MAIN_FOLDER_ID, gencode);
 
   // Create SP subfolders
-  const spFolders = ['SP1', 'SP3', 'SP4', 'SP5', 'SP6'];
+  const spFolders = ['SP1','SP2' ,'SP3', 'SP4', 'SP5', 'SP6'];
   const folderIds = {};
 
   for (const spFolder of spFolders) {
@@ -124,6 +124,7 @@ app.post('/api/upload-files', upload.array('files'), async (req, res) => {
 
     const spFolderName = folderMapping[docType];
     if (!spFolderName) {
+      console.log("2323");
       return res.status(400).json({ error: 'Invalid docType' });
     }
 
@@ -208,6 +209,7 @@ app.get('/api/gencode/:gencode', async (req, res) => {
     // Map SP folders to document keys
     const folderMapping = {
       SP1: 'birBusinessRegistration',
+      SP2: 'sp2GovernmentId',
       SP3: 'secRegistration',
       SP4: 'generalInformation',
       SP5: 'boardResolution',

@@ -190,10 +190,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
         filteredCustomers = filteredCustomers.filter((customer) =>
           customer.maker === userId
         );
-      } else {
-        console.log(filteredCustomers);
-        console.log('User has all access - showing all records');
-      }
+      } 
 
       const sorted = [...filteredCustomers].sort((a, b) => {
         const aId = parseInt(a['#'] || '0');

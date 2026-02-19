@@ -1411,7 +1411,7 @@ export const useCustomerForm = (
       salesterritory: formData.salesterritory,
     };
 
-    console.log('Submitting to BOS with data:', dataToSend);
+    // console.log('Submitting to BOS with data:', dataToSend);
 
     // Submit to BOS sheet
     const response = await fetch(`${BASE_URL}/api/submittobos`, {
@@ -1421,7 +1421,7 @@ export const useCustomerForm = (
     });
 
     const result = await response.json();
-    console.log('BOS submission result:', result);
+    // console.log('BOS submission result:', result);
 
     if (!response.ok) {
       console.error('Submit to BOS failed:', result);
@@ -1435,7 +1435,7 @@ export const useCustomerForm = (
     }
 
     if (result.success) {
-      console.log('Successfully submitted to BOS');
+      // console.log('Successfully submitted to BOS');
       return true;
     } else {
       toast({ 
@@ -1529,7 +1529,7 @@ export const useCustomerForm = (
       }
 
       if (result.success) {
-        console.log('Successfully submitted to BOS');
+        // console.log('Successfully submitted to BOS');
         return true;
       } else {
         toast({ 
@@ -1650,7 +1650,7 @@ export const useCustomerForm = (
       }
 
       if (result.success) {
-        console.log('Successfully submitted to BOS');
+        // console.log('Successfully submitted to BOS');
         return true;
       } else {
         toast({ 

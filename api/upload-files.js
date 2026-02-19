@@ -57,9 +57,10 @@ export default async function handler(req, res) {
       boardResolution: 'SP5',
       others: 'SP6',
     };
-    alert(docType);
+    
     const spFolderName = folderMapping[docType];
     if (!spFolderName) {
+      console.log("2323");
       return res.status(400).json({ error: 'Invalid docType' });
     }
 

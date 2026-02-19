@@ -4,7 +4,7 @@ import FileUploadDialog, { DriveFile } from './FileUploadDialog';
 
 interface UploadedFiles {
   birBusinessRegistration: File | null;
-  sp2GovernmentId: File | null;       // SP2 - Any Government ID (PERSONAL only)
+  sp2GovernmentId: File | null; 
   secRegistration: File | null;
   generalInformation: File | null;
   boardResolution: File | null;
@@ -35,7 +35,6 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
   const [currentDocType, setCurrentDocType] = useState<keyof UploadedFiles | null>(null);
   const [loading, setLoading] = useState(false);
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
   useEffect(() => {
     if (!isOpen || !gencode) return;
     const fetchFolderFiles = async () => {
@@ -56,7 +55,7 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
 
   if (!isOpen) return null;
 
-  const isPersonal = customerType?.toUpperCase() === 'PERSONAL';
+  const isPersonal = customerType?.toUpperCase() === 'P';
 
   // PERSONAL:    BIR Business Registration, Any Government ID, Others
   // CORPORATION: BIR Business Registration, SEC Registration, General Information Sheet, Board Resolution, Others
