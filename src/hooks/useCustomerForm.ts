@@ -186,6 +186,7 @@ export const useCustomerForm = (
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState({
     birBusinessRegistration: null,
+    sp2GovernmentId:null,
     secRegistration: null,
     generalInformation: null,
     boardResolution: null,

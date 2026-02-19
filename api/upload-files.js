@@ -51,12 +51,13 @@ export default async function handler(req, res) {
     // Folder mapping
     const folderMapping = {
       birBusinessRegistration: 'SP1',
+      sp2GovernmentId: 'SP2',
       secRegistration: 'SP3',
       generalInformation: 'SP4',
       boardResolution: 'SP5',
       others: 'SP6',
     };
-
+    alert(docType);
     const spFolderName = folderMapping[docType];
     if (!spFolderName) {
       return res.status(400).json({ error: 'Invalid docType' });

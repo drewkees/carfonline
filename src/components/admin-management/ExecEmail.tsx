@@ -310,7 +310,7 @@ export default function EXECEMAIL() {
           </div>
 
           <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow">
+            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar">
               <table className="min-w-full table-auto">
                 <thead className="bg-gray-900 sticky top-0 z-10">
                   <tr>

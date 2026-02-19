@@ -115,6 +115,7 @@ app.post('/api/upload-files', upload.array('files'), async (req, res) => {
     // Folder mapping
     const folderMapping = {
       birBusinessRegistration: 'SP1',
+      sp2GovernmentId: 'SP2',
       secRegistration: 'SP3',
       generalInformation: 'SP4',
       boardResolution: 'SP5',

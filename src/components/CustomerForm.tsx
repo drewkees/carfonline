@@ -908,6 +908,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 onFileUpload={handleFileUpload}
                 gencode={formData.gencode}
                 approvestatus={formData.approvestatus} 
+                customerType={formData.type[0] ?? ''} 
+                
               />
             </div>
           </div>
