@@ -1,16 +1,26 @@
-import { google } from 'googleapis';
-import { getAuthClient } from '../lib/google-auth';
+import { getDriveApi } from '../../lib/google-auth.js';
+import { MAIN_FOLDER_ID } from '../../lib/drive-helpers.js';
 import JSZip from 'jszip';
 
-const MAIN_FOLDER_ID = '15GyW7ZZt-XFfdze96pJmsoNSgdU7PLmT';
-
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
     const { gencode } = req.query;
-    const auth = await getAuthClient();
-    const driveApi = google.drive({ version: 'v3', auth });
+
+    // ✅ Same helper as the working gencode route
+    const driveApi = await getDriveApi();
 
     // Find gencode folder
     const folderRes = await driveApi.files.list({
@@ -18,7 +28,7 @@ export default async function handler(req, res) {
       fields: 'files(id,name)',
     });
 
-    if (!folderRes.data.files?.length) {
+    if (!folderRes.data.files || folderRes.data.files.length === 0) {
       return res.status(404).json({ error: 'Gencode folder not found' });
     }
 
@@ -46,20 +56,19 @@ export default async function handler(req, res) {
           { responseType: 'arraybuffer' }
         );
 
-        zip.folder(folder.name).file(file.name, fileRes.data);
+        // ✅ Wrap in Buffer for reliable JSZip handling
+        zip.folder(folder.name).file(file.name, Buffer.from(fileRes.data));
       }
     }
 
-    // Generate zip buffer
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
 
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${gencode}-documents.zip"`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(zipBuffer);
+    return res.send(zipBuffer);
 
   } catch (err) {
     console.error('Error creating zip:', err);
-    res.status(500).json({ error: 'Failed to create zip', details: err.message });
+    return res.status(500).json({ error: 'Failed to create zip', details: err.message });
   }
 }
