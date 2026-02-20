@@ -6,6 +6,7 @@ import multer from 'multer'; // ✅ MISSING IMPORT
 import { Readable } from 'stream'; // ✅ MISSING IMPORT
 import 'dotenv/config';
 import archiver from 'archiver';
+import puppeteer from 'puppeteer';
 
 const app = express();
 const PORT = 3001;
@@ -618,6 +619,104 @@ app.post("/api/submittoexecemail", async (req, res) => {
   }
 });
 
+app.post('/api/generate-pdf', async (req, res) => {
+  const { html, title } = req.body;
+
+  if (!html) {
+    return res.status(400).json({ message: 'Missing html in request body' });
+  }
+
+  let browser = null;
+
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    const page = await browser.newPage();
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${title ?? 'CustomerForm'}</title>
+          <style>
+            @page {
+              size: 8.5in 13in;
+              margin: 0.3in;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: Arial, sans-serif;
+              font-size: 9.5pt;
+              color: #000;
+              line-height: 1.15;
+            }
+            .print-container {
+              font-size: 9.5pt;
+              font-family: Arial, sans-serif;
+              color: #000;
+              line-height: 1.15;
+            }
+            .underline-input {
+              border: none;
+              border-bottom: 1px solid #000;
+              padding: 1px 5px;
+              background: #D9EBD3 !important;
+              outline: none;
+              width: 100%;
+              font-size: inherit;
+              font-family: inherit;
+            }
+            .text-sm { font-size: 0.85em; }
+            .text-lg { font-size: 1.1em; }
+            .no-print { display: none !important; }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${html}
+          </div>
+        </body>
+      </html>
+    `;
+
+    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({
+      width: '8.5in',
+      height: '13in',
+      printBackground: true,
+      margin: {
+        top:    '0.3in',
+        bottom: '0.3in',
+        left:   '0.3in',
+        right:  '0.3in',
+      },
+    });
+
+    const safeTitle = (title ?? 'CustomerForm').replace(/[^a-z0-9_\-]/gi, '_');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.status(200).send(Buffer.from(pdfBuffer));
+
+  } catch (error) {
+    console.error('[generate-pdf] Error:', error);
+    return res.status(500).json({ message: 'PDF generation failed', error: String(error) });
+
+  } finally {
+    if (browser) await browser.close();
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
