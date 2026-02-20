@@ -68,9 +68,9 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
       ]
     : [
         { key: 'birBusinessRegistration', label: 'BIR Business Registration' },
-        { key: 'secRegistration', label: 'SEC Registration' },
-        { key: 'generalInformation', label: 'General Information Sheet' },
-        { key: 'boardResolution', label: 'Board Resolution' },
+        { key: 'secRegistration', label: 'SEC Registration of the Corporate Name' },
+        { key: 'generalInformation', label: 'Latest General Information Sheet duly acknowledged by SEC' },
+        { key: 'boardResolution', label: 'Board Resolution authorizing the signatories herein to transact business' },
       ];
 
   const allDocs = [...documents, { key: 'others' as keyof UploadedFiles, label: 'Others' }];
