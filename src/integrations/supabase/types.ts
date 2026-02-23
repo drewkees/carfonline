@@ -536,6 +536,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Insert: {
           id:string
@@ -547,6 +548,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Update: {
           id?:string
@@ -558,6 +560,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Relationships: []
       },paymentterms: {

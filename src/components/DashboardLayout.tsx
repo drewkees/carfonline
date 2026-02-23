@@ -17,7 +17,6 @@ import Message from '@/components/messaging/Message';
 import CustomerTypeSeries from '@/components/admin-management/CustomerTypeSeries';
 import RegionBU from '@/components/admin-management/RegionBU';
 import SalesInfo from '@/components/admin-management/SalesInfo';
-import CustomerGSheet from '@/components/list/CustomerGSheet';
 import SettingsUI from '@/components/Settings';
 import PaymentTerms from '@/components/admin-management/PaymentTerms';
 import PaymentLimit from '@/components/admin-management/PaymentLimit';
@@ -261,8 +260,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         return <RegionBU />;
       case 'salesinfo':
         return <SalesInfo />;
-      case 'customergsheet':
-        return <CustomerGSheet />;
       case 'paymentterms':
         return <PaymentTerms />;
       case 'paymentlimit':

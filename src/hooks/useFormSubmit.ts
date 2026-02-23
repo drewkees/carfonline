@@ -265,7 +265,7 @@ export const useFormSubmit = (
           company: userCompany,
         }),
       };
-
+      alert(`${BASE_URL}/api/submitform`);
       const response = await fetch(`${BASE_URL}/api/submitform`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
