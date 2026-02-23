@@ -526,7 +526,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <User className="h-6 w-6 text-foreground" />
-                <h2 className="text-xl font-semibold text-foreground">PENDING LIST</h2>
+                <h2 className="text-xl font-semibold text-foreground">FOR APPROVAL</h2>
               </div>
 
               <div className="flex items-center space-x-4 mt-2">

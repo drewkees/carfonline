@@ -9,7 +9,9 @@ import { GlobalMessageListener } from '@/components/GlobalMessageListener';
 import { SystemSettingsProvider } from "@/components/SystemSettings/SystemSettingsContext";
 
 const queryClient = new QueryClient();
-
+console.log('API URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('APP ENV:', import.meta.env.VITE_APP_ENV);
+console.log('CUSTOMER SOURCE:', import.meta.env.VITE_CUSTOMER_SOURCE);
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SystemSettingsProvider>

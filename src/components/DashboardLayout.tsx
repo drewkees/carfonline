@@ -17,7 +17,6 @@ import Message from '@/components/messaging/Message';
 import CustomerTypeSeries from '@/components/admin-management/CustomerTypeSeries';
 import RegionBU from '@/components/admin-management/RegionBU';
 import SalesInfo from '@/components/admin-management/SalesInfo';
-import CustomerGSheet from '@/components/list/CustomerGSheet';
 import SettingsUI from '@/components/Settings';
 import PaymentTerms from '@/components/admin-management/PaymentTerms';
 import PaymentLimit from '@/components/admin-management/PaymentLimit';
@@ -31,7 +30,7 @@ import BCApprovalMatrix from './admin-management/BCApprovalMatrix';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-
+import CompanyList from './list/CompanyList';
 interface DashboardLayoutProps {
   userEmail: string;
   userId: string | null;
@@ -261,8 +260,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         return <RegionBU />;
       case 'salesinfo':
         return <SalesInfo />;
-      case 'customergsheet':
-        return <CustomerGSheet />;
       case 'paymentterms':
         return <PaymentTerms />;
       case 'paymentlimit':
@@ -281,6 +278,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         return <EXECEMAIL />;
       case 'bcapprovalmatrix':
         return <BCApprovalMatrix />;
+      case 'company':
+        return <CompanyList />;
       case 'customerlist':
       case 'customer-list':
       default:

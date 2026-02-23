@@ -87,7 +87,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     isOpen: false,
     remarks: '',
   });
-
+// alert(userPermissions.isApprover);
   const [isReturnLoading, setIsReturnLoading] = useState(false);
 
   const isApproved = 

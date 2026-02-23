@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, AlertCircle, AtSign } from 'lucide-react';
+import { User, AlertCircle, AtSign, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type CompanyRow = Database['public']['Tables']['company']['Row'];
 
 interface LoginPageProps {
   onLogin: (email: string, fullName: string, userid: string) => void;
@@ -14,36 +17,37 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [error, setError] = useState('');
 
-  // ✅ Whitelist of allowed Gmail addresses
   const allowedGmailAddresses = [
     'baldonado0514@gmail.com',
-    'shiterunero@gmail.com'
+    'shiterunero@gmail.com',
   ];
 
-  // ✅ Helper function to determine company based on email domain
   const getCompanyFromEmail = (email: string): string | null => {
-    // Check if it's a whitelisted Gmail address
-    if (allowedGmailAddresses.includes(email.toLowerCase())) {
-      return 'BPI'; // Default company for whitelisted emails
-    }
-    
-    if (email.endsWith('@bounty.com.ph')) {
-      return 'BPI';
-    } else if (email.endsWith('@chookstogoinc.com.ph')) {
-      return 'CTGI';
-    }
-    return null; // Not an allowed domain
+    if (allowedGmailAddresses.includes(email.toLowerCase())) return 'BPI';
+    if (email.endsWith('@bounty.com.ph')) return 'BPI';
+    if (email.endsWith('@chookstogoinc.com.ph')) return 'CTGI';
+    return null;
   };
 
-  // ✅ Validate if email domain is allowed
-  const isAllowedEmail = (email: string): boolean => {
-    return getCompanyFromEmail(email) !== null;
-  };
+  const isAllowedEmail = (email: string): boolean => getCompanyFromEmail(email) !== null;
 
-  // Check session and user in Supabase table
+  // Fetch companies for the dropdown
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      const { data, error } = await supabase
+        .from('company')
+        .select('*')
+        .order('company_name', { ascending: true });
+      if (!error && data) setCompanies(data);
+    };
+    fetchCompanies();
+  }, []);
+
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -52,16 +56,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       if (session?.user?.email) {
         const userEmail = session.user.email;
 
-        // ✅ Validate email domain
         if (!isAllowedEmail(userEmail)) {
           setError('Access denied. Only authorized email addresses are allowed.');
-          await supabase.auth.signOut(); // Sign out unauthorized user
+          await supabase.auth.signOut();
           return;
         }
 
         setEmail(userEmail);
 
-        // Check if user exists in Supabase table
         const { data: existingUser, error: fetchError } = await supabase
           .from('users')
           .select('*')
@@ -75,9 +77,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }
 
         if (!existingUser) {
-          setIsFirstTimeUser(true); // prompt for full name
+          // Pre-select company based on email domain
+          const defaultCompany = getCompanyFromEmail(userEmail);
+          if (defaultCompany) setSelectedCompany(defaultCompany);
+          setIsFirstTimeUser(true);
         } else {
-          // user exists, auto-login
           onLogin(existingUser.email, existingUser.fullname, existingUser.userid);
         }
       }
@@ -106,12 +110,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   const handleSubmit = async () => {
-    if (!fullName) {
-      setError('Full Name is required for first-time users.');
+    if (!fullName.trim()) {
+      setError('Full Name is required.');
       return;
     }
-
-    // ✅ Validate email domain before creating user
+    if (!selectedCompany) {
+      setError('Please select a company.');
+      return;
+    }
     if (!isAllowedEmail(email)) {
       setError('Access denied. Only authorized email addresses are allowed.');
       await supabase.auth.signOut();
@@ -120,28 +126,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       const userid = email.split('@')[0];
-      const company = getCompanyFromEmail(email); // ✅ Get company based on email
-      const usergroup = 'salesadmin'; // ✅ Default usergroup
+      const usergroup = 'salesadmin';
 
-      // ✅ Insert new user with company and usergroup
       const { data, error: insertError } = await supabase
         .from('users')
-        .insert([
-          {
-            email,
-            fullname: fullName,
-            userid,
-            company, // ✅ Add company field
-            usergroup, // ✅ Add usergroup field
-          },
-        ])
+        .insert([{
+          email,
+          fullname: fullName,
+          userid,
+          company: selectedCompany,
+          usergroup,
+        }])
         .select()
         .single();
 
       if (insertError) throw insertError;
 
-      // Success, proceed
-      onLogin(data.email, data.fullname,data.userid);
+      onLogin(data.email, data.fullname, data.userid);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to save user data');
@@ -158,7 +159,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <div className="w-full h-px bg-border mt-4" />
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Show Google Sign-in if no email */}
+          {/* Google Sign-in */}
           {!email && (
             <Button
               onClick={handleGoogleSignIn}
@@ -169,23 +170,51 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </Button>
           )}
 
-          {/* Show full name input for first-time users */}
+          {/* First-time user form */}
           {isFirstTimeUser && email && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-foreground">
-                Full Name
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Full Name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10 carf-input-overlay border-border text-foreground"
-                />
+            <div className="space-y-4">
+              {/* Full Name */}
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-foreground">
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={fullName}
+                    onChange={(e) => { setFullName(e.target.value); setError(''); }}
+                    className="pl-10 carf-input-overlay border-border text-foreground"
+                  />
+                </div>
               </div>
+
+              {/* Company Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="company" className="text-foreground">
+                  Company
+                </Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <select
+                    id="company"
+                    value={selectedCompany}
+                    onChange={(e) => { setSelectedCompany(e.target.value); setError(''); }}
+                    className="w-full pl-10 pr-4 py-2 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                  >
+                    <option value="">-- Select Company --</option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.company}>
+                        {c.company_name} ({c.company})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">▾</div>
+                </div>
+              </div>
+
               <Button
                 onClick={handleSubmit}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl py-3"
@@ -195,7 +224,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
           )}
 
-          {/* Error messages */}
+          {/* Error */}
           {error && (
             <Alert className="border-destructive/20 bg-destructive/10">
               <AlertCircle className="h-4 w-4" />

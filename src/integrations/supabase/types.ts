@@ -536,6 +536,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Insert: {
           id:string
@@ -547,6 +548,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Update: {
           id?:string
@@ -558,6 +560,7 @@ export type Database = {
           sheet_id: string
           sheet_apikey: string
           sheet_range: string
+          environment:string
         }
         Relationships: []
       },paymentterms: {
@@ -611,6 +614,7 @@ export type Database = {
           secondapprover: string | null
           thirdapprover: string | null
           complianceandfinalapprover:boolean
+          company: string | null
         }
         Insert: {
           id?: string
@@ -619,6 +623,7 @@ export type Database = {
           secondapprover: string | null
           thirdapprover: string | null
           complianceandfinalapprover:boolean
+          company: string | null
         }
         Update: {
           id?: string
@@ -627,6 +632,7 @@ export type Database = {
           secondapprover: string | null
           thirdapprover: string | null
           complianceandfinalapprover:boolean
+          company: string | null
         }
         Relationships: []
       },formfields: {
@@ -745,6 +751,7 @@ export type Database = {
           firstapprover: string | null
           exception: string | null
           exceptionapprover: string | null
+          company: string | null
         }
         Insert: {
           id?: string
@@ -752,6 +759,7 @@ export type Database = {
           firstapprover: string | null
           exception: string | null
           exceptionapprover: string | null
+          company: string | null
         }
         Update: {
           id?: string
@@ -759,6 +767,7 @@ export type Database = {
           firstapprover: string | null
           exception: string | null
           exceptionapprover: string | null
+          company: string | null
         }
         Relationships: []
       },notifications: {
@@ -833,6 +842,23 @@ export type Database = {
           new_status?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      },company: {
+        Row: {
+          id: number
+          company: string
+          company_name: string 
+        }
+        Insert: {
+          id?: number
+          company: string
+          company_name: string 
+        }
+        Update: {
+          id?: number
+          company: string
+          company_name: string 
         }
         Relationships: []
       },
