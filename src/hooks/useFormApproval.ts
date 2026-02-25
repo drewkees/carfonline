@@ -40,7 +40,7 @@ export const useFormApproval = (onClose?: () => void) => {
 
       const { data: typeData, error: typeError } = await supabase
         .from('customertypeseries')
-        .select('bostype')
+        .select('bostype,bosseries,bosgroup')
         .eq('carftype', formData.custtype)
         .single();
 
@@ -71,7 +71,7 @@ export const useFormApproval = (onClose?: () => void) => {
         district: formData.district,
         datestart: formData.datestart,
         terms: formData.terms,
-        creditlimit: formData.creditlimit,
+        creditlimit: Number(String(formData.creditlimit).replace(/,/g, '')),
         bccode: formData.bccode,
         bcname: formData.bcname,
         saocode: formData.saocode,
@@ -87,8 +87,8 @@ export const useFormApproval = (onClose?: () => void) => {
         isuploaded: 0,
         refid: rowId,
         boscusttype: bosType,
-        series: bosType,
-        group: bosType,
+        series: typeData?.bosseries || '',
+        group: typeData?.bosgroup || '',
         firstname: formData.firstname || '',
         middlename: formData.middlename || '',
         lastname: formData.lastname || '',
@@ -152,7 +152,7 @@ export const useFormApproval = (onClose?: () => void) => {
         customerNo,
         customerName: formData.soldtoparty,
         acValue: formData.custtype,
-        globalUrl: 'https://script.google.com/a/bounty.com.ph/macros/s/AKfycbyxbGUH_zstutWKxpIf5c9oALIb507vkQEYH6-olMn01KRq0kIa6fBxI2uXdrtvMMw3vQ/exec',
+        globalUrl: BASE_URL,
         alreadyemail: 0,
         forfinalapproval: forFinalApproval,
         boscode: '',
@@ -211,33 +211,74 @@ export const useFormApproval = (onClose?: () => void) => {
           ? formData.shiptoparty
           : '';
 
-      let { data: execData, error: execError } = await supabase
+      const formCompany = (formData as any).company || '';
+
+      // Fetch execemail with company info
+      const { data: execData, error: execError } = await supabase
         .from('execemail')
-        .select('userid, exception, allaccess');
+        .select('userid, exception, allaccess, company');
 
       if (execError) {
         toast({ title: 'Error', description: 'Failed to fetch execemail data.', variant: 'destructive' });
         return false;
       }
 
-      execData = execData?.filter((user) =>
-        formData.custtype === 'CTGI ACCOUNTS'
-          ? user.exception === 'CTGI ACCOUNTS'
-          : user.allaccess === true
-      ) || [];
+      // Fetch user companies for ALL rows
+      const allUserIds = (execData || []).filter(u => u.company === 'ALL').map(u => u.userid);
+      let userCompanyMap: Record<string, string> = {};
 
-      if (!execData.length) {
-        toast({ title: 'Info', description: 'No exec email users found for this custtype.', variant: 'destructive' });
+      if (allUserIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('userid, company')
+          .in('userid', allUserIds);
+
+        usersData?.forEach(u => {
+          userCompanyMap[u.userid] = u.company;
+        });
+      }
+
+      const filtered = (execData || []).filter((user) => {
+        const userExceptions = (user.exception || '')
+          .split(',')
+          .map((e: string) => e.trim())
+          .filter(Boolean);
+
+        // Exact company match
+        if (user.company === formCompany) {
+          // If user has exceptions, only include if one matches custtype
+          if (userExceptions.length > 0) {
+            return userExceptions.includes(formData.custtype);
+          }
+          return true;
+        }
+
+        // ALL: include if user's own company matches formData.company
+        // OR if any exception matches formData.custtype
+        if (user.company === 'ALL') {
+          const userOwnCompany = userCompanyMap[user.userid] || '';
+          const companyMatches = userOwnCompany === formCompany;
+          const exceptionMatches = userExceptions.length > 0
+            ? userExceptions.includes(formData.custtype)
+            : false;
+          return companyMatches || exceptionMatches;
+        }
+
+        return false;
+      });
+
+      if (!filtered.length) {
+        toast({ title: 'Info', description: 'No exec email users found for this company.', variant: 'destructive' });
         return false;
       }
 
-      const rowsToSend = execData.map((user) => ({
+      const rowsToSend = filtered.map((user) => ({
         id: rowId,
         approvalValue: user.userid,
         customerNo,
         customerName: formData.soldtoparty,
         acValue: formData.custtype,
-        globalUrl: 'https://script.google.com/a/bounty.com.ph/macros/s/AKfycbyxbGUH_zstutWKxpIf5c9oALIb507vkQEYH6-olMn01KRq0kIa6fBxI2uXdrtvMMw3vQ/exec',
+        globalUrl: BASE_URL,
         alreadyemail: 1,
         forfinalapproval: 1,
         refid: rowId,
@@ -309,7 +350,6 @@ export const useFormApproval = (onClose?: () => void) => {
       const secondApprovers = parseApprovers(matrix.secondapprover);
       const thirdApprovers = parseApprovers(matrix.thirdapprover);
       const finalApprovers = parseApprovers(formData.finalapprover);
-
       let updatedStatus = 'PENDING';
       let updatedNextApprover = formData.nextapprover;
       let updatedFinalApprover = formData.finalapprover;
@@ -317,7 +357,6 @@ export const useFormApproval = (onClose?: () => void) => {
 
       const now = new Date().toLocaleString();
       const approverName = await getUserNameByUserId(userid);
-
       if (isComplianceFinalApprover) {
         updatedStatus = 'APPROVED';
         updatedNextApprover = '';
@@ -344,8 +383,10 @@ export const useFormApproval = (onClose?: () => void) => {
         // 1️⃣ FIRST APPROVER
         if (firstApprovers.includes(userid) && !finalApprovers.includes(userid)) {
           updatedStatus = 'PENDING';
-          updatedNextApprover = matrix.secondapprover || '';
-          updatedFinalApprover = matrix.secondapprover || '';
+          const secondList = parseApprovers(matrix.secondapprover);
+          const thirdList = parseApprovers(matrix.thirdapprover);
+          const combined = Array.from(new Set([...secondList, ...thirdList]));
+          updatedNextApprover = combined.join(',');
           formData.initialapprover = userid;
           formData.initialapprovedate = now;
           formData.firstapprovername = approverName;
@@ -482,7 +523,6 @@ export const useFormApproval = (onClose?: () => void) => {
         finalapprover: '',
         remarks: remarksreturn,
       };
-
       await submitToEmail(dataToSend, formData.maker, 0, 0, remarksreturn);
 
       const response = await fetch(`${BASE_URL}/api/updateform`, {
@@ -515,8 +555,9 @@ export const useFormApproval = (onClose?: () => void) => {
         approvestatus: 'RETURN TO MAKER',
         nextapprover: '',
         finalapprover: '',
+        remarks: remarksreturn,
       };
-
+      await submitToEmail(dataToSend, formData.maker, 1, 0, remarksreturn);
       const response = await fetch(`${BASE_URL}/api/updateform`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

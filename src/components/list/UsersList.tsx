@@ -14,6 +14,7 @@ export default function UsersList() {
   const [editingUser, setEditingUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [userGroups, setUserGroups] = useState<{id: number; groupcode: string; groupname: string}[]>([]);
   const [newUser, setNewUser] = useState<
     Database['public']['Tables']['users']['Insert']
   >({
@@ -30,8 +31,10 @@ export default function UsersList() {
     complianceandfinalapprover: false,
   });
 
+  // ✅ Single useEffect for initial data fetching
   useEffect(() => {
-    fetchSchema();
+    fetchUsers();
+    fetchUserGroups();
   }, []);
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export default function UsersList() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const fetchSchema = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase.from('users').select('*');
@@ -58,6 +61,14 @@ export default function UsersList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUserGroups = async () => {
+    const { data, error } = await supabase
+      .from('usergroups')
+      .select('id, groupcode, groupname')
+      .order('groupname', { ascending: true });
+    if (!error && data) setUserGroups(data);
   };
 
   const handleAddUser = () => {
@@ -436,7 +447,7 @@ export default function UsersList() {
             </div>
             <div className="space-y-3">
               {/* Text Fields */}
-              {['userid', 'email', 'fullname', 'usergroup', 'company'].map((field) => (
+              {['userid', 'email', 'fullname', 'company'].map((field) => (
                 <div key={field} className="flex flex-col">
                   <label className="text-sm mb-1 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
                   <input
@@ -450,6 +461,23 @@ export default function UsersList() {
                   />
                 </div>
               ))}
+
+              {/* User Group Dropdown */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">User Group</label>
+                <select
+                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newUser.usergroup || ''}
+                  onChange={(e) => setNewUser({ ...newUser, usergroup: e.target.value })}
+                >
+                  <option value="">— Select User Group —</option>
+                  {userGroups.map((group) => (
+                    <option key={group.id} value={group.groupcode}>
+                      {group.groupname}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Boolean Fields as Checkboxes */}
               <div className="pt-2 border-t border-gray-700">

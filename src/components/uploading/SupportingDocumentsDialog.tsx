@@ -129,21 +129,21 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 md:p-4">
       <div
-        className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[620px] overflow-hidden flex flex-col max-h-[92vh]"
-        style={{ boxShadow: '0 30px 70px -12px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.05)' }}
+        className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[600px] overflow-hidden flex flex-col max-h-[92vh]"
+        style={{ boxShadow: '0 24px 60px -10px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06)' }}
       >
         {/* ── Top accent bar ── */}
-        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-600 flex-shrink-0" />
+        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-500 flex-shrink-0" />
 
         {/* ── Header ── */}
         <div className="px-6 pt-5 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-base font-bold text-gray-900 tracking-tight">Supporting Documents</h2>
+              <h2 className="text-base font-bold text-gray-800 tracking-tight">Supporting Documents</h2>
               {gencode && (
-                <p className="text-[11px] text-gray-400 mt-0.5 font-mono tracking-wider">{gencode}</p>
+                <p className="text-xs text-gray-400 mt-0.5 font-mono">{gencode}</p>
               )}
             </div>
             <button
@@ -157,14 +157,15 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
 
           {/* ── Progress + Download card ── */}
           {!loading && (
-            <div className="mt-4 rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-slate-50 p-4">
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <FileArchive className="w-4 h-4 text-indigo-400" />
-                  <span className="text-xs font-semibold text-gray-600">
-                    {uploadedCount}/{allDocs.length} categories &nbsp;·&nbsp;
-                    <span className="text-gray-400 font-normal">{totalFileCount} file{totalFileCount !== 1 ? 's' : ''}</span>
+                  <FileArchive className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {uploadedCount} of {allDocs.length} categories
                   </span>
+                  <span className="text-gray-400 text-xs">·</span>
+                  <span className="text-xs text-gray-500">{totalFileCount} file{totalFileCount !== 1 ? 's' : ''}</span>
                 </div>
 
                 {/* Download ZIP */}
@@ -173,12 +174,12 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
                     type="button"
                     onClick={handleDownloadZip}
                     disabled={downloading || loading}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all select-none
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all select-none
                       ${downloading
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : downloadError
                           ? 'bg-red-50 text-red-500 border border-red-200'
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md active:scale-95'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow active:scale-95'
                       }`}
                   >
                     {downloading ? (
@@ -193,13 +194,10 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
               </div>
 
               {/* Progress track */}
-              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{
-                    width: `${(uploadedCount / allDocs.length) * 100}%`,
-                    background: 'linear-gradient(90deg, #6366f1, #3b82f6)',
-                  }}
+                  className="h-full rounded-full transition-all duration-700 ease-out bg-blue-500"
+                  style={{ width: `${(uploadedCount / allDocs.length) * 100}%` }}
                 />
               </div>
             </div>
@@ -210,14 +208,14 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
         <div className="h-px bg-gray-100 mx-6 flex-shrink-0" />
 
         {/* ── Document list ── */}
-        <div className="px-4 py-3 space-y-1.5 overflow-y-auto flex-1">
+        <div className="px-4 py-3 space-y-2 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="w-9 h-9 rounded-full border-2 border-indigo-200 border-t-indigo-500 animate-spin" />
-              <p className="text-xs text-gray-400 font-medium">Loading documents...</p>
+              <div className="w-9 h-9 rounded-full border-2 border-blue-200 border-t-blue-500 animate-spin" />
+              <p className="text-sm text-gray-400">Loading documents...</p>
             </div>
           ) : (
-            allDocs.map((doc, index) => {
+            allDocs.map((doc) => {
               const files = folderFiles[doc.key] || [];
               const hasFiles = files.length > 0;
 
@@ -232,33 +230,33 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
                   disabled={loading || downloading}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all group text-left select-none
                     ${hasFiles
-                      ? 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50'
-                      : 'bg-white border-gray-150 hover:border-blue-200 hover:bg-blue-50/30 border-gray-200'
+                      ? 'bg-green-50 border-green-200 hover:border-green-300 hover:bg-green-50'
+                      : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/40'
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]`}
                 >
                   {/* Icon bubble */}
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
                     ${hasFiles
-                      ? 'bg-emerald-100'
+                      ? 'bg-green-100'
                       : 'bg-gray-100 group-hover:bg-blue-100'
                     }`}
                   >
                     {hasFiles
-                      ? <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      : <FolderOpen className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      ? <CheckCircle2 className="w-4.5 h-4.5 text-green-600 w-5 h-5" />
+                      : <FolderOpen className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     }
                   </div>
 
                   {/* Text */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold truncate leading-tight
-                      ${hasFiles ? 'text-emerald-800' : 'text-gray-700'}`}
+                    <p className={`text-sm font-semibold leading-snug truncate
+                      ${hasFiles ? 'text-green-800' : 'text-gray-800'}`}
                     >
                       {doc.label}
                     </p>
-                    <p className={`text-[11px] mt-0.5 leading-tight
-                      ${hasFiles ? 'text-emerald-500' : 'text-gray-400'}`}
+                    <p className={`text-xs mt-0.5 leading-tight
+                      ${hasFiles ? 'text-green-600' : 'text-gray-400'}`}
                     >
                       {hasFiles
                         ? `${files.length} file${files.length !== 1 ? 's' : ''} uploaded`
@@ -269,16 +267,16 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
 
                   {/* Right badge + arrow */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide transition-all
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all
                       ${hasFiles
-                        ? 'bg-emerald-200 text-emerald-700'
-                        : 'bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
                       }`}
                     >
                       {hasFiles ? 'View' : 'Upload'}
                     </span>
                     <ChevronRight className={`w-4 h-4 transition-all group-hover:translate-x-0.5
-                      ${hasFiles ? 'text-emerald-400' : 'text-gray-300 group-hover:text-blue-400'}`}
+                      ${hasFiles ? 'text-green-400' : 'text-gray-300 group-hover:text-blue-400'}`}
                     />
                   </div>
                 </button>
@@ -288,15 +286,15 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-3.5 border-t border-gray-100 flex items-center justify-between flex-shrink-0 bg-gray-50/60">
-          <p className="text-[11px] text-gray-400">
-            {loading ? 'Fetching...' : `${allDocs.length} document categories`}
+        <div className="px-6 py-3.5 border-t border-gray-100 flex items-center justify-between flex-shrink-0 bg-gray-50">
+          <p className="text-xs text-gray-400">
+            {loading ? 'Fetching documents...' : `${allDocs.length} document categories`}
           </p>
           <button
             type="button"
             onClick={onClose}
             disabled={loading || downloading}
-            className="px-4 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Close
           </button>

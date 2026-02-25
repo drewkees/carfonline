@@ -417,6 +417,8 @@ export type Database = {
           defaultapplyfor: string | null
           defaultsoldto: string | null
           defaultbillingaddress: string | null
+          bosseries: string | null
+          bosgroup: string | null
         }
         Insert: {
           id?: string
@@ -432,6 +434,8 @@ export type Database = {
           defaultapplyfor?: string | null
           defaultsoldto?: string | null
           defaultbillingaddress?: string | null
+          bosseries: string | null
+          bosgroup: string | null
         }
         Update: {
           id?: string
@@ -447,6 +451,8 @@ export type Database = {
           defaultapplyfor?: string | null
           defaultsoldto?: string | null
           defaultbillingaddress?: string | null
+          bosseries: string | null
+          bosgroup: string | null
         }
         Relationships: []
       },regionbu: {
@@ -723,6 +729,7 @@ export type Database = {
           fullname: string | null
           exception: string | null
           allaccess: boolean
+          company: string
         }
         Insert: {
           id?: string
@@ -731,6 +738,7 @@ export type Database = {
           fullname?: string | null
           exception?: string | null
           allaccess?: boolean
+          company: string
         }
         Update: {
           id?: string
@@ -739,6 +747,7 @@ export type Database = {
           fullname?: string | null
           exception?: string | null
           allaccess?: boolean
+          company: string
         }
         Relationships: []
       },bcapprovalmatrix: {

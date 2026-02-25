@@ -19,16 +19,17 @@ export default function CustomerTypeSeries() {
   >({
     carftype: '',
     bostype: '',
+    bosseries: '',
     defaulttin: '',
     defaultvolumeday: 0,
     defaultvolumemonth: 0,
-    defaultcreditlimit:0,
+    defaultcreditlimit: 0,
     defaultcreditterms: '',
     defaultsalestype: '',
     defaulttype: '',
     defaultapplyfor: '',
     defaultsoldto: '',
-    defaultbillingaddress:'',
+    defaultbillingaddress: '',
   });
 
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function CustomerTypeSeries() {
     setNewSchema({
       carftype: '',
       bostype: '',
+      bosseries: '',
+      bosgroup: '',
       defaulttin: '',
       defaultvolumeday: 0,
       defaultvolumemonth: 0,
@@ -85,6 +88,8 @@ export default function CustomerTypeSeries() {
     setNewSchema({
       carftype: schema.carftype || '',
       bostype: schema.bostype || '',
+      bosseries: schema.bosseries || '',
+      bosgroup: schema.bosgroup || '',
       defaulttin: schema.defaulttin || '',
       defaultvolumeday: schema.defaultvolumeday || 0,
       defaultvolumemonth: schema.defaultvolumemonth || 0,
@@ -139,6 +144,8 @@ export default function CustomerTypeSeries() {
       setNewSchema({
         carftype: '',
         bostype: '',
+        bosseries: '',
+      bosgroup: '',
         defaulttin: '',
         defaultvolumeday: 0,
         defaultvolumemonth: 0,
@@ -180,6 +187,8 @@ export default function CustomerTypeSeries() {
     return (
       schema.carftype?.toLowerCase().includes(q) ||
       schema.bostype?.toLowerCase().includes(q) ||
+      schema.bosseries?.toLowerCase().includes(q) ||
+      schema.bosgroup?.toLowerCase().includes(q) ||
       schema.defaulttin?.toLowerCase().includes(q)
     );
   });
@@ -270,23 +279,33 @@ export default function CustomerTypeSeries() {
                             <div className="text-foreground mt-0.5">{schema.bostype || '-'}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-muted-foreground uppercase tracking-wide">Default TIN</div>
-                            <div className="text-foreground mt-0.5">{schema.defaulttin || '-'}</div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">BOS Series</div>
+                            <div className="text-foreground mt-0.5">{schema.bosseries || '-'}</div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">BOS Group</div>
+                            <div className="text-foreground mt-0.5">{schema.bosgroup || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">Default TIN</div>
+                            <div className="text-foreground mt-0.5">{schema.defaulttin || '-'}</div>
+                          </div>
+                          <div>
                             <div className="text-xs text-muted-foreground uppercase tracking-wide">Volume/Day</div>
                             <div className="text-foreground mt-0.5">{schema.defaultvolumeday}</div>
                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <div className="text-xs text-muted-foreground uppercase tracking-wide">Volume/Month</div>
                             <div className="text-foreground mt-0.5">{schema.defaultvolumemonth}</div>
                           </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide">Credit Limit</div>
-                          <div className="text-foreground mt-0.5">{schema.defaultcreditlimit}</div>
+                          <div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">Credit Limit</div>
+                            <div className="text-foreground mt-0.5">{schema.defaultcreditlimit}</div>
+                          </div>
                         </div>
                         <div>
                           <div className="text-xs text-muted-foreground uppercase tracking-wide">Credit Terms</div>
@@ -336,6 +355,8 @@ export default function CustomerTypeSeries() {
                   <tr>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">CARF TYPE</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">BOS TYPE</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">BOS SERIES</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">BOS GROUP</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">DEFAULT TIN</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">DEFAULT VOLUME DAY</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">DEFAULT VOLUME MONTH</th>
@@ -351,9 +372,11 @@ export default function CustomerTypeSeries() {
                 </thead>
                 <tbody className="divide-y divide-gray-700">
                   {filteredSchemas.map((schema) => (
-                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
+                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.carftype}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.bostype}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.bosseries}</td>
+                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.bosgroup}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.defaulttin}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.defaultvolumeday}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.defaultvolumemonth}</td>
@@ -407,6 +430,8 @@ export default function CustomerTypeSeries() {
               {[
                 { key: 'carftype', label: 'CARF Type', type: 'text' },
                 { key: 'bostype', label: 'BOS Type', type: 'text' },
+                { key: 'bosseries', label: 'BOS Series', type: 'text' },
+                { key: 'bosgroup', label: 'BOS Group', type: 'text' },
                 { key: 'defaulttin', label: 'Default TIN', type: 'text' },
                 { key: 'defaultvolumeday', label: 'Default Volume Day', type: 'number' },
                 { key: 'defaultvolumemonth', label: 'Default Volume Month', type: 'number' },
@@ -425,9 +450,9 @@ export default function CustomerTypeSeries() {
                     className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newSchema[key]}
                     onChange={(e) =>
-                      setNewSchema({ 
-                        ...newSchema, 
-                        [key]: type === 'number' ? Number(e.target.value) : e.target.value 
+                      setNewSchema({
+                        ...newSchema,
+                        [key]: type === 'number' ? Number(e.target.value) : e.target.value,
                       })
                     }
                   />

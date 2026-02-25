@@ -37,6 +37,7 @@ type TooltipState = {
 const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false); // ✅ separate action loading state
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
@@ -117,6 +118,25 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     return str.length > max ? str.substring(0, max) + '…' : str;
   };
 
+  // ✅ Silent refresh — does NOT touch the main loading state
+  const silentRefresh = async () => {
+    try {
+      if (customerSource === 'PROD') {
+        const { data, error } = await supabase
+          .from('customerdata')
+          .select('*')
+          .eq('approvestatus', 'PENDING')
+          .order('datecreated', { ascending: false });
+        if (error) throw error;
+        setCustomers(data || []);
+      } else {
+        await fetchCustomersFromGSheet();
+      }
+    } catch (error) {
+      console.error('Error refreshing customers:', error);
+    }
+  };
+
   const fetchCustomers = async () => {
     try {
       setLoading(true);
@@ -194,7 +214,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     }
   };
 
-  // Smart tooltip: detects right-edge AND bottom-edge overflow and flips accordingly
   const handleMouseEnter = (e: React.MouseEvent<HTMLTableCellElement>, value: string) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const tooltipMaxWidth = 280;
@@ -247,54 +266,59 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
     setConfirmationDialog({ isOpen: true, action: 'cancel', customer });
   };
 
+  // ✅ Uses actionLoading instead of setLoading — toast shows BEFORE list refreshes
   const executeApprove = async () => {
     if (!confirmationDialog.customer) return;
+    closeConfirmationDialog();
+    setActionLoading(true);
     try {
-      setLoading(true);
       const success = await approveForm(confirmationDialog.customer);
       if (success) {
-        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
+        toast({ title: 'Success', description: 'Customer approved successfully.' });
+        await silentRefresh();
       }
     } catch (error) {
       console.error('Error approving customer:', error);
       toast({ title: 'Error', description: 'Failed to approve customer.', variant: 'destructive' });
     } finally {
-      setLoading(false);
-      closeConfirmationDialog();
+      setActionLoading(false);
     }
   };
 
   const executeReturnToMaker = async () => {
     if (!confirmationDialog.customer) return;
+    closeConfirmationDialog();
+    setReturnDialog({ isOpen: false, remarks: '' });
+    setActionLoading(true);
     try {
-      setLoading(true);
       const success = await returntomakerForm(confirmationDialog.customer, returnDialog.remarks);
       if (success) {
-        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
+        toast({ title: 'Success', description: 'Request returned to maker.' });
+        await silentRefresh();
       }
     } catch (error) {
       console.error('Error returning to maker:', error);
       toast({ title: 'Error', description: 'Failed to return customer to maker.', variant: 'destructive' });
     } finally {
-      setLoading(false);
-      closeConfirmationDialog();
+      setActionLoading(false);
     }
   };
 
   const executeCancel = async () => {
     if (!confirmationDialog.customer) return;
+    closeConfirmationDialog();
+    setActionLoading(true);
     try {
-      setLoading(true);
       const success = await cancelForm(confirmationDialog.customer);
       if (success) {
-        customerSource === 'PROD' ? await fetchCustomers() : await fetchCustomersFromGSheet();
+        toast({ title: 'Success', description: 'Customer request cancelled.' });
+        await silentRefresh();
       }
     } catch (error) {
       console.error('Error cancelling customer:', error);
       toast({ title: 'Error', description: 'Failed to cancel customer request.', variant: 'destructive' });
     } finally {
-      setLoading(false);
-      closeConfirmationDialog();
+      setActionLoading(false);
     }
   };
 
@@ -359,6 +383,16 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* ✅ Subtle action loading overlay — doesn't unmount the list */}
+      {actionLoading && (
+        <div className="fixed inset-0 z-[80] bg-black/20 flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-xl px-6 py-4 shadow-lg flex items-center gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium text-gray-700">Processing...</span>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 p-6">
         {isMobile ? (
           /* ── Mobile Layout ── */
@@ -454,12 +488,12 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                             </div>
                           )}
 
-                          {/* Mobile Action Buttons */}
                           <div className="mt-4 pt-3 border-t border-border">
                             <div className="flex flex-col gap-2">
                               <Button
                                 size="sm"
                                 onClick={(e) => handleApprove(customer, e)}
+                                disabled={actionLoading}
                                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white text-xs h-9"
                               >
                                 <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
@@ -468,6 +502,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                               <Button
                                 size="sm"
                                 onClick={(e) => handleReturnClick(customer, e)}
+                                disabled={actionLoading}
                                 className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9"
                               >
                                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
@@ -476,6 +511,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                               <Button
                                 size="sm"
                                 onClick={(e) => handleCancel(customer, e)}
+                                disabled={actionLoading}
                                 className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-9"
                               >
                                 <XCircle className="h-3.5 w-3.5 mr-1.5" />
@@ -577,7 +613,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                         >
                           {udfFields.filter((f) => f.visible).map((field) => {
                             const value = customer[field.fieldid];
-                            // Display-only: resolve maker userid → fullname
                             const displayValue =
                               field.fieldid === 'maker' && value
                                 ? (usersMap[value] || value)
@@ -607,6 +642,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                               <Button
                                 size="sm"
                                 onClick={(e) => handleApprove(customer, e)}
+                                disabled={actionLoading}
                                 className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs h-8 px-3"
                               >
                                 <CheckCircle className="h-3 w-3 mr-1" />
@@ -615,6 +651,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                               <Button
                                 size="sm"
                                 onClick={(e) => handleReturnClick(customer, e)}
+                                disabled={actionLoading}
                                 className="bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 px-3"
                               >
                                 <RotateCcw className="h-3 w-3 mr-1" />
@@ -623,6 +660,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
                               <Button
                                 size="sm"
                                 onClick={(e) => handleCancel(customer, e)}
+                                disabled={actionLoading}
                                 className="bg-red-500 hover:bg-red-600 text-white text-xs h-8 px-3"
                               >
                                 <XCircle className="h-3 w-3 mr-1" />
@@ -672,7 +710,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         )}
       </main>
 
-      {/* Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={confirmationDialog.isOpen}
         onClose={closeConfirmationDialog}
@@ -694,7 +731,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         }
       />
 
-      {/* Return to Maker Dialog */}
       {returnDialog.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-[90vw] max-w-[500px] mx-4">
@@ -731,7 +767,6 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
         </div>
       )}
 
-      {/* ── Smart Edge-Aware Tooltip (fixed, never clipped) ── */}
       {tooltip && (
         <div
           className="fixed bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none break-words"
