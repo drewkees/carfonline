@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
+type CompanyRow = Database['public']['Tables']['company']['Row'];
+
 export default function UsersList() {
   const [users, setUsers] = useState([]);
+  const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [userGroups, setUserGroups] = useState<{id: number; groupcode: string; groupname: string}[]>([]);
   const [newUser, setNewUser] = useState<
@@ -31,10 +35,10 @@ export default function UsersList() {
     complianceandfinalapprover: false,
   });
 
-  // ✅ Single useEffect for initial data fetching
   useEffect(() => {
     fetchUsers();
     fetchUserGroups();
+    fetchCompanies();
   }, []);
 
   useEffect(() => {
@@ -69,6 +73,11 @@ export default function UsersList() {
       .select('id, groupcode, groupname')
       .order('groupname', { ascending: true });
     if (!error && data) setUserGroups(data);
+  };
+
+  const fetchCompanies = async () => {
+    const { data, error } = await supabase.from('company').select('*').order('company_name', { ascending: true });
+    if (!error) setCompanies(data || []);
   };
 
   const handleAddUser = () => {
@@ -110,7 +119,6 @@ export default function UsersList() {
   const handleSaveUser = async () => {
     try {
       if (editingUser) {
-        // UPDATE
         const { userid, ...updateData } = newUser;
         const { data, error } = await supabase
           .from('users')
@@ -120,29 +128,13 @@ export default function UsersList() {
 
         if (error) throw error;
 
-        setUsers(
-          users.map((s) =>
-            s.userid === editingUser.userid ? data[0] : s
-          )
-        );
-
-        toast({
-          title: 'Success',
-          description: 'User updated successfully',
-        });
+        setUsers(users.map((s) => s.userid === editingUser.userid ? data[0] : s));
+        toast({ title: 'Success', description: 'User updated successfully' });
       } else {
-        // INSERT
-        const { data, error } = await supabase
-          .from('users')
-          .insert([newUser])
-          .select();
-
+        const { data, error } = await supabase.from('users').insert([newUser]).select();
         if (error) throw error;
         setUsers([...users, ...data]);
-        toast({
-          title: 'Success',
-          description: 'User added successfully',
-        });
+        toast({ title: 'Success', description: 'User added successfully' });
       }
 
       setShowModal(false);
@@ -161,11 +153,7 @@ export default function UsersList() {
         complianceandfinalapprover: false,
       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save user',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to save user', variant: 'destructive' });
     }
   };
 
@@ -173,11 +161,7 @@ export default function UsersList() {
     if (confirm('Are you sure you want to delete this user?')) {
       const { error } = await supabase.from('users').delete().eq('userid', id);
       if (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to delete user',
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' });
       } else {
         setUsers(users.filter((user) => user.userid !== id));
         toast({ title: 'Deleted', description: 'User deleted successfully' });
@@ -188,17 +172,20 @@ export default function UsersList() {
   const boolText = (v: boolean) => (v ? 'Yes' : 'No');
 
   const filteredUsers = users
-  .filter((user) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      user.userid?.toLowerCase().includes(q) ||
-      user.email?.toLowerCase().includes(q) ||
-      user.fullname?.toLowerCase().includes(q) ||
-      user.company?.toLowerCase().includes(q) ||
-      user.usergroup?.toLowerCase().includes(q)
-    );
-  })
-  .sort((a, b) => (a.userid || '').localeCompare(b.userid || ''));
+    .filter((user) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        user.userid?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q) ||
+        user.fullname?.toLowerCase().includes(q) ||
+        user.company?.toLowerCase().includes(q) ||
+        user.usergroup?.toLowerCase().includes(q);
+
+      const matchesCompany = selectedCompany ? user.company === selectedCompany : true;
+
+      return matchesSearch && matchesCompany;
+    })
+    .sort((a, b) => (a.userid || '').localeCompare(b.userid || ''));
 
   if (loading) {
     return (
@@ -210,6 +197,25 @@ export default function UsersList() {
       </div>
     );
   }
+
+  const CompanySelect = ({ className = '' }: { className?: string }) => (
+    <div className={`relative ${className}`}>
+      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <select
+        value={selectedCompany}
+        onChange={(e) => setSelectedCompany(e.target.value)}
+        className="pl-9 pr-8 py-2 text-sm rounded-lg bg-input border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none w-full cursor-pointer"
+      >
+        <option value="">All Companies</option>
+        {companies.map((c) => (
+          <option key={c.id} value={c.company}>
+            {c.company_name} ({c.company})
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">▾</div>
+    </div>
+  );
 
   return (
     <div className="h-full bg-background flex flex-col">
@@ -228,7 +234,7 @@ export default function UsersList() {
                   Add
                 </button>
               </div>
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex gap-2 w-full">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -238,6 +244,7 @@ export default function UsersList() {
                     className="pl-10 w-full bg-input border-border text-sm"
                   />
                 </div>
+                <CompanySelect className="flex-1" />
               </div>
             </div>
           </div>
@@ -245,26 +252,27 @@ export default function UsersList() {
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-3 pb-6">
               {filteredUsers.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No users found
-                </div>
+                <div className="text-center py-12 text-muted-foreground">No users found</div>
               ) : (
                 filteredUsers.map((user) => (
                   <Card key={user.userid} className="bg-card border-border" onClick={() => handleEdit(user)}>
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <div className="text-primary font-semibold text-sm">
-                          {user.userid}
+                        <div>
+                          <div className="text-primary font-semibold text-sm">{user.userid}</div>
+                          {user.company && (
+                            <div className="text-xs text-muted-foreground">{user.company}</div>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleEdit(user)}
+                            onClick={(e) => { e.stopPropagation(); handleEdit(user); }}
                             className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => handleDelete(user.userid)}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(user.userid); }}
                             className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
                           >
                             <Trash2 size={16} />
@@ -274,68 +282,40 @@ export default function UsersList() {
 
                       <div className="space-y-2">
                         <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                            Full Name
-                          </div>
-                          <div className="text-sm text-foreground mt-0.5">
-                            {user.fullname || '-'}
-                          </div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</div>
+                          <div className="text-sm text-foreground mt-0.5">{user.fullname || '-'}</div>
                         </div>
-
                         <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                            Email
-                          </div>
-                          <div className="text-sm text-foreground mt-0.5">
-                            {user.email || '-'}
-                          </div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">Email</div>
+                          <div className="text-sm text-foreground mt-0.5">{user.email || '-'}</div>
                         </div>
-
                         <div className="grid grid-cols-2 gap-3 pt-2">
                           <div>
-                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                              Company
-                            </div>
-                            <div className="text-sm text-foreground mt-0.5">
-                              {user.company || '-'}
-                            </div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">Company</div>
+                            <div className="text-sm text-foreground mt-0.5">{user.company || '-'}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                              User Group
-                            </div>
-                            <div className="text-sm text-foreground mt-0.5">
-                              {user.usergroup || '-'}
-                            </div>
+                            <div className="text-xs text-muted-foreground uppercase tracking-wide">User Group</div>
+                            <div className="text-sm text-foreground mt-0.5">{user.usergroup || '-'}</div>
                           </div>
                         </div>
-
                         <div className="h-px bg-border my-2"></div>
-
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex items-center gap-1">
                             <span className="text-muted-foreground">Approver:</span>
-                            <span className={user.approver ? 'text-green-500' : 'text-gray-500'}>
-                              {boolText(user.approver)}
-                            </span>
+                            <span className={user.approver ? 'text-green-500' : 'text-gray-500'}>{boolText(user.approver)}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-muted-foreground">All Access:</span>
-                            <span className={user.allaccess ? 'text-green-500' : 'text-gray-500'}>
-                              {boolText(user.allaccess)}
-                            </span>
+                            <span className={user.allaccess ? 'text-green-500' : 'text-gray-500'}>{boolText(user.allaccess)}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-muted-foreground">Edit Access:</span>
-                            <span className={user.editaccess ? 'text-green-500' : 'text-gray-500'}>
-                              {boolText(user.editaccess)}
-                            </span>
+                            <span className={user.editaccess ? 'text-green-500' : 'text-gray-500'}>{boolText(user.editaccess)}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-muted-foreground">Custom Limit:</span>
-                            <span className={user.customlimitaccess ? 'text-green-500' : 'text-gray-500'}>
-                              {boolText(user.customlimitaccess)}
-                            </span>
+                            <span className={user.customlimitaccess ? 'text-green-500' : 'text-gray-500'}>{boolText(user.customlimitaccess)}</span>
                           </div>
                         </div>
                       </div>
@@ -349,10 +329,9 @@ export default function UsersList() {
       ) : (
         /* Desktop Layout */
         <>
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">USER LIST</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -362,6 +341,7 @@ export default function UsersList() {
                   className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
                 />
               </div>
+              <CompanySelect className="w-52" />
               <button
                 onClick={handleAddUser}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -372,10 +352,9 @@ export default function UsersList() {
             </div>
           </div>
 
-          {/* Table Container - Scrollable */}
           <div className="flex flex-col bg-gray-800 mx-4 mb-4 mt-4 rounded-lg shadow overflow-hidden flex-1">
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <table className="w-full table-auto ">
+              <table className="w-full table-auto">
                 <thead className="bg-gray-900 sticky top-0 z-10">
                   <tr>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 w-32">User ID</th>
@@ -393,39 +372,47 @@ export default function UsersList() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.userid} className="hover:bg-gray-700 transition-colors">
-                      <td className="px-6 py-4 w-32 text-gray-300">{user.userid}</td>
-                      <td className="px-6 py-4 text-gray-200">{user.email}</td>
-                      <td className="px-6 py-4 text-gray-200">{user.fullname}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.approver)}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.allaccess)}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.editaccess)}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.customlimitaccess)}</td>
-                      <td className="px-6 py-4 text-gray-200">{user.company}</td>
-                      <td className="px-6 py-4 text-gray-200">{user.usergroup}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.allcompanyaccess)}</td>
-                      <td className="px-6 py-4 text-gray-200">{boolText(user.complianceandfinalapprover)}</td>
-                      <td className="px-6 py-4 w-32">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEdit(user)}
-                            className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.userid)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="px-6 py-10 text-center text-gray-500 italic text-sm">
+                        No users found
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <tr key={user.userid} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(user)}>
+                        <td className="px-6 py-4 w-32 text-gray-300">{user.userid}</td>
+                        <td className="px-6 py-4 text-gray-200">{user.email}</td>
+                        <td className="px-6 py-4 text-gray-200">{user.fullname}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.approver)}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.allaccess)}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.editaccess)}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.customlimitaccess)}</td>
+                        <td className="px-6 py-4 text-gray-200">{user.company}</td>
+                        <td className="px-6 py-4 text-gray-200">{user.usergroup}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.allcompanyaccess)}</td>
+                        <td className="px-6 py-4 text-gray-200">{boolText(user.complianceandfinalapprover)}</td>
+                        <td className="px-6 py-4 w-32">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEdit(user)}
+                              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(user.userid)}
+                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -446,21 +433,35 @@ export default function UsersList() {
               </button>
             </div>
             <div className="space-y-3">
-              {/* Text Fields */}
-              {['userid', 'email', 'fullname', 'company'].map((field) => (
+              {['userid', 'email', 'fullname'].map((field) => (
                 <div key={field} className="flex flex-col">
                   <label className="text-sm mb-1 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
                   <input
                     type={field === 'email' ? 'email' : 'text'}
                     className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newUser[field]}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, [field]: e.target.value })
-                    }
+                    onChange={(e) => setNewUser({ ...newUser, [field]: e.target.value })}
                     disabled={field === 'userid' && editingUser}
                   />
                 </div>
               ))}
+
+              {/* Company Dropdown */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Company</label>
+                <select
+                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newUser.company || ''}
+                  onChange={(e) => setNewUser({ ...newUser, company: e.target.value })}
+                >
+                  <option value="">— Select Company —</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.company}>
+                      {c.company_name} ({c.company})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* User Group Dropdown */}
               <div className="flex flex-col">
@@ -479,7 +480,7 @@ export default function UsersList() {
                 </select>
               </div>
 
-              {/* Boolean Fields as Checkboxes */}
+              {/* Boolean Fields */}
               <div className="pt-2 border-t border-gray-700">
                 <label className="text-sm font-semibold mb-2 block">Permissions</label>
                 {[
@@ -495,29 +496,19 @@ export default function UsersList() {
                       type="checkbox"
                       id={key}
                       checked={newUser[key] || false}
-                      onChange={(e) =>
-                        setNewUser({ ...newUser, [key]: e.target.checked })
-                      }
+                      onChange={(e) => setNewUser({ ...newUser, [key]: e.target.checked })}
                       className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
-                    <label htmlFor={key} className="text-sm cursor-pointer">
-                      {label}
-                    </label>
+                    <label htmlFor={key} className="text-sm cursor-pointer">{label}</label>
                   </div>
                 ))}
               </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
-              >
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
                 Cancel
               </button>
-              <button
-                onClick={handleSaveUser}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700"
-              >
+              <button onClick={handleSaveUser} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700">
                 {editingUser ? 'Update' : 'Save'}
               </button>
             </div>
