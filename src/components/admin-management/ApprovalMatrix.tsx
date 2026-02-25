@@ -14,7 +14,6 @@ type FormData = {
   firstapprover: string;
   secondapprover: string;
   thirdapprover: string;
-  complianceandfinalapprover: boolean;
   company?: string;
 };
 
@@ -33,7 +32,6 @@ export default function ApprovalMatrix() {
     firstapprover: '',
     secondapprover: '',
     thirdapprover: '',
-    complianceandfinalapprover: false,
     company: '',
   });
 
@@ -70,12 +68,11 @@ export default function ApprovalMatrix() {
     if (!error) setCompanies(data || []);
   };
 
-  const resetForm = () => ({
+  const resetForm = (): FormData => ({
     approvaltype: '',
     firstapprover: '',
     secondapprover: '',
     thirdapprover: '',
-    complianceandfinalapprover: false,
     company: '',
   });
 
@@ -92,7 +89,6 @@ export default function ApprovalMatrix() {
       firstapprover: schema.firstapprover || '',
       secondapprover: schema.secondapprover || '',
       thirdapprover: schema.thirdapprover || '',
-      complianceandfinalapprover: schema.complianceandfinalapprover || false,
       company: (schema as any).company || '',
     });
     setShowModal(true);
@@ -270,7 +266,6 @@ export default function ApprovalMatrix() {
           <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">Approval Matrix</h2>
             <div className="flex items-center gap-3">
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -280,10 +275,7 @@ export default function ApprovalMatrix() {
                   className="pl-10 w-52 bg-input border-border transition-all duration-300 hover:w-72 focus:w-72"
                 />
               </div>
-
-              {/* Company Filter */}
               <CompanySelect className="w-52" />
-
               <button
                 onClick={handleAddSchema}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -366,13 +358,12 @@ export default function ApprovalMatrix() {
             </div>
 
             <div className="space-y-3">
-              {/* Company dropdown in modal */}
               <div className="flex flex-col">
                 <label className="text-sm mb-1">Company</label>
                 <select
                   className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={(newSchema as any).company || ''}
-                  onChange={(e) => setNewSchema({ ...newSchema, company: e.target.value } as any)}
+                  onChange={(e) => setNewSchema({ ...newSchema, company: e.target.value })}
                 >
                   <option value="">-- Select Company --</option>
                   {companies.map((c) => (
@@ -399,19 +390,6 @@ export default function ApprovalMatrix() {
                   />
                 </div>
               ))}
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="complianceandfinalapprover"
-                  checked={newSchema.complianceandfinalapprover}
-                  onChange={(e) => setNewSchema({ ...newSchema, complianceandfinalapprover: e.target.checked })}
-                  className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600"
-                />
-                <label htmlFor="complianceandfinalapprover" className="text-sm cursor-pointer">
-                  Compliance & Final Approver
-                </label>
-              </div>
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
