@@ -729,6 +729,47 @@ app.post('/api/generate-pdf', async (req, res) => {
     if (browser) await browser.close();
   }
 });
+
+app.post("/api/submitusers", async (req, res) => {
+  try {
+    const { rows } = req.body;
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ error: "No data provided" });
+    }
+
+    const sheets = await getSheetsClient();
+
+    const headerRes = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "User!1:1",
+    });
+
+    const headers = headerRes.data.values?.[0] || [];
+    if (headers.length === 0) {
+      return res.status(500).json({ error: "No headers found in USERS sheet" });
+    }
+
+    const rowsToInsert = rows.map(formData => {
+      return headers.map(col => {
+        const value = formData[col];
+        if (Array.isArray(value)) return value.join(", ");
+        return value ?? "";
+      });
+    });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "User!A1",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: rowsToInsert },
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error writing to USERS sheet:", err);
+    res.status(500).json({ error: "Failed to submit user", details: err.message });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

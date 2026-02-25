@@ -259,7 +259,7 @@ export const useCustomerForm = (
         let filtered = paymentData.filter((r) => formData.type.includes(r.limittype) && r.limitgroup === formData.custtype);
         if (!filtered.length) filtered = paymentData;
         const opts = Array.from(new Set(filtered.map((r) => r.paymentlimit).filter((v): v is string => !!v)));
-        if (canUseCustomLimit) opts.push('Enter Custom Limit');
+        if (canUseCustomLimit && !opts.includes('Enter Custom Limit')) opts.push('Enter Custom Limit');
         setpaymentLimitOptions(opts);
       } catch (err) { console.error('Error fetching payment limits:', err); }
     };

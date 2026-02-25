@@ -393,6 +393,39 @@ export const useFormSubmit = (
       }
 
       if (result.success) {
+        await fetch(`${BASE_URL}/api/submittoemail`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rows: [{
+              refid: rowId,
+              approvalValue: nextApprover,
+              customerNo: formData.soldtoparty,
+              customerName: formData.soldtoparty,
+              acValue: formData.custtype,
+              globalUrl: BASE_URL,
+              alreadyemail: 0,
+              forfinalapproval: 0,
+              boscode: '',
+              bc: formData.bucenter,
+              maker: userid,
+              requestfor: formData.requestfor,
+              salestype: formData.saletype,
+              soldtoparty: formData.soldtoparty,
+              shiptoparty: formData.shiptoparty,
+              tin: formData.tin,
+              biladdress: formData.billaddress,
+              deladdress: formData.deladdress,
+              creditterms: formData.terms,
+              creditlimit: formData.creditlimit,
+              executive: formData.bcname,
+              gm: formData.saoname,
+              sao: formData.supname,
+              return: 1,
+              remarks: '',
+            }],
+          }),
+        });
         toast({ title: 'Success', description: 'Submitted for approval successfully.' });
         if (onClose) onClose();
         return true;

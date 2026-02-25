@@ -141,6 +141,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         .single();
 
       if (insertError) throw insertError;
+      const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const userRes = await fetch(`${BASE_URL}/api/submitusers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: [{
+            email: data.email,
+            fullname: data.fullname,
+            userid: data.userid,
+            company: data.company,
+            usergroup: data.usergroup,
+          }],
+        }),
+      });
+
 
       onLogin(data.email, data.fullname, data.userid);
     } catch (err: any) {

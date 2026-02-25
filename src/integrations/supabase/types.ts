@@ -613,7 +613,6 @@ export type Database = {
           firstapprover: string | null
           secondapprover: string | null
           thirdapprover: string | null
-          complianceandfinalapprover:boolean
           company: string | null
         }
         Insert: {
@@ -622,7 +621,6 @@ export type Database = {
           firstapprover: string | null
           secondapprover: string | null
           thirdapprover: string | null
-          complianceandfinalapprover:boolean
           company: string | null
         }
         Update: {
@@ -631,7 +629,6 @@ export type Database = {
           firstapprover: string | null
           secondapprover: string | null
           thirdapprover: string | null
-          complianceandfinalapprover:boolean
           company: string | null
         }
         Relationships: []
