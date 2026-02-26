@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, User } from 'lucide-react';
+import { Search, User, Workflow } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSystemSettings } from '../SystemSettings/SystemSettingsContext';
+import ApprovalFlowModal from '../ApprovalModalFlow';
 
 interface Customer {
   id: string;
@@ -32,6 +33,37 @@ type TooltipState = {
   flipUp: boolean;
 } | null;
 
+// ── Approval Flow Trigger Icon ──────────────────────────────────────────────
+const ApprovalIcon: React.FC<{ customer: Customer; onClick: (e: React.MouseEvent) => void }> = ({
+  customer,
+  onClick,
+}) => {
+  const status = (customer.approvestatus || '').toUpperCase();
+  const isApproved = status === 'APPROVED';
+  const isCancelled = status === 'CANCELLED';
+  const isReturned = status === 'RETURN TO MAKER';
+
+  const color = isApproved
+    ? '#22c55e'
+    : isCancelled
+    ? '#ef4444'
+    : isReturned
+    ? '#f59e0b'
+    : 'hsl(var(--primary))';
+
+  return (
+    <button
+      onClick={onClick}
+      title="View Approval Flow"
+      className="inline-flex items-center justify-center w-7 h-7 rounded-md transition-all hover:scale-110 active:scale-95 border flex-shrink-0"
+      style={{ background: `${color}12`, borderColor: `${color}35`, color }}
+    >
+      <Workflow className="w-3.5 h-3.5" />
+    </button>
+  );
+};
+// ───────────────────────────────────────────────────────────────────────────
+
 const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +77,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
   const [activeFilter, setActiveFilter] = useState('All');
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [approvalCustomer, setApprovalCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -54,9 +87,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -86,16 +117,11 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
         .select('fieldid, fieldnames, datatype, visible,truncatecolumn')
         .eq('objectcode', 'pending')
         .order('id', { ascending: true });
-
       if (error) throw error;
       setUdfFields((data || []) as FieldType[]);
     } catch (error) {
       console.error('Error fetching UDF fields:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch UDF fields.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to fetch UDF fields.', variant: 'destructive' });
     }
   };
 
@@ -113,7 +139,6 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
         .select('*')
         .eq('approvestatus', 'PENDING')
         .order('datecreated', { ascending: false });
-
       if (error) throw error;
       setCustomers(data || []);
     } catch (error) {
@@ -129,12 +154,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
       setLoading(true);
       const userid = (window as any).getGlobal?.('userid');
       if (!userid) {
-        console.error('User ID not found in global');
-        toast({
-          title: 'Error',
-          description: 'User session not found. Please refresh the page.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: 'User session not found. Please refresh the page.', variant: 'destructive' });
         return;
       }
 
@@ -143,11 +163,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
         .select('allaccess')
         .eq('userid', userid)
         .single();
-
-      if (userError) {
-        console.error('Error fetching user access:', userError);
-        throw userError;
-      }
+      if (userError) throw userError;
 
       const hasAllAccess = userData?.allaccess || false;
 
@@ -179,9 +195,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
       });
 
       if (!hasAllAccess) {
-        filteredCustomers = filteredCustomers.filter((customer) =>
-          customer.maker === userid
-        );
+        filteredCustomers = filteredCustomers.filter((customer) => customer.maker === userid);
       }
 
       const sorted = [...filteredCustomers].sort((a, b) => {
@@ -192,26 +206,15 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
       setCustomers(sorted);
     } catch (error) {
       console.error('Error fetching Google Sheet:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch customers from Google Sheet.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to fetch customers from Google Sheet.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
   const filteredCustomers = customers.filter((c) => {
-    const matchesSearch = Object.values(c)
-      .join(' ')
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-
-    const matchesFilter =
-      activeFilter === 'All' ||
-      (c.requestfor || '').toUpperCase() === activeFilter.toUpperCase();
-
+    const matchesSearch = Object.values(c).join(' ').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'All' || (c.requestfor || '').toUpperCase() === activeFilter.toUpperCase();
     return matchesSearch && matchesFilter;
   });
 
@@ -222,10 +225,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
 
   const formatCurrency = (amount: number) => {
     if (!amount) return '-';
-    return new Intl.NumberFormat('en-PH', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return new Intl.NumberFormat('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
   };
 
   const formatValue = (value: any, type: string) => {
@@ -247,20 +247,16 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
     return 'bg-gray-500 text-white';
   };
 
-  // Smart tooltip: detects right-edge AND bottom-edge overflow and flips accordingly
   const handleMouseEnter = (e: React.MouseEvent<HTMLTableCellElement>, value: string) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const tooltipMaxWidth = 280;
     const tooltipMaxHeight = 300;
     const spaceOnRight = window.innerWidth - rect.left;
     const spaceBelow = window.innerHeight - rect.bottom;
-
     let x = spaceOnRight < tooltipMaxWidth ? rect.right - tooltipMaxWidth : rect.left;
     x = Math.max(8, x);
-
     const flipUp = spaceBelow < tooltipMaxHeight;
     const y = flipUp ? rect.top - 6 : rect.bottom + 6;
-
     setTooltip({ value, x, y, flipUp });
   };
 
@@ -287,9 +283,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
               <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
                 <div className="flex items-center space-x-2 w-full">
                   <User className="h-5 w-5 text-foreground flex-shrink-0" />
-                  <h2 className="text-lg font-semibold text-foreground truncate">
-                    PENDING LIST
-                  </h2>
+                  <h2 className="text-lg font-semibold text-foreground truncate">PENDING LIST</h2>
                 </div>
                 <div className="flex items-center gap-2 w-full">
                   <div className="relative flex-1">
@@ -312,9 +306,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
                     size="sm"
                     onClick={() => setActiveFilter(filter)}
                     className={`flex-shrink-0 text-xs ${
-                      activeFilter === filter
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card text-foreground'
+                      activeFilter === filter ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
                     }`}
                   >
                     {filter}
@@ -326,9 +318,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
             <div className="flex-1 overflow-auto p-4">
               <div className="space-y-3 pb-6">
                 {currentCustomers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No pending customers found
-                  </div>
+                  <div className="text-center py-12 text-muted-foreground">No pending customers found</div>
                 ) : (
                   currentCustomers.map((customer) => {
                     const visibleFields = udfFields.filter((f) => f.visible);
@@ -343,15 +333,21 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
                       >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
-                            <div className="text-primary font-semibold text-sm">
-                              {customer.carfno || customer.id}
+                            <div className="flex items-center gap-2">
+                              {/* ── Approval Icon (mobile) ── */}
+                              <ApprovalIcon
+                                customer={customer}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setApprovalCustomer(customer);
+                                }}
+                              />
+                              <div className="text-primary font-semibold text-sm">
+                                {customer.carfno || customer.id}
+                              </div>
                             </div>
                             {customer.requestfor && (
-                              <div
-                                className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${getStatusBadgeClass(
-                                  customer.requestfor
-                                )}`}
-                              >
+                              <div className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${getStatusBadgeClass(customer.requestfor)}`}>
                                 {customer.requestfor}
                               </div>
                             )}
@@ -360,42 +356,26 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
                           {primaryFields.map((field) => {
                             const value = customer[field.fieldid];
                             if (!value) return null;
-                            const displayValue =
-                              field.fieldid === 'maker'
-                                ? (usersMap[value] || value)
-                                : value;
+                            const displayValue = field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                             return (
                               <div key={field.fieldid} className="mb-2">
-                                <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                                  {field.fieldnames}
-                                </div>
-                                <div className="text-sm text-foreground mt-0.5">
-                                  {formatValue(displayValue, field.datatype)}
-                                </div>
+                                <div className="text-xs text-muted-foreground uppercase tracking-wide">{field.fieldnames}</div>
+                                <div className="text-sm text-foreground mt-0.5">{formatValue(displayValue, field.datatype)}</div>
                               </div>
                             );
                           })}
 
-                          {secondaryFields.length > 0 && (
-                            <div className="h-px bg-border my-3"></div>
-                          )}
+                          {secondaryFields.length > 0 && <div className="h-px bg-border my-3"></div>}
 
                           {secondaryFields.length > 0 && (
                             <div className="grid grid-cols-2 gap-3">
                               {secondaryFields.map((field) => {
                                 const value = customer[field.fieldid];
-                                const displayValue =
-                                  field.fieldid === 'maker'
-                                    ? (usersMap[value] || value)
-                                    : value;
+                                const displayValue = field.fieldid === 'maker' ? (usersMap[value] || value) : value;
                                 return (
                                   <div key={field.fieldid}>
-                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                                      {field.fieldnames}
-                                    </div>
-                                    <div className="text-sm text-foreground mt-0.5">
-                                      {formatValue(displayValue, field.datatype) || '-'}
-                                    </div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">{field.fieldnames}</div>
+                                    <div className="text-sm text-foreground mt-0.5">{formatValue(displayValue, field.datatype) || '-'}</div>
                                   </div>
                                 );
                               })}
@@ -411,28 +391,11 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
               <div className="sticky bottom-0 bg-background border-t border-border p-4 -mx-4">
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span className="text-xs">
-                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
-                    {filteredCustomers.length}
+                    {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
                   </span>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="h-8 px-3 text-xs"
-                    >
-                      ←
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="h-8 px-3 text-xs"
-                    >
-                      →
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="h-8 px-3 text-xs">←</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="h-8 px-3 text-xs">→</Button>
                   </div>
                 </div>
               </div>
@@ -444,9 +407,7 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <User className="h-5 w-5 sm:h-6 sm:w-6 text-foreground flex-shrink-0" />
-                <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">
-                  PENDING LIST
-                </h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">PENDING LIST</h2>
               </div>
               <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap mt-2 sm:mt-0">
                 <div className="relative flex-1 min-w-[120px] sm:min-w-[200px]">
@@ -463,24 +424,24 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
 
             <Card className="bg-card border-border overflow-hidden shadow-sm">
               <CardContent className="p-0">
-                <div
-                  className="w-full overflow-auto custom-scrollbar"
-                  style={{ maxHeight: 'calc(100vh - 300px)' }}
-                >
+                <div className="w-full overflow-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                   <table className="min-w-max w-full border-collapse">
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-muted">
-                        {udfFields
-                          .filter((f) => f.visible)
-                          .map((field) => (
-                            <th
-                              key={field.fieldid}
-                              className="text-foreground font-medium text-left px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
-                              style={{ minWidth: '120px', width: '150px' }}
-                            >
-                              {field.fieldnames.toUpperCase()}
-                            </th>
-                          ))}
+                        {/* ── Approval Flow Column Header ── */}
+                        <th
+                          className="text-foreground font-medium text-left px-2 sm:px-3 py-1 sm:py-2"
+                          style={{ width: '44px', minWidth: '44px' }}
+                        />
+                        {udfFields.filter((f) => f.visible).map((field) => (
+                          <th
+                            key={field.fieldid}
+                            className="text-foreground font-medium text-left px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
+                            style={{ minWidth: '120px', width: '150px' }}
+                          >
+                            {field.fieldnames.toUpperCase()}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
@@ -490,35 +451,39 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
                           className="border-b border-border hover:bg-muted/50 cursor-pointer"
                           onDoubleClick={() => onEditCustomer(customer)}
                         >
-                          {udfFields
-                            .filter((f) => f.visible)
-                            .map((field) => {
-                              const value = customer[field.fieldid];
-                              // Display-only: resolve maker userid → fullname
-                              const displayValue =
-                                field.fieldid === 'maker' && value
-                                  ? (usersMap[value] || value)
-                                  : value;
-                              const isTruncated = field.truncatecolumn && displayValue;
+                          {/* ── Approval Icon Cell ── */}
+                          <td
+                            className="px-2 sm:px-3 py-1 sm:py-2"
+                            style={{ width: '44px', minWidth: '44px' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ApprovalIcon
+                              customer={customer}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setApprovalCustomer(customer);
+                              }}
+                            />
+                          </td>
 
-                              return (
-                                <td
-                                  key={field.fieldid}
-                                  className="text-foreground px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
-                                  style={{ minWidth: '120px', width: '150px' }}
-                                  onMouseEnter={
-                                    isTruncated
-                                      ? (e) => handleMouseEnter(e, String(displayValue))
-                                      : undefined
-                                  }
-                                  onMouseLeave={isTruncated ? handleMouseLeave : undefined}
-                                >
-                                  {field.truncatecolumn
-                                    ? truncate(displayValue ?? '')
-                                    : displayValue ?? '-'}
-                                </td>
-                              );
-                            })}
+                          {udfFields.filter((f) => f.visible).map((field) => {
+                            const value = customer[field.fieldid];
+                            const displayValue =
+                              field.fieldid === 'maker' && value ? (usersMap[value] || value) : value;
+                            const isTruncated = field.truncatecolumn && displayValue;
+
+                            return (
+                              <td
+                                key={field.fieldid}
+                                className="text-foreground px-2 sm:px-4 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
+                                style={{ minWidth: '120px', width: '150px' }}
+                                onMouseEnter={isTruncated ? (e) => handleMouseEnter(e, String(displayValue)) : undefined}
+                                onMouseLeave={isTruncated ? handleMouseLeave : undefined}
+                              >
+                                {field.truncatecolumn ? truncate(displayValue ?? '') : displayValue ?? '-'}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
@@ -534,26 +499,11 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
               </div>
               <div className="flex items-center space-x-1">
                 <span>
-                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of{' '}
-                  {filteredCustomers.length}
+                  {startIndex + 1}-{Math.min(endIndex, filteredCustomers.length)} of {filteredCustomers.length}
                 </span>
                 <div className="flex items-center space-x-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    ‹
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    ›
-                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>‹</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>›</Button>
                 </div>
               </div>
             </div>
@@ -561,14 +511,12 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
         )}
       </main>
 
-      {/* ── Smart Edge-Aware Tooltip (fixed, never clipped) ── */}
+      {/* ── Smart Edge-Aware Tooltip ── */}
       {tooltip && (
         <div
           className="fixed bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none break-words"
           style={{
-            ...(tooltip.flipUp
-              ? { bottom: window.innerHeight - tooltip.y, top: 'auto' }
-              : { top: tooltip.y, bottom: 'auto' }),
+            ...(tooltip.flipUp ? { bottom: window.innerHeight - tooltip.y, top: 'auto' } : { top: tooltip.y, bottom: 'auto' }),
             left: tooltip.x,
             zIndex: 99999,
             maxWidth: '280px',
@@ -577,6 +525,15 @@ const PendingCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =>
         >
           {tooltip.value}
         </div>
+      )}
+
+      {/* ── Approval Flow Modal ── */}
+      {approvalCustomer && (
+        <ApprovalFlowModal
+          customer={approvalCustomer}
+          usersMap={usersMap}
+          onClose={() => setApprovalCustomer(null)}
+        />
       )}
     </div>
   );

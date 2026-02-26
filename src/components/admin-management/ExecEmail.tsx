@@ -318,7 +318,7 @@ export default function EXECEMAIL() {
                     </tr>
                   ) : (
                     filteredSchemas.map((schema) => (
-                      <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
+                      <tr key={schema.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
                         <td className="px-6 py-4 text-gray-400 whitespace-nowrap text-sm">{schema.company || '-'}</td>
                         <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.userid}</td>
                         <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.email}</td>

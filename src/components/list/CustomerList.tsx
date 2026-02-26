@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, User } from 'lucide-react';
+import { Search, Plus, User, Workflow } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSystemSettings } from '../SystemSettings/SystemSettingsContext';
+import ApprovalFlowModal from '../ApprovalModalFlow';
 
 
 interface Customer {
@@ -35,6 +36,37 @@ type TooltipState = {
   flipUp: boolean;
 } | null;
 
+// ── Approval Flow Trigger Icon ──────────────────────────────────────────────
+const ApprovalIcon: React.FC<{ customer: Customer; onClick: (e: React.MouseEvent) => void }> = ({
+  customer,
+  onClick,
+}) => {
+  const status = (customer.approvestatus || '').toUpperCase();
+  const isApproved = status === 'APPROVED';
+  const isCancelled = status === 'CANCELLED';
+  const isReturned = status === 'RETURN TO MAKER';
+
+  const color = isApproved
+    ? '#22c55e'
+    : isCancelled
+    ? '#ef4444'
+    : isReturned
+    ? '#f59e0b'
+    : 'hsl(var(--primary))';
+
+  return (
+    <button
+      onClick={onClick}
+      title="View Approval Flow"
+      className="inline-flex items-center justify-center w-7 h-7 rounded-md transition-all hover:scale-110 active:scale-95 border flex-shrink-0"
+      style={{ background: `${color}12`, borderColor: `${color}35`, color }}
+    >
+      <Workflow className="w-3.5 h-3.5" />
+    </button>
+  );
+};
+// ───────────────────────────────────────────────────────────────────────────
+
 const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +79,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
   const [activeFilter, setActiveFilter] = useState('All');
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [approvalCustomer, setApprovalCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -190,7 +223,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
         filteredCustomers = filteredCustomers.filter((customer) =>
           customer.maker === userId
         );
-      } 
+      }
 
       const sorted = [...filteredCustomers].sort((a, b) => {
         const aId = parseInt(a['#'] || '0');
@@ -236,7 +269,6 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
     return 'bg-gray-500 text-white';
   };
 
-  // Smart tooltip: detects right-edge AND bottom-edge overflow and flips accordingly
   const handleMouseEnter = (e: React.MouseEvent<HTMLTableCellElement>, value: string) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const tooltipMaxWidth = 280;
@@ -244,11 +276,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
     const spaceOnRight = window.innerWidth - rect.left;
     const spaceBelow = window.innerHeight - rect.bottom;
 
-    // Horizontal: flip left if near right edge
     let x = spaceOnRight < tooltipMaxWidth ? rect.right - tooltipMaxWidth : rect.left;
     x = Math.max(8, x);
 
-    // Vertical: flip above if not enough space below
     const flipUp = spaceBelow < tooltipMaxHeight;
     const y = flipUp ? rect.top - 6 : rect.bottom + 6;
 
@@ -341,8 +371,18 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
                       >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
-                            <div className="text-primary font-semibold text-sm">
-                              {customer.carfno || customer.id}
+                            <div className="flex items-center gap-2">
+                              {/* ── Approval Icon (mobile) ── */}
+                              <ApprovalIcon
+                                customer={customer}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setApprovalCustomer(customer);
+                                }}
+                              />
+                              <div className="text-primary font-semibold text-sm">
+                                {customer.carfno || customer.id}
+                              </div>
                             </div>
                             {customer.requestfor && (
                               <div
@@ -465,6 +505,11 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
                   <table className="min-w-max w-full border-collapse">
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-muted">
+                        {/* ── Approval Flow Column Header ── */}
+                        <th
+                          className="text-foreground font-medium text-left px-2 sm:px-3 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm"
+                          style={{ width: '44px', minWidth: '44px' }}
+                        />
                         {udfFields
                           .filter((f) => f.visible)
                           .map((field) => (
@@ -485,11 +530,25 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
                           className="border-b border-border hover:bg-muted/50 cursor-pointer"
                           onDoubleClick={() => onEditCustomer(customer)}
                         >
+                          {/* ── Approval Flow Icon Cell ── */}
+                          <td
+                            className="px-2 sm:px-3 py-1 sm:py-2"
+                            style={{ width: '44px', minWidth: '44px' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ApprovalIcon
+                              customer={customer}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setApprovalCustomer(customer);
+                              }}
+                            />
+                          </td>
+
                           {udfFields
                             .filter((f) => f.visible)
                             .map((field) => {
                               const value = customer[field.fieldid];
-                              // For display only: resolve maker userid to fullname
                               const displayValue =
                                 field.fieldid === 'maker' && value
                                   ? (usersMap[value] || value)
@@ -554,7 +613,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
         )}
       </main>
 
-      {/* ── Smart Edge-Aware Tooltip (fixed, never clipped) ── */}
+      {/* ── Smart Edge-Aware Tooltip ── */}
       {tooltip && (
         <div
           className="fixed bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none break-words"
@@ -570,6 +629,15 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
         >
           {tooltip.value}
         </div>
+      )}
+
+      {/* ── Approval Flow Modal ── */}
+      {approvalCustomer && (
+        <ApprovalFlowModal
+          customer={approvalCustomer}
+          usersMap={usersMap}
+          onClose={() => setApprovalCustomer(null)}
+        />
       )}
     </div>
   );

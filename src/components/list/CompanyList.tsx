@@ -242,7 +242,7 @@ export default function CompanyList() {
                     </tr>
                   ) : (
                     filteredCompanies.map((c) => (
-                      <tr key={c.id} className="hover:bg-gray-700 transition-colors">
+                      <tr key={c.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(c)}>
                         <td className="px-6 py-4 text-gray-400 text-sm">{c.id}</td>
                         <td className="px-6 py-4 text-gray-200">{c.company}</td>
                         <td className="px-6 py-4 text-gray-200">{c.company_name}</td>

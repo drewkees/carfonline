@@ -309,7 +309,7 @@ export default function CCEMAIL() {
                 </thead>
                 <tbody className="divide-y divide-gray-700">
                   {filteredSchemas.map((schema) => (
-                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
+                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.email}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.customergroup}</td>
                       <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.bc}</td>
