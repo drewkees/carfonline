@@ -265,6 +265,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          avatar_url: string
         }
         Insert: {
           userid: string
@@ -278,6 +279,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          avatar_url: string
         }
         Update: {
           userid?: string
@@ -291,6 +293,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          avatar_url: string
         }
         Relationships: []
       },employees: {

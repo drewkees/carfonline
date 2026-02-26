@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApprovalFlowModalProps {
   customer: any;
@@ -8,10 +9,96 @@ interface ApprovalFlowModalProps {
 
 const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose, usersMap = {} }) => {
   const [visible, setVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ userid: string; fullname?: string; email?: string; avatar_url?: string } | null>(null);
+  const [userLoading, setUserLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [expandedProfile, setExpandedProfile] = useState(false);
+  const [approvalMatrix, setApprovalMatrix] = useState<any>(null);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
+    fetchApprovalMatrix();
   }, []);
+
+  // Fetch approval matrix for this request type and company
+  const fetchApprovalMatrix = async () => {
+    try {
+      const requestFor = customer.custtype || '';
+      const company = customer.company || '';
+      // console.log('Fetching approval matrix for requestFor:', requestFor, 'company:', company);
+
+      let query = supabase
+        .from('approvalmatrix')
+        .select('*')
+        .eq('approvaltype', requestFor);
+      
+      if (company) {
+        query = query.or(`company.eq.${company},company.is.null`);
+      } else {
+        query = query.is('company', null);
+      }
+
+      const { data, error } = await query.limit(1).single();
+      
+      // console.log('Approval matrix result - data:', data, 'error:', error);
+      
+      if (!error && data) {
+        // console.log('Approval matrix found:', data);
+        setApprovalMatrix(data);
+      }
+    } catch (err) {
+      console.log('Approval matrix not found for this request type:', err);
+    }
+  };
+
+  // Fetch user details from Supabase
+  const fetchUserDetails = async (userid: string) => {
+    try {
+      setUserLoading(true);
+      setImageError(false);
+      // Search by userid directly
+      const { data, error } = await supabase
+        .from('users')
+        .select('userid, email, fullname, avatar_url')
+        .eq('userid', userid)
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        let avatarUrl = data.avatar_url;
+        // console.log(avatarUrl);
+        // If avatar_url exists and is not a data URL or full URL, construct it as Supabase storage URL
+        if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith('data:')) {
+          const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(avatarUrl);
+          avatarUrl = publicUrl.publicUrl;
+        }
+        
+        setSelectedUser({
+          userid: data.userid,
+          fullname: data.fullname,
+          email: data.email,
+          avatar_url: avatarUrl,
+        });
+      } else {
+        setSelectedUser({
+          userid: userid,
+          fullname: userid,
+          email: undefined,
+          avatar_url: undefined,
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching user details:', err);
+      setSelectedUser({
+        userid: userid,
+        fullname: userid,
+        email: undefined,
+        avatar_url: undefined,
+      });
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   const handleClose = () => {
     setVisible(false);
@@ -22,12 +109,64 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
   const isApproved = status === 'APPROVED';
   const isCancelled = status === 'CANCELLED';
   const isReturned = status === 'RETURN TO MAKER';
+  const isPending = status === 'PENDING';
+
+  // Helper to parse approver arrays from approval matrix
+  const parseApprovers = (approvers: any): string[] => {
+    if (!approvers) return [];
+    if (Array.isArray(approvers)) return approvers;
+    if (typeof approvers === 'string') {
+      try {
+        const parsed = JSON.parse(approvers);
+        return Array.isArray(parsed) ? parsed : [approvers];
+      } catch {
+        return approvers.split(',').map(a => a.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  };
+
+  // Get approver names (from customer data if they've been assigned, or from approval matrix)
+  const getFirstApprover = () => {
+    if (customer.initialapprover) {
+      // console.log('Using customer.initialapprover:', customer.initialapprover);
+      return customer.initialapprover;
+    }
+    const firstApprovers = parseApprovers(approvalMatrix?.firstapprover);
+    // console.log('Approval matrix firstapprover:', approvalMatrix?.firstapprover, 'parsed:', firstApprovers);
+    return firstApprovers.length > 0 ? firstApprovers[0] : null;
+  };
+
+  const getSecondApprover = () => {
+    if (customer.secondapprover) {
+      // console.log('Using customer.secondapprover:', customer.secondapprover);
+      return customer.secondapprover;
+    }
+    const secondApprovers = parseApprovers(approvalMatrix?.secondapprover);
+    // console.log('Approval matrix secondapprover:', approvalMatrix?.secondapprover, 'parsed:', secondApprovers);
+    return secondApprovers.length > 0 ? secondApprovers[0] : null;
+  };
+
+  const getThirdApprover = () => {
+    if (customer.thirdapprover) {
+      // console.log('Using customer.thirdapprover:', customer.thirdapprover);
+      return customer.thirdapprover;
+    }
+    const thirdApprovers = parseApprovers(approvalMatrix?.thirdapprover);
+    // console.log('Approval matrix thirdapprover:', approvalMatrix?.thirdapprover, 'parsed:', thirdApprovers);
+    return thirdApprovers.length > 0 ? thirdApprovers[0] : null;
+  };
+
+  const firstApproverUserId = getFirstApprover();
+  const secondApproverUserId = getSecondApprover();
+  const thirdApproverUserId = getThirdApprover();
 
   const steps = [
     {
       key: 'maker',
       label: 'Request Created',
       role: 'Maker',
+      userid: customer.maker,
       person: usersMap[customer.maker] || customer.maker || '—',
       date: customer.datecreated || null,
       done: true,
@@ -37,28 +176,31 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
       key: 'firstapprover',
       label: 'Initial Review',
       role: '1st Approver',
-      person: customer.firstapprovername || usersMap[customer.initialapprover] || customer.initialapprover || '—',
+      userid: firstApproverUserId,
+      person: customer.firstapprovername || usersMap[firstApproverUserId] || firstApproverUserId || '—',
       date: customer.initialapprovedate || null,
-      done: !!(customer.initialapprover && customer.initialapprovedate),
-      active: !!(customer.initialapprover && !customer.secondapproverdate && status === 'PENDING'),
+      done: !!(firstApproverUserId && customer.initialapprovedate),
+      active: !!(firstApproverUserId && !customer.initialapprovedate && isPending),
     },
     {
       key: 'secondapprover',
       label: 'Secondary Review',
       role: '2nd Approver',
-      person: customer.secondapprovername || usersMap[customer.secondapprover] || customer.secondapprover || '—',
+      userid: secondApproverUserId,
+      person: customer.secondapprovername || usersMap[secondApproverUserId] || secondApproverUserId || '—',
       date: customer.secondapproverdate || null,
-      done: !!(customer.secondapprover && customer.secondapproverdate),
-      active: !!(customer.initialapprovedate && !customer.secondapproverdate && status === 'PENDING'),
+      done: !!(secondApproverUserId && customer.secondapproverdate),
+      active: !!(customer.initialapprovedate && !customer.secondapproverdate && isPending && secondApproverUserId),
     },
     {
       key: 'thirdapprover',
       label: 'Final Approval',
       role: '3rd Approver',
-      person: customer.finalapprovername || usersMap[customer.thirdapprover] || customer.thirdapprover || '—',
+      userid: thirdApproverUserId,
+      person: customer.finalapprovername || usersMap[thirdApproverUserId] || thirdApproverUserId || '—',
       date: customer.thirdapproverdate || null,
-      done: !!(customer.thirdapprover && customer.thirdapproverdate) || isApproved,
-      active: !!(customer.secondapproverdate && !customer.thirdapproverdate && status === 'PENDING'),
+      done: !!(thirdApproverUserId && customer.thirdapproverdate) || isApproved,
+      active: !!(customer.secondapproverdate && !customer.thirdapproverdate && isPending && thirdApproverUserId),
     },
   ];
 
@@ -331,6 +473,109 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
         .afm-remarks-txt {
           font-size: 14px; color: hsl(var(--foreground)); line-height: 1.6;
         }
+
+        /* User Modal */
+        .user-modal-overlay {
+          position: fixed; inset: 0; z-index: 999999;
+          background: rgba(0,0,0,0.5);
+          display: flex; align-items: center; justify-content: center;
+          padding: 16px;
+          opacity: 0; transition: opacity 0.2s ease;
+        }
+        .user-modal-overlay.visible { opacity: 1; }
+
+        .user-modal-panel {
+          background: hsl(var(--background));
+          border: 1px solid hsl(var(--border));
+          border-radius: 12px;
+          width: 100%;
+          max-width: 400px;
+          padding: 32px;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+          transform: scale(0.9);
+          transition: transform 0.2s ease;
+        }
+        .user-modal-overlay.visible .user-modal-panel {
+          transform: scale(1);
+        }
+
+        .user-modal-icon {
+          width: 80px; height: 80px; border-radius: 50%;
+          background: hsl(var(--primary) / 0.1);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 36px; margin: 0 auto 20px;
+          overflow: hidden;
+        }
+
+        .user-modal-icon img {
+          width: 100%; height: 100%; object-fit: cover;
+          border-radius: 50%;
+        }
+
+        .user-modal-title {
+          font-size: 18px; font-weight: 700; color: hsl(var(--foreground));
+          margin-bottom: 4px; text-align: center;
+        }
+
+        .user-modal-subtitle {
+          font-size: 13px; color: hsl(var(--muted-foreground));
+          margin-bottom: 20px; text-align: center;
+        }
+
+        .user-modal-field {
+          margin-bottom: 16px;
+        }
+
+        .user-modal-label {
+          font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+          color: hsl(var(--muted-foreground)); margin-bottom: 6px;
+        }
+
+        .user-modal-value {
+          font-size: 14px; color: hsl(var(--foreground));
+          word-break: break-all;
+        }
+
+        .user-modal-value a {
+          color: hsl(var(--primary));
+          text-decoration: none;
+          transition: opacity 0.15s;
+        }
+
+        .user-modal-value a:hover {
+          opacity: 0.8;
+          text-decoration: underline;
+        }
+
+        .user-modal-close {
+          width: 100%; padding: 10px;
+          background: hsl(var(--muted));
+          border: 1px solid hsl(var(--border));
+          border-radius: 6px;
+          color: hsl(var(--foreground));
+          font-weight: 500; cursor: pointer;
+          transition: background 0.15s;
+          margin-top: 20px;
+        }
+        .user-modal-close:hover {
+          background: hsl(var(--muted) / 0.8);
+        }
+
+        /* Clickable username */
+        .user-name-link {
+          cursor: pointer;
+          color: hsl(var(--primary));
+          text-decoration: none;
+          border: none;
+          background: none;
+          padding: 0;
+          font: inherit;
+          transition: opacity 0.15s;
+        }
+        .user-name-link:hover {
+          opacity: 0.8;
+          text-decoration: underline;
+        }
       `}</style>
 
       <div className={`afm-overlay ${visible ? 'visible' : ''}`} onClick={handleClose}>
@@ -379,7 +624,16 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
               <div className="afm-summary-card">
                 <div className="afm-summary-lbl">Maker</div>
                 <div className="afm-summary-val">
-                  {usersMap[customer.maker] || customer.maker || '—'}
+                  <button
+                    className="user-name-link"
+                    onClick={() => {
+                      if (customer.maker && customer.maker !== '—') {
+                        fetchUserDetails(customer.maker);
+                      }
+                    }}
+                  >
+                    {usersMap[customer.maker] || customer.maker || '—'}
+                  </button>
                 </div>
               </div>
               <div className="afm-summary-card">
@@ -427,10 +681,21 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
                         <div className="afm-node-hr" />
                         <div className={`afm-step-person ${isEmpty && !step.active ? 'empty' : ''}`}>
                           {step.person !== '—'
-                            ? step.person
-                            : step.active
-                            ? 'Awaiting approval'
-                            : 'Not assigned'}
+                            ? (
+                              <button
+                                className="user-name-link"
+                                onClick={() => {
+                                  if (step.userid && step.userid !== '—') {
+                                    fetchUserDetails(step.userid);
+                                  }
+                                }}
+                              >
+                                {step.person}
+                              </button>
+                            )
+                            : (step.active
+                              ? 'Awaiting approval'
+                              : 'Not assigned')}
                         </div>
                         {step.date && (
                           <div className="afm-step-date">{step.date}</div>
@@ -516,6 +781,160 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
           </div>
         </div>
       </div>
+
+      {/* User Details Modal */}
+      {selectedUser && !expandedProfile && (
+        <div 
+          className={`user-modal-overlay ${selectedUser ? 'visible' : ''}`}
+          onClick={() => {
+            setSelectedUser(null);
+            setImageError(false);
+          }}
+        >
+          <div 
+            className="user-modal-panel" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div 
+              className="user-modal-icon cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setExpandedProfile(true)}
+              title="Click to expand"
+            >
+              {selectedUser.avatar_url && !imageError ? (
+                <img 
+                  src={selectedUser.avatar_url} 
+                  alt={selectedUser.fullname || selectedUser.userid}
+                  onError={() => {
+                    console.log('Image failed to load:', selectedUser.avatar_url);
+                    setImageError(true);
+                  }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                '👤'
+              )}
+            </div>
+
+            <div className="user-modal-title">
+              {selectedUser.fullname || selectedUser.userid}
+            </div>
+
+            {selectedUser.email && (
+              <div className="user-modal-field">
+                <div className="user-modal-label">Email</div>
+                <div className="user-modal-value">
+                  <a href={`mailto:${selectedUser.email}`}>
+                    {selectedUser.email}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <button 
+              className="user-modal-close"
+              onClick={() => {
+                setSelectedUser(null);
+                setImageError(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Avatar View */}
+      {selectedUser && expandedProfile && (
+        <div 
+          className={`user-modal-overlay ${expandedProfile ? 'visible' : ''}`}
+          onClick={() => setExpandedProfile(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            background: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vh',
+              maxHeight: '90vh',
+              animation: 'expandSlideIn 0.3s ease forwards',
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setExpandedProfile(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: 'none',
+                color: 'white',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)'}
+            >
+              ✕
+            </button>
+
+            {/* Large Avatar Image */}
+            <div 
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                backgroundColor: 'hsl(var(--card))',
+              }}
+            >
+              {selectedUser.avatar_url && !imageError ? (
+                <img 
+                  src={selectedUser.avatar_url} 
+                  alt={selectedUser.fullname || selectedUser.userid}
+                  onError={() => setImageError(true)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    maxWidth: '90vh',
+                    maxHeight: '90vh',
+                  }}
+                />
+              ) : (
+                <div style={{
+                  fontSize: '200px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  👤
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

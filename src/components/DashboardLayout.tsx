@@ -31,6 +31,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import CompanyList from './list/CompanyList';
+import ProfilePage from './uploading/ProfilePage';
+
 interface DashboardLayoutProps {
   userEmail: string;
   userId: string | null;
@@ -50,6 +52,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   const [hasAuthorization, setHasAuthorization] = useState<boolean>(true);
   const [userGroup, setUserGroup] = useState<string>('');
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const isMobile = () => {
     return window.innerWidth < 768;
@@ -73,18 +77,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
       
       const { data, error } = await supabase
         .from('users')
-        .select('usergroup')
+        .select('usergroup, avatar_url')
         .eq('email', userEmail)
         .single();
 
       if (!error && data) {
         setUserGroup(data.usergroup || '');
+        setAvatarUrl((data as any).avatar_url || null);
       }
     };
 
     fetchUserGroup();
   }, [userEmail]);
 
+  // Re-fetch avatar when returning from ProfilePage so header updates immediately
+  const handleProfileBack = async () => {
+    setShowProfile(false);
+    if (!userEmail) return;
+    const { data } = await supabase
+      .from('users')
+      .select('avatar_url')
+      .eq('email', userEmail)
+      .single();
+    if (data) setAvatarUrl((data as any).avatar_url || null);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -104,13 +120,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
 
   // ✅ Prevent body scroll on mobile - force fixed viewport
   useEffect(() => {
-    // Prevent default scroll on body
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
     
-    // Set viewport height CSS variable for mobile
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -210,6 +224,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   );
 
   const renderContent = () => {
+    // ── Profile page ──────────────────────────────────────────────────────────
+    if (showProfile) {
+      return (
+        <ProfilePage
+          userEmail={userEmail}
+          onBack={handleProfileBack}
+          onLogout={onLogout}
+        />
+      );
+    }
+
     if (showSubmitTicketForm) {
       return <SubmitTicketForm onBack={handleBackToCustomerList} onSuccess={handleBackToCustomerList} />;
     }
@@ -341,6 +366,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                 setActiveTab('customer-list');
                 setShowNewCustomerForm(false);
                 setShowSubmitTicketForm(false);
+                setShowProfile(false);
                 setEditingCustomer(null);
               }}
               className="text-sm md:text-lg lg:text-xl font-semibold text-foreground cursor-pointer hover:opacity-80 transition truncate"
@@ -488,17 +514,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                 onClick={() => setShowUserMenu((prev) => !prev)}
                 className="flex items-center space-x-2 p-1 md:p-2 rounded-full hover:bg-muted transition-colors"
               >
-                <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-r from-indigo-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {userEmail?.charAt(0).toUpperCase() || 'U'}
+                {/* Avatar — shows photo if set, otherwise gradient + initial */}
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden bg-gradient-to-r from-indigo-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    userEmail?.charAt(0).toUpperCase() || 'U'
+                  )}
                 </div>
               </button>
 
               {/* Dropdown Menu */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted w-full text-left">
+                  {/* Profile — opens ProfilePage */}
+                  <button
+                    onClick={() => {
+                      setShowProfile(true);
+                      setShowUserMenu(false);
+                      setShowNewCustomerForm(false);
+                      setShowSubmitTicketForm(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted w-full text-left"
+                  >
                     <User className="h-4 w-4" /> Profile
                   </button>
+
                   <button
                     onClick={() => {
                       setActiveTab('message');
@@ -508,6 +549,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                   >
                     <MessageSquare className="h-4 w-4" /> Messages
                   </button>
+
                   {userGroup === 'sysadmin' && (
                     <button
                       onClick={() => {
@@ -537,10 +579,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         </header>
 
         {/* Content */}
-        <main
-          className="flex-1 bg-background overflow-hidden min-h-0"
-        >
-          <div className="h-full p-3 md:p-4 lg:p-6">{renderContent()}</div>
+        <main className="flex-1 bg-background overflow-hidden min-h-0">
+          {/* make this a flex column with min-h-0 so children using flex-1 (like Message) can stretch */}
+          <div className="h-full p-3 md:p-4 lg:p-6 flex flex-col min-h-0">{renderContent()}</div>
         </main>
 
         {/* Footer */}

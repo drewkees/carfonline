@@ -373,13 +373,15 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
                               {/* ── Approval Icon (mobile) ── */}
-                              <ApprovalIcon
-                                customer={customer}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setApprovalCustomer(customer);
-                                }}
-                              />
+                              {customer.approvestatus && (
+                                <ApprovalIcon
+                                  customer={customer}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setApprovalCustomer(customer);
+                                  }}
+                                />
+                              )}
                               <div className="text-primary font-semibold text-sm">
                                 {customer.carfno || customer.id}
                               </div>
@@ -536,13 +538,15 @@ const CustomerList: React.FC<CustomerListProps> = ({ userId, onNewCustomer, onEd
                             style={{ width: '44px', minWidth: '44px' }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <ApprovalIcon
-                              customer={customer}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setApprovalCustomer(customer);
-                              }}
-                            />
+                            {customer.approvestatus && (
+                              <ApprovalIcon
+                                customer={customer}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setApprovalCustomer(customer);
+                                }}
+                              />
+                            )}
                           </td>
 
                           {udfFields
