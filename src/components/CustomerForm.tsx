@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import SupportingDocumentsDialog from '@/components/uploading/SupportingDocumentsDialog';
 import { useSystemSettings } from './SystemSettings/SystemSettingsContext';
@@ -7,9 +7,11 @@ import { CustomerFormData } from '@/hooks/useCustomerForm';
 import Loader from './ui/loader';
 import { formatTIN, formatNumberWithCommas } from '@/utils/formobjs';
 import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import ConfirmationDialog from '@/pages/ConfirmationDialog';
 import PrintableCustomerForm from './PrintableCustomerForm';
 import { VirtualizedMenuList } from '@/components/VirtualizedMenuList';
+import { supabase } from '@/integrations/supabase/client';
 
 
 interface CustomerFormProps {
@@ -17,6 +19,15 @@ interface CustomerFormProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   initialData?: any | null;
+}
+
+interface SalesAgentRow {
+  id: number;
+  customername: string;
+  email_address: string;
+  position: string | null;
+  cellphoneno: string | null;
+  company: string | null;
 }
 
 const CustomerForm: React.FC<CustomerFormProps> = ({ 
@@ -67,7 +78,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     cancelForm,
     fetchMakerNameByUserId,
     returntomakerForm,
-    returnForm
+    returnForm,
+    getUserCompany
   } = useCustomerForm(initialData, dialogVisible, onClose);
 
   const [isDraftLoading, setIsDraftLoading] = useState(false);
@@ -89,12 +101,135 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   });
 // alert(userPermissions.isApprover);
   const [isReturnLoading, setIsReturnLoading] = useState(false);
+  const [salesAgents, setSalesAgents] = useState<SalesAgentRow[]>([]);
+  const [userCompany, setUserCompany] = useState('');
+  const [matchedSalesAgent, setMatchedSalesAgent] = useState<SalesAgentRow | null>(null);
+  const [isSavingSalesAgent, setIsSavingSalesAgent] = useState(false);
+  const formScrollRef = useRef<HTMLDivElement | null>(null);
 
   const isApproved = 
     formData.approvestatus === "APPROVED" || 
     (formData.approvestatus === "PENDING" && !userPermissions.hasEditAccess);
+  const currentUserId = ((window as any).getGlobal?.('userid') || '').toString();
+  const isMaker = !!currentUserId && (formData.maker || '').toString() === currentUserId;
+  const canSubmit = isMaker;
 
   const isSoldToParty = formData.ismother.includes('SOLD TO PARTY');
+  const normalizeText = (value?: string | null) => (value || '').trim().toLowerCase();
+  const salesAgentOptions = salesAgents
+    .map((agent) => ({
+      value: agent.customername,
+      label: agent.customername,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const selectedCustomerOption = formData.contactperson
+    ? salesAgentOptions.find((opt) => normalizeText(opt.value) === normalizeText(formData.contactperson)) || {
+        value: formData.contactperson,
+        label: formData.contactperson,
+      }
+    : null;
+
+  useEffect(() => {
+    const fetchSalesAgentsByCompany = async () => {
+      if (!dialogVisible) return;
+
+      const userid = (window as any).getGlobal?.('userid');
+      const companyFromGlobal = (window as any).getGlobal?.('company') || '';
+      const resolvedCompany = companyFromGlobal || (userid ? await getUserCompany(userid) : '');
+      setUserCompany(resolvedCompany || '');
+
+      let query = supabase
+        .from('sales_agent')
+        .select('id, customername, email_address, position, cellphoneno, company')
+        .order('customername', { ascending: true });
+
+      if (resolvedCompany) {
+        query = query.eq('company', resolvedCompany);
+      }
+
+      const { data, error } = await query;
+      if (!error) setSalesAgents(data || []);
+    };
+
+    fetchSalesAgentsByCompany();
+  }, [dialogVisible]);
+
+  useEffect(() => {
+    const customerName = formData.contactperson?.trim() || '';
+    if (!customerName) {
+      setMatchedSalesAgent(null);
+      if (formData.email) handleInputChange('email', '');
+      if (formData.position) handleInputChange('position', '');
+      if (formData.contactnumber) handleInputChange('contactnumber', '');
+      return;
+    }
+
+    const matched = salesAgents.find(
+      (agent) => normalizeText(agent.customername) === normalizeText(formData.contactperson)
+    ) || null;
+
+    setMatchedSalesAgent(matched);
+
+    if (!matched) return;
+
+    if (formData.email !== (matched.email_address || '')) {
+      handleInputChange('email', matched.email_address || '');
+    }
+    if (formData.position !== (matched.position || '')) {
+      handleInputChange('position', matched.position || '');
+    }
+    if (formData.contactnumber !== (matched.cellphoneno || '')) {
+      handleInputChange('contactnumber', matched.cellphoneno || '');
+    }
+  }, [formData.contactperson, salesAgents]);
+
+  const isKnownSalesAgent = !!matchedSalesAgent;
+  const isCustomerNameEmpty = !(formData.contactperson || '').trim();
+  const isRequestedByFieldsDisabled = isApproved || isKnownSalesAgent || isCustomerNameEmpty;
+
+  const handleAddSalesAgent = async () => {
+    const customername = formData.contactperson.trim();
+    const email_address = formData.email.trim();
+
+    if (!customername) {
+      alert('Please enter Customer Name first.');
+      return;
+    }
+    if (!email_address) {
+      alert('Please enter Email Address first.');
+      return;
+    }
+    if (!userCompany) {
+      alert('Unable to determine your company. Please contact admin.');
+      return;
+    }
+
+    setIsSavingSalesAgent(true);
+    try {
+      const payload = {
+        customername,
+        email_address,
+        position: formData.position?.trim() || null,
+        cellphoneno: formData.contactnumber?.trim() || null,
+        company: userCompany,
+      };
+
+      const { data, error } = await supabase.from('sales_agent').insert([payload]).select();
+      if (error) throw error;
+
+      if (data && data[0]) {
+        setSalesAgents((prev) => [...prev, data[0] as SalesAgentRow]);
+        setMatchedSalesAgent(data[0] as SalesAgentRow);
+      }
+
+      alert('Sales agent added successfully.');
+    } catch (err: any) {
+      alert(`Failed to add sales agent: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setIsSavingSalesAgent(false);
+    }
+  };
 
   // ─── Auto-fill: CORPORATION + SOLD TO PARTY ───────────────────────────────
   // soldtoparty → shiptoparty | billaddress → deladdress
@@ -122,6 +257,26 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       }));
     }
   }, [formData.lastname, formData.firstname, formData.middlename, formData.billaddress, formData.type, formData.ismother]);
+
+  useEffect(() => {
+    if (!dialogVisible || invalidFields.length === 0) return;
+
+    requestAnimationFrame(() => {
+      const root = formScrollRef.current;
+      if (!root) return;
+
+      const firstError = root.querySelector('.error-border') as HTMLElement | null;
+      if (!firstError) return;
+
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+      const focusTarget = firstError.matches('input, select, textarea')
+        ? firstError
+        : (firstError.querySelector('input, select, textarea') as HTMLElement | null);
+
+      focusTarget?.focus({ preventScroll: true });
+    });
+  }, [invalidFields, dialogVisible]);
 
   const handlePrintClick = () => {
     setShowPrintView(true);
@@ -285,7 +440,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-2 md:p-8">
-      <div className="no-scrollbar bg-gray-100 text-black w-full max-w-[95vw] md:max-w-[75vw] rounded-lg shadow-lg overflow-y-scroll max-h-[95vh] md:max-h-[92vh] p-4 md:p-20 m-2 md:m-4">
+      <div ref={formScrollRef} className="carf-customer-form no-scrollbar bg-gray-100 text-black w-full max-w-[95vw] md:max-w-[75vw] rounded-lg shadow-lg overflow-y-scroll max-h-[95vh] md:max-h-[92vh] p-4 md:p-20 m-2 md:m-4">
         {/* Header */}
         <div className="flex justify-between items-center pb-2 mb-4">
           <h2 className="text-lg md:text-xl font-bold">📄 CUSTOMER ACTIVATION REQUEST FORM</h2>
@@ -870,13 +1025,43 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4">
               <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
                 <strong className="whitespace-nowrap mb-1 md:mb-0 text-sm md:text-base">Customer Name:</strong>
-                <input
-                  type="text"
-                  value={formData.contactperson}
-                  onChange={(e) => handleInputChange('contactperson', e.target.value)}
-                  disabled={isApproved}
-                  className={`flex-1 rounded-lg border border-gray-300 ${isApproved ? "bg-gray-200" : "bg-white"} px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm ${invalidFields.includes('contactperson') ? 'error-border' : ''}`}
+                <div className="flex-1">
+                <CreatableSelect
+                  value={selectedCustomerOption}
+                  options={salesAgentOptions}
+                  placeholder="Select or type customer name"
+                  isDisabled={isApproved}
+                  isClearable
+                  openMenuOnFocus
+                  openMenuOnClick
+                  onChange={(option) => handleInputChange('contactperson', option?.value || '')}
+                  onCreateOption={(inputValue) => handleInputChange('contactperson', inputValue)}
+                  onInputChange={(inputValue, meta) => {
+                    if (meta.action === 'input-change') {
+                      handleInputChange('contactperson', inputValue);
+                    }
+                    return inputValue;
+                  }}
+                  components={{ MenuList: VirtualizedMenuList }}
+                  styles={{
+                    control: (base, state) => ({
+                      ...base,
+                      minHeight: 42,
+                      borderRadius: 8,
+                      borderColor: invalidFields.includes('contactperson')
+                        ? '#ef4444'
+                        : state.isFocused
+                        ? '#3b82f6'
+                        : '#d1d5db',
+                      boxShadow: state.isFocused ? '0 0 0 2px rgba(59,130,246,0.25)' : 'none',
+                      backgroundColor: isApproved ? '#e5e7eb' : '#ffffff',
+                    }),
+                    valueContainer: (base) => ({ ...base, padding: '0 12px' }),
+                    menu: (base) => ({ ...base, zIndex: 20 }),
+                  }}
+                  className="text-sm md:text-base text-gray-900"
                 />
+                </div>
               </div>
               <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
                 <strong className="whitespace-nowrap mb-1 md:mb-0 text-sm md:text-base">Email Address:</strong>
@@ -885,7 +1070,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                   placeholder="email@example.com or N/A"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  disabled={isApproved}
+                  disabled={isRequestedByFieldsDisabled}
                   className={`md:w-[600px] rounded-lg border border-gray-300 ${isApproved ? "bg-gray-200" : "bg-white"} px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm ${invalidFields.includes('email') ? 'error-border' : ''}`}
                 />
                 {invalidFields.includes('email') && (
@@ -903,7 +1088,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                   type="text"
                   value={formData.position}
                   onChange={(e) => handleInputChange('position', e.target.value)}
-                  disabled={isApproved}
+                  disabled={isRequestedByFieldsDisabled}
                   className={`md:w-[600px] rounded-lg border border-gray-300 ${isApproved ? "bg-gray-200" : "bg-white"} px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm ${invalidFields.includes('position') ? 'error-border' : ''}`}
                 />
               </div>
@@ -913,11 +1098,31 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                   type="number"
                   value={formData.contactnumber}
                   onChange={(e) => handleInputChange('contactnumber', e.target.value)}
-                  disabled={isApproved}
+                  disabled={isRequestedByFieldsDisabled}
                   className={`md:w-[500px] rounded-lg border border-gray-300 ${isApproved ? "bg-gray-200" : "bg-white"} px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition-all duration-200 shadow-sm ${invalidFields.includes('contactnumber') ? 'error-border' : ''}`}
                 />
               </div>
             </div>
+
+            {!isApproved && formData.contactperson.trim() && !isKnownSalesAgent && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={handleAddSalesAgent}
+                  disabled={isSavingSalesAgent}
+                  className={`px-4 py-2 rounded text-sm font-medium text-white ${
+                    isSavingSalesAgent ? 'bg-gray-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                >
+                  {isSavingSalesAgent ? 'Saving...' : 'Add this contact to Sales Agent database'}
+                </button>
+                {userCompany && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Company: {userCompany}
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="mt-4">
               <strong className="text-sm md:text-base">Supporting Documents:</strong>
@@ -1732,15 +1937,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                       {isCancelLoading && <Spinner />}
                       {isCancelLoading ? 'Cancelling...' : 'Cancel'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleSubmitClick}
-                      disabled={isSubmitLoading}
-                      className="px-4 md:px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
-                    >
-                      {isSubmitLoading && <Spinner />}
-                      {isSubmitLoading ? 'Submitting...' : 'Submit'}
-                    </button>
+                    {canSubmit && (
+                      <button
+                        type="button"
+                        onClick={handleSubmitClick}
+                        disabled={isSubmitLoading}
+                        className="px-4 md:px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
+                      >
+                        {isSubmitLoading && <Spinner />}
+                        {isSubmitLoading ? 'Submitting...' : 'Submit'}
+                      </button>
+                    )}
                   </>
                 )}
                 {!isEditMode && (
@@ -1825,15 +2032,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                   {isCancelLoading && <Spinner />}
                   {isCancelLoading ? 'Cancelling...' : 'Cancel'}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitClick}
-                  disabled={isSubmitLoading}
-                  className="px-4 md:px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
-                >
-                  {isSubmitLoading && <Spinner />}
-                  {isSubmitLoading ? 'Submitting...' : 'Submit'}
-                </button>
+                {canSubmit && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitClick}
+                    disabled={isSubmitLoading}
+                    className="px-4 md:px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
+                  >
+                    {isSubmitLoading && <Spinner />}
+                    {isSubmitLoading ? 'Submitting...' : 'Submit'}
+                  </button>
+                )}
                 <button type="button" onClick={onClose} className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base">
                   Close
                 </button>

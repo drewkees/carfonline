@@ -127,47 +127,39 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
   };
 
   // Get approver names (from customer data if they've been assigned, or from approval matrix)
-  const getFirstApprover = () => {
+  const getFirstApprovers = () => {
     if (customer.initialapprover) {
-      // console.log('Using customer.initialapprover:', customer.initialapprover);
-      return customer.initialapprover;
+      return parseApprovers(customer.initialapprover);
     }
-    const firstApprovers = parseApprovers(approvalMatrix?.firstapprover);
-    // console.log('Approval matrix firstapprover:', approvalMatrix?.firstapprover, 'parsed:', firstApprovers);
-    return firstApprovers.length > 0 ? firstApprovers[0] : null;
+    return parseApprovers(approvalMatrix?.firstapprover);
   };
 
-  const getSecondApprover = () => {
+  const getSecondApprovers = () => {
     if (customer.secondapprover) {
-      // console.log('Using customer.secondapprover:', customer.secondapprover);
-      return customer.secondapprover;
+      return parseApprovers(customer.secondapprover);
     }
-    const secondApprovers = parseApprovers(approvalMatrix?.secondapprover);
-    // console.log('Approval matrix secondapprover:', approvalMatrix?.secondapprover, 'parsed:', secondApprovers);
-    return secondApprovers.length > 0 ? secondApprovers[0] : null;
+    return parseApprovers(approvalMatrix?.secondapprover);
   };
 
-  const getThirdApprover = () => {
+  const getThirdApprovers = () => {
     if (customer.thirdapprover) {
-      // console.log('Using customer.thirdapprover:', customer.thirdapprover);
-      return customer.thirdapprover;
+      return parseApprovers(customer.thirdapprover);
     }
-    const thirdApprovers = parseApprovers(approvalMatrix?.thirdapprover);
-    // console.log('Approval matrix thirdapprover:', approvalMatrix?.thirdapprover, 'parsed:', thirdApprovers);
-    return thirdApprovers.length > 0 ? thirdApprovers[0] : null;
+    return parseApprovers(approvalMatrix?.thirdapprover);
   };
 
-  const firstApproverUserId = getFirstApprover();
-  const secondApproverUserId = getSecondApprover();
-  const thirdApproverUserId = getThirdApprover();
+  const firstApproverUserIds = getFirstApprovers();
+  const secondApproverUserIds = getSecondApprovers();
+  const thirdApproverUserIds = getThirdApprovers();
 
   const steps = [
     {
       key: 'maker',
       label: 'Request Created',
       role: 'Maker',
-      userid: customer.maker,
-      person: usersMap[customer.maker] || customer.maker || '—',
+      assignees: customer.maker
+        ? [{ userid: customer.maker, person: usersMap[customer.maker] || customer.maker }]
+        : [],
       date: customer.datecreated || null,
       done: true,
       active: false,
@@ -176,34 +168,45 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
       key: 'firstapprover',
       label: 'Initial Review',
       role: '1st Approver',
-      userid: firstApproverUserId,
-      person: customer.firstapprovername || usersMap[firstApproverUserId] || firstApproverUserId || '—',
+      assignees: customer.firstapprovername && firstApproverUserIds.length <= 1
+        ? [{ userid: firstApproverUserIds[0], person: customer.firstapprovername }]
+        : firstApproverUserIds.map((userid: string) => ({
+            userid,
+            person: usersMap[userid] || userid,
+          })),
       date: customer.initialapprovedate || null,
-      done: !!(firstApproverUserId && customer.initialapprovedate),
-      active: !!(firstApproverUserId && !customer.initialapprovedate && isPending),
+      done: !!(firstApproverUserIds.length && customer.initialapprovedate),
+      active: !!(firstApproverUserIds.length && !customer.initialapprovedate && isPending),
     },
     {
       key: 'secondapprover',
       label: 'Secondary Review',
       role: '2nd Approver',
-      userid: secondApproverUserId,
-      person: customer.secondapprovername || usersMap[secondApproverUserId] || secondApproverUserId || '—',
+      assignees: customer.secondapprovername && secondApproverUserIds.length <= 1
+        ? [{ userid: secondApproverUserIds[0], person: customer.secondapprovername }]
+        : secondApproverUserIds.map((userid: string) => ({
+            userid,
+            person: usersMap[userid] || userid,
+          })),
       date: customer.secondapproverdate || null,
-      done: !!(secondApproverUserId && customer.secondapproverdate),
-      active: !!(customer.initialapprovedate && !customer.secondapproverdate && isPending && secondApproverUserId),
+      done: !!(secondApproverUserIds.length && customer.secondapproverdate),
+      active: !!(customer.initialapprovedate && !customer.secondapproverdate && isPending && secondApproverUserIds.length),
     },
     {
       key: 'thirdapprover',
       label: 'Final Approval',
       role: '3rd Approver',
-      userid: thirdApproverUserId,
-      person: customer.finalapprovername || usersMap[thirdApproverUserId] || thirdApproverUserId || '—',
+      assignees: customer.finalapprovername && thirdApproverUserIds.length <= 1
+        ? [{ userid: thirdApproverUserIds[0], person: customer.finalapprovername }]
+        : thirdApproverUserIds.map((userid: string) => ({
+            userid,
+            person: usersMap[userid] || userid,
+          })),
       date: customer.thirdapproverdate || null,
-      done: !!(thirdApproverUserId && customer.thirdapproverdate) || isApproved,
-      active: !!(customer.secondapproverdate && !customer.thirdapproverdate && isPending && thirdApproverUserId),
+      done: !!(thirdApproverUserIds.length && customer.thirdapproverdate) || isApproved,
+      active: !!(customer.secondapproverdate && !customer.thirdapproverdate && isPending && thirdApproverUserIds.length),
     },
   ];
-
   const statusLabel = isApproved ? 'Approved' : isCancelled ? 'Cancelled' : isReturned ? 'Returned' : 'Pending';
   const statusCls = isApproved
     ? 'bg-green-500 text-white'
@@ -397,7 +400,9 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
 
         .afm-step-person {
           font-size: 14px; font-weight: 600; color: hsl(var(--foreground));
-          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          overflow: visible; text-overflow: unset; white-space: normal;
+          word-break: break-word;
+          line-height: 1.35;
           margin-bottom: 3px;
         }
         .afm-step-person.empty {
@@ -576,6 +581,124 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
           opacity: 0.8;
           text-decoration: underline;
         }
+
+        @media (max-width: 768px) {
+          .afm-overlay {
+            padding: 8px;
+          }
+
+          .afm-panel {
+            max-height: 96vh;
+            border-radius: 10px;
+          }
+
+          .afm-header {
+            padding: 14px 14px 12px;
+          }
+
+          .afm-title {
+            font-size: 16px;
+          }
+
+          .afm-tags {
+            gap: 6px;
+            margin-top: 10px;
+          }
+
+          .afm-tag-muted {
+            font-size: 11px;
+            padding: 2px 8px;
+          }
+
+          .afm-body {
+            padding: 14px;
+          }
+
+          .afm-summary {
+            grid-template-columns: 1fr;
+            margin-bottom: 18px;
+          }
+
+          .afm-divider-row {
+            margin-bottom: 14px;
+          }
+
+          .afm-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-x: visible;
+            padding-bottom: 0;
+          }
+
+          .afm-step-unit {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            animation: none;
+            opacity: 1;
+          }
+
+          .afm-node {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+          }
+
+          .afm-arrow {
+            width: 100%;
+            height: 18px;
+          }
+
+          .afm-arrow svg {
+            transform: rotate(90deg);
+          }
+
+          .afm-step-title {
+            font-size: 14px;
+          }
+
+          .afm-step-role,
+          .afm-step-date,
+          .afm-step-person {
+            font-size: 12px;
+          }
+
+          .afm-status-chip {
+            font-size: 11px;
+            padding: 4px 8px;
+          }
+
+          .afm-outcome {
+            margin-top: 16px;
+            padding: 12px 14px;
+          }
+
+          .afm-outcome-icon {
+            font-size: 18px;
+          }
+
+          .afm-outcome-title {
+            font-size: 13px;
+          }
+
+          .afm-outcome-sub {
+            font-size: 12px;
+          }
+
+          .afm-remarks {
+            margin-top: 12px;
+            padding: 10px 12px;
+          }
+
+          .afm-remarks-txt {
+            font-size: 13px;
+          }
+
+          .user-modal-panel {
+            padding: 18px;
+          }
+        }
       `}</style>
 
       <div className={`afm-overlay ${visible ? 'visible' : ''}`} onClick={handleClose}>
@@ -586,7 +709,7 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
             <div className="afm-header-row">
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="afm-record-id">
-                  Approval Workflow &nbsp;/&nbsp; {customer.carfno || `Record #${customer['#'] || customer.id}`}
+                  Approval Workflow
                 </div>
                 <div className="afm-title">
                   {(() => {
@@ -668,7 +791,7 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
                   : step.active ? 'active'
                   : 'waiting';
 
-                const isEmpty = step.person === '—' && !step.date;
+                const isEmpty = step.assignees.length === 0 && !step.date;
 
                 return (
                   <div className="afm-step-unit" key={step.key}>
@@ -680,19 +803,22 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
                         <div className="afm-step-role">{step.role}</div>
                         <div className="afm-node-hr" />
                         <div className={`afm-step-person ${isEmpty && !step.active ? 'empty' : ''}`}>
-                          {step.person !== '—'
-                            ? (
-                              <button
-                                className="user-name-link"
-                                onClick={() => {
-                                  if (step.userid && step.userid !== '—') {
-                                    fetchUserDetails(step.userid);
-                                  }
-                                }}
-                              >
-                                {step.person}
-                              </button>
-                            )
+                                                    {step.assignees.length > 0
+                            ? step.assignees.map((assignee: { userid?: string; person: string }, idx: number) => (
+                                <React.Fragment key={`${step.key}-${assignee.userid || assignee.person}-${idx}`}>
+                                  {idx > 0 && ', '}
+                                  <button
+                                    className="user-name-link"
+                                    onClick={() => {
+                                      if (assignee.userid) {
+                                        fetchUserDetails(assignee.userid);
+                                      }
+                                    }}
+                                  >
+                                    {assignee.person}
+                                  </button>
+                                </React.Fragment>
+                              ))
                             : (step.active
                               ? 'Awaiting approval'
                               : 'Not assigned')}
@@ -940,3 +1066,8 @@ const ApprovalFlowModal: React.FC<ApprovalFlowModalProps> = ({ customer, onClose
 };
 
 export default ApprovalFlowModal;
+
+
+
+
+

@@ -62,34 +62,34 @@
   }
 
   .light {
-    /* Light mode - keeping CARF dark theme consistent */
-    --background: 212 7% 20.4%;
-    --foreground: 0 0% 100%;
-    --card: 212 7% 23.5%;
-    --card-foreground: 0 0% 100%;
-    --popover: 212 7% 23.5%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 212 7% 20.4%;
-    --secondary: 212 7% 30%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 212 7% 30%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 45 100% 51%;
-    --accent-foreground: 212 7% 20.4%;
+    /* Light mode palette (bright background, dark text, colored primary) */
+    --background: 0 0% 98%;                /* very light grey */
+    --foreground: 212 7% 20.4%;            /* dark slate for text */
+    --card: 0 0% 100%;                      /* white cards */
+    --card-foreground: 212 7% 20.4%;       
+    --popover: 0 0% 100%;                  
+    --popover-foreground: 212 7% 20.4%;    
+    --primary: 214 100% 50%;               /* vivid blue for buttons */
+    --primary-foreground: 0 0% 100%;       /* white text on primary */
+    --secondary: 210 16% 82%;              /* light grey secondary */
+    --secondary-foreground: 212 7% 20.4%;  
+    --muted: 0 0% 94%;                    /* very light muted background */
+    --muted-foreground: 212 7% 40%;       /* grey text for muted */
+    --accent: 45 100% 51%;                /* keep same accent */
+    --accent-foreground: 212 7% 20.4%;    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 212 7% 40%;
-    --input: 212 7% 30%;
-    --ring: 0 0% 100%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 210 16% 84%;                /* light border grey */
+    --input: 0 0% 93%;                    
+    --ring: 214 100% 50%;
+    --sidebar-background: 0 0% 100%;      /* white sidebar */
+    --sidebar-foreground: 212 7% 20.4%;   
+    --sidebar-primary: 214 100% 50%;      /* use primary blue */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 45 100% 51%;
+    --sidebar-accent-foreground: 212 7% 20.4%;
+    --sidebar-border: 210 16% 84%;
+    --sidebar-ring: 214 100% 50%;
   }
 }
 
@@ -320,3 +320,22 @@
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Keep native checkbox/radio light and larger in Customer Form */
+.carf-customer-form input[type='checkbox'],
+.carf-customer-form input[type='radio'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-width: 1.15rem;
+  min-height: 1.15rem;
+  accent-color: #2563eb;
+  background-color: #ffffff;
+  border-color: #6b7280;
+  color-scheme: light;
+}
+
+/* Seasonal monthly theme overrides */
+  .month-january   { --accent: 0 100% 50%;   /* red */ }
+  .month-february  { --accent: 340 100% 47%; /* pink */ }
+  .month-october   { --accent: 30 100% 50%;  /* orange */ }
+  .month-december  { --accent: 120 100% 25%; /* dark green */ }

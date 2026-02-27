@@ -172,10 +172,10 @@ const CropModal: React.FC<CropModalProps> = ({ imageSrc, onConfirm, onCancel }) 
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 md:p-5 space-y-4">
 
           {/* Canvas + preview side by side */}
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
             {/* Main crop canvas */}
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs text-muted-foreground">Drag to reposition</p>
@@ -183,8 +183,7 @@ const CropModal: React.FC<CropModalProps> = ({ imageSrc, onConfirm, onCancel }) 
                 ref={canvasRef}
                 width={CANVAS_SIZE}
                 height={CANVAS_SIZE}
-                className="rounded-full cursor-grab active:cursor-grabbing border-2 border-indigo-500/40"
-                style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
+                className="rounded-full cursor-grab active:cursor-grabbing border-2 border-indigo-500/40 w-[min(68vw,320px)] h-[min(68vw,320px)] md:w-[320px] md:h-[320px]"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -262,23 +261,23 @@ const CropModal: React.FC<CropModalProps> = ({ imageSrc, onConfirm, onCancel }) 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-border">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-0 md:justify-between px-4 md:px-5 py-4 border-t border-border">
           <button
             onClick={() => { setZoom(1); setRotation(0); setOffset({ x: 0, y: 0 }); }}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
           >
             Reset all
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/40 transition-colors"
+              className="flex-1 md:flex-none px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/40 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors font-medium"
+              className="flex-1 md:flex-none px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors font-medium"
             >
               Apply Photo
             </button>
@@ -457,7 +456,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
       <div className="w-full h-full flex flex-col overflow-hidden">
 
         {/* ── Top bar ───────────────────────────────────────────────── */}
-        <div className="flex-shrink-0 flex items-center gap-4 px-5 py-4 border-b border-border">
+        <div className="flex-shrink-0 flex flex-wrap items-center gap-3 px-3 md:px-5 py-3 md:py-4 border-b border-border">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
@@ -490,7 +489,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
             <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
           </div>
 
-          <div className="ml-auto flex flex-wrap gap-1.5 justify-end">
+          <div className="w-full md:w-auto md:ml-auto flex flex-wrap gap-1.5 justify-start md:justify-end">
             {roleBadges.map((badge, i) => (
               <span key={i} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${badge.color}`}>
                 {badge.label}
@@ -508,7 +507,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
         />
 
         {/* ── Fields ────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-h-0 px-5 py-5">
+        <div className="flex-1 flex flex-col min-h-0 px-3 md:px-5 py-4 md:py-5 overflow-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
 
             <div>
@@ -547,13 +546,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
               <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 <Camera className="h-3 w-3" /> Profile Photo
               </label>
-              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 flex items-center justify-between gap-2">
+              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <span className="text-xs text-muted-foreground">Max 10MB · JPG, PNG, WEBP</span>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap flex-shrink-0 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={handlePhotoClick}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1 text-xs px-2.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
                   >
                     <CropIcon className="h-3 w-3" />
                     {avatarPreview ? 'Change & Crop' : 'Upload & Crop'}
@@ -562,7 +561,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="text-xs px-2.5 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded hover:bg-red-500/30 transition-colors"
+                      className="flex-1 sm:flex-none text-xs px-2.5 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded hover:bg-red-500/30 transition-colors"
                     >
                       Remove
                     </button>
@@ -595,12 +594,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
           </div>
 
           {/* ── Actions ───────────────────────────────────────────── */}
-          <div className="flex items-center justify-between pt-4 mt-auto border-t border-border w-full">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 mt-auto border-t border-border w-full">
+            <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={handleSave}
                 disabled={saving || !editName.trim() || editName.trim() === profile.fullname}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {saving
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
@@ -617,7 +616,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
             {onLogout && (
               <button
                 onClick={onLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-all"
               >
                 <LogOut className="h-4 w-4" /> Logout
               </button>

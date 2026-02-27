@@ -483,13 +483,13 @@ export default function UdfMaintenance() {
           </div>
 
           <div className="px-4 py-4">
-            <div className="bg-gray-900 rounded-lg shadow-sm p-6 flex items-center justify-between">
+            <div className="bg-gray-900 rounded-lg shadow-sm p-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#F5F5F5] mb-2">Select Table</label>
                 <select
                   value={selectedTable}
                   onChange={(e) => setSelectedTable(e.target.value)}
-                  className="px-4 py-2 border bg-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-auto min-w-[600px]"
+                  className="px-4 py-2 border bg-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full xl:w-[620px] max-w-full"
                 >
                   <option value="">-- Choose a table --</option>
                   {tablelist.map((table) => (
@@ -503,7 +503,7 @@ export default function UdfMaintenance() {
               <button
                 onClick={handleSave}
                 disabled={!selectedTable}
-                className={`flex items-center gap-3 px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200
+                className={`flex items-center gap-3 px-6 py-2.5 rounded-xl text-base font-semibold transition-all duration-200 self-start xl:self-auto
                           ${selectedTable
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
                     : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}
@@ -516,8 +516,8 @@ export default function UdfMaintenance() {
 
           {selectedTable ? (
             <div className="flex-1 mx-4 mb-4 overflow-hidden flex flex-col">
-              <div className="custom-scrollbar bg-gray-900 rounded-lg shadow-sm relative overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-                <table className="w-full table-fixed border-collapse">
+              <div className="custom-scrollbar bg-gray-900 rounded-lg shadow-sm relative overflow-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                <table className="w-full min-w-[980px] table-auto border-collapse">
                   <thead>
                     <tr className="bg-gray-900 border-b border-gray-200">
                       {['Field ID', 'Field Name', 'Data Type', 'Visible', 'Truncate', 'Actions'].map((col) => (
@@ -545,7 +545,7 @@ export default function UdfMaintenance() {
                                   className={`hover:bg-gray-600 ${snapshot.isDragging ? 'bg-gray-700' : ''}`}
                                 >
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#f5f5f5]">{field.fieldid}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#f5f5f5]">
+                                  <td className="px-6 py-4 text-sm text-[#f5f5f5]">
                                     {editingId === field.id ? (
                                       <input
                                         type="text"
@@ -561,7 +561,7 @@ export default function UdfMaintenance() {
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter') setEditingId(null);
                                         }}
-                                        className="w-72 px-2 py-1 border border-gray-300 rounded-md text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="w-full min-w-[220px] max-w-[360px] px-2 py-1 border border-gray-300 rounded-md text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                       />
                                     ) : (
                                       <span
@@ -648,7 +648,7 @@ export default function UdfMaintenance() {
                               <select
                                 value={newRow.fieldid}
                                 onChange={(e) => setNewRow({ ...newRow, fieldid: e.target.value })}
-                                className="text-black w-70 px-2 py-2 border border-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="text-black w-full min-w-[220px] px-2 py-2 border border-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                               >
                                 <option value="">-- Select a field --</option>
                                 {customerColumns.map((col) => (
@@ -665,7 +665,7 @@ export default function UdfMaintenance() {
                                 placeholder="Custom field"
                                 value={newRow.fieldnames}
                                 onChange={(e) => setNewRow({ ...newRow, fieldnames: e.target.value })}
-                                className="w-72 px-2 py-2 border border-gray-800 bg-white text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="w-full min-w-[220px] max-w-[360px] px-2 py-2 border border-gray-800 bg-white text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                               />
                             </td>
 

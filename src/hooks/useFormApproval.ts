@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { CustomerFormData } from './useCustomerForm';
 import { getApprovalMatrix } from './useFormSubmit';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -21,6 +22,9 @@ const getUserNameByUserId = async (userid: string): Promise<string> => {
 
 export const useFormApproval = (onClose?: () => void) => {
   const [loading, setLoading] = useState(false);
+
+  // ── Notification helper ──────────────────────────────────────────────────
+  const { createNotification, getUserNameByUserId } = useNotifications();
 
   // ==================== SUBMIT TO BOS ====================
   const submitToBOS = async (formData: CustomerFormData): Promise<boolean> => {
@@ -455,6 +459,43 @@ export const useFormApproval = (onClose?: () => void) => {
       if (!response.ok) {
         alert(result.error || 'Failed to approve!');
         return false;
+      }
+
+      // ── Create notification for form maker/next approvers ─────────────────
+      try {
+        const rowId = Number((formData as any)['#']);
+        const gencode = formData.gencode || '';
+        const approverName = await getUserNameByUserId(userid);
+        const notifMessage =
+          updatedStatus === 'APPROVED'
+            ? `CARF ${gencode} has been APPROVED and will be submitted to BOS.`
+            : `CARF ${gencode} requires additional approval from the next approver.`;
+        
+        // Notify the form maker about approval status
+        const makerName = await getUserNameByUserId(formData.maker);
+        await createNotification({
+          gencode,
+          refid: rowId,
+          notification_type: updatedStatus === 'APPROVED' ? 'APPROVAL' : 'APPROVAL',
+          action: updatedStatus === 'APPROVED' ? 'APPROVED' : 'PENDING',
+          actor_userid: userid,
+          actor_name: approverName,
+          recipient_userid: formData.maker,
+          recipient_name: makerName,
+          custtype: formData.custtype,
+          approval_level: isComplianceFinalApprover ? 'COMPLIANCE_FINAL' : 'FIRST_APPROVER',
+          title: `CARF Approval Update - ${gencode}`,
+          message: notifMessage,
+          previous_status: 'PENDING',
+          new_status: updatedStatus,
+          form_data: formData,
+        });
+
+        // Note: Next approvers are notified via email (submitToEmail function)
+        // No need to create duplicate notifications here
+        console.log('✅ Approval notifications created for maker');
+      } catch (notifErr) {
+        console.error('⚠️ Failed to create approval notifications:', notifErr);
       }
 
       if (shouldSubmitToBOS) {

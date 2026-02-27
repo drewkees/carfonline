@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <title>CARF System - Online Customer Activation Request Form</title>
     <meta name="description" content="Customer Activation Request Form System - Customer management and request processing" />
     <meta name="author" content="CARF System" />
@@ -20,6 +21,24 @@
   </head>
 
   <body>
+    <script>
+      // Prevent theme flashing by applying theme before render
+      (function() {
+        try {
+          const theme = localStorage.getItem('carf-theme') || 'dark';
+          if (theme === 'light') {
+            document.documentElement.classList.add('light');
+          } else {
+            document.documentElement.classList.remove('light');
+          }
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          // Fallback to dark if error
+          document.documentElement.classList.remove('light');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

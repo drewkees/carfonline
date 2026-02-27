@@ -870,6 +870,52 @@ export type Database = {
           company_name: string 
         }
         Relationships: []
+      },sales_agent: {
+        Row: {
+          id: number
+          customername: string
+          email_address: string
+          position: string | null
+          cellphoneno: string | null
+          company: string | null
+        }
+        Insert: {
+          id?: number
+          customername: string
+          email_address: string
+          position?: string | null
+          cellphoneno?: string | null
+          company?: string | null
+        }
+        Update: {
+          id?: number
+          customername?: string
+          email_address?: string
+          position?: string | null
+          cellphoneno?: string | null
+          company?: string | null
+        }
+        Relationships: []
+      },monthlythemes: {
+        Row: {
+          id: number
+          month: string
+          theme: string
+          isactivate: boolean
+        }
+        Insert: {
+          id?: number
+          month: string
+          theme: string
+          isactivate?: boolean
+        }
+        Update: {
+          id?: number
+          month?: string
+          theme?: string
+          isactivate?: boolean
+        }
+        Relationships: []
       },
 
  

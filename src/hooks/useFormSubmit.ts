@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { CustomerFormData } from './useCustomerForm';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -150,6 +151,9 @@ export const useFormSubmit = (
 ) => {
   const [loading, setLoading] = useState(false);
 
+  // ── Notification helper ──────────────────────────────────────────────────
+  const { createNotification, getUserNameByUserId } = useNotifications();
+
   // ── Helper: get userid + company ────────────────────────────────────────
   const getUserContext = async () => {
     const userid = (window as any).getGlobal?.('userid');
@@ -159,7 +163,7 @@ export const useFormSubmit = (
     }
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('company')
+      .select('company, fullname')
       .eq('userid', userid)
       .single();
     if (userError) {
@@ -167,7 +171,7 @@ export const useFormSubmit = (
       toast({ title: 'Error', description: 'Failed to fetch user company information.', variant: 'destructive' });
       return null;
     }
-    return { userid, userCompany: userData?.company || '' };
+    return { userid, userCompany: userData?.company || '', userFullname: userData?.fullname || '' };
   };
 
   // ── Shared payload builder ───────────────────────────────────────────────
@@ -427,6 +431,40 @@ export const useFormSubmit = (
           }),
         });
         toast({ title: 'Success', description: 'Submitted for approval successfully.' });
+        
+        // ── Create notifications for approvers ────────────────────────────
+        try {
+          const recipients = nextApprover
+            ? nextApprover.split(',').map((r) => r.trim()).filter(Boolean)
+            : [];
+          const actorName = ctx.userFullname || '';
+          const gencode = formData.gencode || '';
+          const refid = rowId;
+
+          for (const recipientId of recipients) {
+            const recName = await getUserNameByUserId(recipientId);
+            await createNotification({
+              gencode,
+              refid,
+              notification_type: 'SUBMISSION',
+              action: 'SUBMITTED',
+              actor_userid: userid,
+              actor_name: actorName,
+              recipient_userid: recipientId,
+              recipient_name: recName,
+              custtype: formData.custtype,
+              title: `New CARF Submission - ${gencode}`,
+              message: `Customer activation request for ${formData.soldtoparty} is pending your approval.`,
+              previous_status: '',
+              new_status: 'PENDING',
+              form_data: formData,
+            });
+          }
+          console.log(`✅ Notifications created for ${recipients.length} approver(s)`);
+        } catch (notifErr) {
+          console.error('⚠️ Failed to create submission notifications:', notifErr);
+        }
+        
         if (onClose) onClose();
         return true;
       } else {

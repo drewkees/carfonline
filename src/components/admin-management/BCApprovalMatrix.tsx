@@ -1,5 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search, Building2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  Search,
+  Building2,
+  GitMerge,
+  Users,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,18 +19,162 @@ import type { Database } from '@/integrations/supabase/types';
 
 type BCApprovalMatrixRow = Database['public']['Tables']['bcapprovalmatrix']['Row'];
 type CompanyRow = Database['public']['Tables']['company']['Row'];
+type UserRow = { userid: string; fullname: string; email: string };
+type CarfTypeRow = { id: number; carftype: string; company: string | null };
 
 type FormData = {
   approvaltype: string;
-  firstapprover: string;
+  firstapprover: string[];
   exception: string;
-  exceptionapprover: string;
+  exceptionapprover: string[];
   company?: string;
 };
+
+function ApproverMultiSelect({
+  label,
+  selectedValues,
+  onChange,
+  users,
+}: {
+  label: string;
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  users: UserRow[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const filtered = users.filter((u) => {
+    const q = search.toLowerCase();
+    return (
+      u.userid.toLowerCase().includes(q) ||
+      u.fullname?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q)
+    );
+  });
+
+  const toggle = (userid: string) => {
+    if (selectedValues.includes(userid)) {
+      onChange(selectedValues.filter((v) => v !== userid));
+    } else {
+      onChange([...selectedValues, userid]);
+    }
+  };
+
+  const handleOpen = () => {
+    setOpen((o) => {
+      if (!o) setTimeout(() => searchRef.current?.focus(), 50);
+      return !o;
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</label>
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm flex justify-between items-center hover:border-gray-500 transition-colors min-h-[42px] text-left"
+      >
+        <span className={`truncate pr-2 ${selectedValues.length === 0 ? 'text-gray-500' : 'text-white'}`}>
+          {selectedValues.length === 0 ? `- Select ${label} -` : selectedValues.join(', ')}
+        </span>
+        <span className="flex items-center gap-1.5 flex-shrink-0">
+          {selectedValues.length > 0 && (
+            <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-medium">
+              {selectedValues.length}
+            </span>
+          )}
+          {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        </span>
+      </button>
+
+      {open && (
+        <div className="rounded-lg border border-gray-600 bg-gray-850 overflow-hidden" style={{ background: '#1a1f2e' }}>
+          <div className="p-2 border-b border-gray-700">
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search users..."
+              className="w-full px-3 py-1.5 rounded-md bg-gray-900 border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 custom-scrollbar"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="max-h-44 overflow-y-auto custom-scrollbar">
+            {filtered.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-gray-500 italic">No users found</div>
+            ) : (
+              filtered.map((u) => {
+                const selected = selectedValues.includes(u.userid);
+                return (
+                  <div
+                    key={u.userid}
+                    onClick={() => toggle(u.userid)}
+                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
+                      selected ? 'bg-blue-600/20' : 'hover:bg-gray-700/60'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded flex items-center justify-center border flex-shrink-0 transition-colors ${
+                      selected ? 'bg-blue-600 border-blue-600' : 'border-gray-600'
+                    }`}>
+                      {selected && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+                          <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-white font-medium truncate">{u.userid}</div>
+                      <div className="text-xs text-gray-400 truncate">{u.fullname}</div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="px-3 py-2 border-t border-gray-700 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setSearch('');
+              }}
+              className="text-xs text-gray-400 hover:text-white px-3 py-1 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const toArray = (val: unknown): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val as string[];
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [val];
+    } catch {
+      return val.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+  }
+  return [];
+};
+
+const fromArray = (arr: string[]): string => arr.join(', ');
 
 export default function BCApprovalMatrix() {
   const [schemas, setSchemas] = useState<BCApprovalMatrixRow[]>([]);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [carfTypes, setCarfTypes] = useState<CarfTypeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSchema, setEditingSchema] = useState<BCApprovalMatrixRow | null>(null);
@@ -29,15 +184,17 @@ export default function BCApprovalMatrix() {
 
   const [newSchema, setNewSchema] = useState<FormData>({
     approvaltype: '',
-    firstapprover: '',
+    firstapprover: [],
     exception: '',
-    exceptionapprover: '',
+    exceptionapprover: [],
     company: '',
   });
 
   useEffect(() => {
     fetchSchema();
     fetchCompanies();
+    fetchUsers();
+    fetchCarfTypes();
   }, []);
 
   useEffect(() => {
@@ -68,11 +225,31 @@ export default function BCApprovalMatrix() {
     if (!error) setCompanies(data || []);
   };
 
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('userid, fullname, email')
+      .order('userid', { ascending: true });
+    if (!error && data) setUsers(data as UserRow[]);
+  };
+
+  const fetchCarfTypes = async () => {
+    const { data, error } = await supabase
+      .from('customertypeseries')
+      .select('id, carftype, company')
+      .order('carftype', { ascending: true });
+    if (!error && data) setCarfTypes(data as CarfTypeRow[]);
+  };
+
+  const filteredCarfTypes = newSchema.company
+    ? carfTypes.filter((ct) => !ct.company || ct.company === newSchema.company)
+    : carfTypes;
+
   const resetForm = (): FormData => ({
     approvaltype: '',
-    firstapprover: '',
+    firstapprover: [],
     exception: '',
-    exceptionapprover: '',
+    exceptionapprover: [],
     company: '',
   });
 
@@ -86,9 +263,9 @@ export default function BCApprovalMatrix() {
     setEditingSchema(schema);
     setNewSchema({
       approvaltype: schema.approvaltype || '',
-      firstapprover: schema.firstapprover || '',
+      firstapprover: toArray(schema.firstapprover),
       exception: schema.exception || '',
-      exceptionapprover: schema.exceptionapprover || '',
+      exceptionapprover: toArray(schema.exceptionapprover),
       company: (schema as any).company || '',
     });
     setShowModal(true);
@@ -96,10 +273,16 @@ export default function BCApprovalMatrix() {
 
   const handleSaveSchema = async () => {
     try {
+      const payload = {
+        ...newSchema,
+        firstapprover: fromArray(newSchema.firstapprover),
+        exceptionapprover: fromArray(newSchema.exceptionapprover),
+      };
+
       if (editingSchema) {
         const { data, error } = await supabase
           .from('bcapprovalmatrix')
-          .update(newSchema)
+          .update(payload)
           .eq('id', editingSchema.id)
           .select();
         if (error) throw error;
@@ -108,7 +291,7 @@ export default function BCApprovalMatrix() {
       } else {
         const { data, error } = await supabase
           .from('bcapprovalmatrix')
-          .insert([newSchema])
+          .insert([payload])
           .select();
         if (error) throw error;
         setSchemas([...schemas, ...data]);
@@ -140,11 +323,7 @@ export default function BCApprovalMatrix() {
       schema.firstapprover?.toLowerCase().includes(q) ||
       schema.exception?.toLowerCase().includes(q) ||
       schema.exceptionapprover?.toLowerCase().includes(q);
-
-    const matchesCompany = selectedCompany
-      ? (schema as any).company === selectedCompany
-      : true;
-
+    const matchesCompany = selectedCompany ? (schema as any).company === selectedCompany : true;
     return matchesSearch && matchesCompany;
   });
 
@@ -174,14 +353,13 @@ export default function BCApprovalMatrix() {
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">▾</div>
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">v</div>
     </div>
   );
 
   return (
     <div className="h-full bg-background flex flex-col">
       {isMobile ? (
-        /* ── Mobile Layout ── */
         <div className="fixed inset-x-0 top-0 bottom-0 flex flex-col" style={{ paddingTop: '60px' }}>
           <div className="flex-shrink-0 bg-background border-b border-border">
             <div className="flex flex-col items-start justify-between gap-3 p-4 pb-3">
@@ -227,13 +405,19 @@ export default function BCApprovalMatrix() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleEdit(schema); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(schema);
+                            }}
                             className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(schema.id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(schema.id);
+                            }}
                             className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
                           >
                             <Trash2 size={16} />
@@ -267,7 +451,6 @@ export default function BCApprovalMatrix() {
           </div>
         </div>
       ) : (
-        /* ── Desktop Layout ── */
         <>
           <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">BC Approval Matrix</h2>
@@ -281,9 +464,7 @@ export default function BCApprovalMatrix() {
                   className="pl-10 w-52 bg-input border-border transition-all duration-300 hover:w-72 focus:w-72"
                 />
               </div>
-
               <CompanySelect className="w-52" />
-
               <button
                 onClick={handleAddSchema}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -317,9 +498,7 @@ export default function BCApprovalMatrix() {
                   ) : (
                     filteredSchemas.map((schema) => (
                       <tr key={schema.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
-                        <td className="px-6 py-4 text-gray-400 whitespace-nowrap text-sm">
-                          {(schema as any).company || '-'}
-                        </td>
+                        <td className="px-6 py-4 text-gray-400 whitespace-nowrap text-sm">{(schema as any).company || '-'}</td>
                         <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.approvaltype}</td>
                         <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.firstapprover || '-'}</td>
                         <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.exception || '-'}</td>
@@ -352,68 +531,132 @@ export default function BCApprovalMatrix() {
         </>
       )}
 
-      {/* ── Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
-                {editingSchema ? 'Edit BC Approval Matrix' : 'Add BC Approval Matrix'}
-              </h3>
-              <button onClick={() => setShowModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {/* Company dropdown */}
-              <div className="flex flex-col">
-                <label className="text-sm mb-1">Company</label>
-                <select
-                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newSchema.company || ''}
-                  onChange={(e) => setNewSchema({ ...newSchema, company: e.target.value })}
-                >
-                  <option value="">-- Select Company --</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.company}>
-                      {c.company_name} ({c.company})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {[
-                { key: 'approvaltype', label: 'Approval Type' },
-                { key: 'firstapprover', label: 'First Approver' },
-                { key: 'exception', label: 'Exception' },
-                { key: 'exceptionapprover', label: 'Exception Approver' },
-              ].map(({ key, label }) => (
-                <div key={key} className="flex flex-col">
-                  <label className="text-sm mb-1">{label}</label>
-                  <input
-                    type="text"
-                    className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={(newSchema as any)[key] || ''}
-                    onChange={(e) => setNewSchema({ ...newSchema, [key]: e.target.value })}
-                  />
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: '92vh' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 bg-gray-800 rounded-t-xl flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <GitMerge size={16} className="text-white" />
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-4 flex justify-end gap-2">
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    {editingSchema ? 'Edit BC Approval Matrix' : 'New BC Approval Matrix'}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {editingSchema ? `Editing: ${editingSchema.approvaltype}` : 'Define BC approval workflow'}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
               >
-                Cancel
+                <X size={18} />
               </button>
-              <button
-                onClick={handleSaveSchema}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700"
-              >
-                {editingSchema ? 'Update' : 'Save'}
-              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2 size={13} className="text-blue-400" />
+                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-widest">Configuration</span>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Company <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer"
+                      value={newSchema.company || ''}
+                      onChange={(e) => setNewSchema({ ...newSchema, company: e.target.value, approvaltype: '' })}
+                    >
+                      <option value="">- Select Company -</option>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.company}>
+                          {c.company_name} ({c.company})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Approval Type <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer disabled:opacity-50"
+                      value={newSchema.approvaltype}
+                      onChange={(e) => setNewSchema({ ...newSchema, approvaltype: e.target.value })}
+                      disabled={!newSchema.company}
+                    >
+                      <option value="">
+                        {!newSchema.company ? '- Select a company first -' : '- Select Approval Type -'}
+                      </option>
+                      {filteredCarfTypes.map((ct) => (
+                        <option key={ct.id} value={ct.carftype}>{ct.carftype}</option>
+                      ))}
+                    </select>
+                    {!newSchema.company && (
+                      <p className="text-xs text-amber-500 mt-0.5">Please select a company to load available types.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-700/60" />
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Users size={13} className="text-blue-400" />
+                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-widest">Approvers</span>
+                </div>
+                <div className="space-y-3">
+                  <ApproverMultiSelect
+                    label="First Approver"
+                    selectedValues={newSchema.firstapprover}
+                    onChange={(vals) => setNewSchema({ ...newSchema, firstapprover: vals })}
+                    users={users}
+                  />
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Exception</label>
+                    <input
+                      type="text"
+                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newSchema.exception}
+                      onChange={(e) => setNewSchema({ ...newSchema, exception: e.target.value })}
+                      placeholder="Enter exception condition/value"
+                    />
+                  </div>
+
+                  <ApproverMultiSelect
+                    label="Exception Approver"
+                    selectedValues={newSchema.exceptionapprover}
+                    onChange={(vals) => setNewSchema({ ...newSchema, exceptionapprover: vals })}
+                    users={users}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-700 bg-gray-800/50 rounded-b-xl flex-shrink-0">
+              <p className="text-xs text-gray-500"><span className="text-red-400">*</span> Required fields</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveSchema}
+                  className="px-5 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors shadow-lg shadow-blue-900/30"
+                >
+                  {editingSchema ? 'Save Changes' : 'Create Matrix'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

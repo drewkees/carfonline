@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import ListLoadingSkeleton from '../list/ListLoadingSkeleton';
 
 interface TabData {
   id: string;
@@ -21,6 +22,7 @@ const SalesInfo: React.FC = () => {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -34,35 +36,28 @@ const SalesInfo: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data, error } = await supabase.from('salesinfosalesorg').select('salesorganization').order('salesorganization', { ascending: true });
-      if (!error) setSalesOrgData(data.map((r) => r.salesorganization));
-    };
-    fetch();
-  }, []);
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const [salesOrgRes, distRes, divisionRes, buRes] = await Promise.all([
+          supabase.from('salesinfosalesorg').select('salesorganization').order('salesorganization', { ascending: true }),
+          supabase.from('salesinfodistributionchannel').select('distributionchannel').order('distributionchannel', { ascending: true }),
+          supabase.from('salesinfodivision').select('division').order('division', { ascending: true }),
+          supabase.from('salesinfobucenter').select('bucenter').order('bucenter', { ascending: true }),
+        ]);
 
-  useEffect(() => {
-    const fetch = async () => {
-      const { data, error } = await supabase.from('salesinfodistributionchannel').select('distributionchannel').order('distributionchannel', { ascending: true });
-      if (!error) setDistributionChannel(data.map((r) => r.distributionchannel));
+        if (!salesOrgRes.error) setSalesOrgData((salesOrgRes.data || []).map((r) => r.salesorganization));
+        if (!distRes.error) setDistributionChannel((distRes.data || []).map((r) => r.distributionchannel));
+        if (!divisionRes.error) setDivision((divisionRes.data || []).map((r) => r.division));
+        if (!buRes.error) setBucenter((buRes.data || []).map((r) => r.bucenter));
+      } catch {
+        toast({ title: 'Error', description: 'Failed to load sales info.', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
-  }, []);
 
-  useEffect(() => {
-    const fetch = async () => {
-      const { data, error } = await supabase.from('salesinfodivision').select('division').order('division', { ascending: true });
-      if (!error) setDivision(data.map((r) => r.division));
-    };
-    fetch();
-  }, []);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const { data, error } = await supabase.from('salesinfobucenter').select('bucenter').order('bucenter', { ascending: true });
-      if (!error) setBucenter(data.map((r) => r.bucenter));
-    };
-    fetch();
+    fetchAll();
   }, []);
 
   const tabs: TabData[] = [
@@ -155,6 +150,19 @@ const SalesInfo: React.FC = () => {
       toast({ title: 'Error', description: 'Error saving data.', variant: 'destructive' });
     }
   };
+
+  if (loading) {
+    return (
+      <ListLoadingSkeleton
+        isMobile={isMobile}
+        title="SALES INFO"
+        tableColumns={5}
+        mainClassName="p-6"
+        showFilters={false}
+        showActionButton
+      />
+    );
+  }
 
   return (
     <>

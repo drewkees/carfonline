@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import ListLoadingSkeleton from './ListLoadingSkeleton';
 
 type Schema = Database['public']['Tables']['schemas']['Row'];
 type ViewMode = 'table' | 'tree';
@@ -151,10 +152,30 @@ export default function SchemaList() {
   });
 
   const TYPE_ORDER = ['M', 'S', 'P'];
-  const grouped = filteredSchemas.reduce((acc, s) => { const t = s.menutype || 'Unknown'; if (!acc[t]) acc[t] = []; acc[t].push(s); return acc; }, {} as Record<string, Schema[]>);
+  const TYPE_RANK: Record<string, number> = { M: 0, S: 1, P: 2 };
+  const sortedFilteredSchemas = [...filteredSchemas].sort((a, b) => {
+    const byMenuId = (a.menuid || '').localeCompare(b.menuid || '');
+    if (byMenuId !== 0) return byMenuId;
+    const byType = (TYPE_RANK[a.menutype || ''] ?? 99) - (TYPE_RANK[b.menutype || ''] ?? 99);
+    if (byType !== 0) return byType;
+    return (a.menuname || '').localeCompare(b.menuname || '');
+  });
+
+  const grouped = sortedFilteredSchemas.reduce((acc, s) => { const t = s.menutype || 'Unknown'; if (!acc[t]) acc[t] = []; acc[t].push(s); return acc; }, {} as Record<string, Schema[]>);
   const groupKeys = [...TYPE_ORDER.filter((t) => grouped[t]), ...Object.keys(grouped).filter((t) => !TYPE_ORDER.includes(t))];
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+  if (loading) {
+    return (
+      <ListLoadingSkeleton
+        isMobile={isMobile}
+        title="SCHEMA LIST"
+        tableColumns={6}
+        mainClassName="p-6"
+        showFilters={false}
+        showActionButton
+      />
+    );
+  }
 
   const GroupHeader = ({ type, count, onAdd }: { type: string; count: number; onAdd: () => void }) => {
     const cfg = getTypeConfig(type); const isOpen = expandedGroups.has(type);
@@ -401,7 +422,7 @@ export default function SchemaList() {
           <div className="flex-1 overflow-auto p-4">
             {viewMode === 'table' ? (
               <div className="space-y-3 pb-6">
-                {filteredSchemas.length === 0 ? <div className="text-center py-12 text-muted-foreground">No schemas found</div> : filteredSchemas.map((schema) => (
+                {sortedFilteredSchemas.length === 0 ? <div className="text-center py-12 text-muted-foreground">No schemas found</div> : sortedFilteredSchemas.map((schema) => (
                   <Card key={schema.itemid} className="bg-card border-border" onClick={() => handleEdit(schema)}>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between items-start">
@@ -493,8 +514,8 @@ export default function SchemaList() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {filteredSchemas.length === 0 ? <tr><td colSpan={8} className="text-center py-12 text-gray-400">No schemas found</td></tr>
-                      : filteredSchemas.map((schema) => (
+                    {sortedFilteredSchemas.length === 0 ? <tr><td colSpan={8} className="text-center py-12 text-gray-400">No schemas found</td></tr>
+                      : sortedFilteredSchemas.map((schema) => (
                         <tr key={schema.itemid} className="hover:bg-gray-700/50 transition-colors group">
                           <td className="px-6 py-3 text-gray-200 whitespace-nowrap font-mono text-sm">{schema.menuid}</td>
                           <td className="px-6 py-3 text-gray-200 whitespace-nowrap">{schema.menuname}</td>
@@ -524,14 +545,14 @@ export default function SchemaList() {
                 {groupKeys.length === 0 ? (
                   <div className="text-center py-12 text-gray-400 bg-gray-800 rounded-lg">No schemas found</div>
                 ) : (() => {
-                  const menus = grouped['M'] || [];
-                  const submenus = grouped['S'] || [];
-                  const programs = grouped['P'] || [];
+                  const menus = [...(grouped['M'] || [])].sort((a, b) => (a.menuid || '').localeCompare(b.menuid || ''));
+                  const submenus = [...(grouped['S'] || [])].sort((a, b) => (a.menuid || '').localeCompare(b.menuid || ''));
+                  const programs = [...(grouped['P'] || [])].sort((a, b) => (a.menuid || '').localeCompare(b.menuid || ''));
 
                   const getSubmenusForMenu = (menuId: string) =>
-                    submenus.filter((s) => s.menuid?.startsWith(menuId));
+                    submenus.filter((s) => (s.menuid || '') === menuId);
                   const getProgramsForSubmenu = (subId: string) =>
-                    programs.filter((p) => p.menuid?.startsWith(subId));
+                    programs.filter((p) => (p.menuid || '') === subId);
 
                   const matchedSubIds = new Set<number>();
                   const matchedProgIds = new Set<number>();

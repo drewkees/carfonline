@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { useSystemSettings } from '../SystemSettings/SystemSettingsContext';
 import { useCustomerForm } from '@/hooks/useCustomerForm';
 import ConfirmationDialog from '@/pages/ConfirmationDialog';
+import ListLoadingSkeleton from './ListLoadingSkeleton';
 
 interface CustomerListProps {
   onEditCustomer: (customer: Customer) => void;
@@ -372,12 +373,13 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading customers...</p>
-        </div>
-      </div>
+      <ListLoadingSkeleton
+        isMobile={isMobile}
+        title="FOR APPROVAL LIST"
+        tableColumns={udfFields.filter((f) => f.visible).length + 1}
+        mainClassName="p-6"
+        showFilters={false}
+      />
     );
   }
 

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { User, Crown, PlusCircle, Edit2 } from "lucide-react";
+import { User, Crown, PlusCircle, Edit2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Employee {
@@ -25,6 +25,7 @@ const EmployeeDirectory: React.FC = () => {
   const [editedIndex, setEditedIndex] = useState(-1);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<"Executives" | "Managers" | "SAO" | "OPS LEAD">("Executives");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -113,34 +114,58 @@ const EmployeeDirectory: React.FC = () => {
   };
 
   const renderDesktopTable = (title: string, color: string, data: Employee[]) => (
-    <Card className="bg-card border-border">
-      <CardHeader className="flex flex-row justify-between items-center">
-        <CardTitle className="flex items-center gap-2">
+    <Card className="bg-card border-border/80 shadow-sm rounded-xl">
+      <CardHeader className="flex flex-row justify-between items-center border-b border-border/70 pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Crown className={`text-${color}-500`} />
           <span className="font-bold">{title}</span>
         </CardTitle>
-        <Button variant="warning" onClick={() => openDialogEmployee(title)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> ADD
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search employee..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-56 bg-input border-border text-sm"
+            />
+          </div>
+          <Button
+            size="sm"
+            onClick={() => openDialogEmployee(title)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="no-scrollbar overflow-y-auto relative" style={{ maxHeight: 'calc(95vh - 280px)' }}>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Emp No</TableHead>
-                <TableHead>Employee Name</TableHead>
+              <TableRow className="bg-muted/30">
+                <TableHead className="uppercase tracking-wide text-xs">Employee No.</TableHead>
+                <TableHead className="uppercase tracking-wide text-xs">Employee Name</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item, index) => (
+              {data
+                .filter((item) => {
+                  const q = searchQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    item.employeeno?.toLowerCase().includes(q) ||
+                    item.employeename?.toLowerCase().includes(q)
+                  );
+                })
+                .map((item, index) => (
                 <TableRow
                   key={index}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/40 transition-colors"
                   onClick={() => openEditDialog(item, title, index)}
                 >
-                  <TableCell>{item.employeeno}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium">{item.employeeno}</TableCell>
+                  <TableCell className="font-semibold">
                     <div className="flex items-center">
                       <Badge className="rounded-full w-6 h-6 flex items-center justify-center mr-2">
                         {item.employeename.charAt(0)}
@@ -162,7 +187,7 @@ const EmployeeDirectory: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Crown className={`text-${color}-500`} size={20} />
-          <h3 className="font-semibold text-foreground">{title}</h3>
+          <h3 className="font-semibold text-foreground tracking-wide">{title}</h3>
         </div>
         <button
           onClick={() => openDialogEmployee(title)}
@@ -223,6 +248,13 @@ const EmployeeDirectory: React.FC = () => {
     { label: "OPS LEAD", key: "OPS LEAD" },
   ];
 
+  const activeDesktopConfig = (() => {
+    if (activeTab === "Executives") return { title: "Executives", color: "yellow", data: executives };
+    if (activeTab === "Managers") return { title: "Managers", color: "orange", data: managers };
+    if (activeTab === "SAO") return { title: "SAO", color: "red", data: sao };
+    return { title: "OPS LEAD", color: "blue", data: opsLead };
+  })();
+
   return (
     <div className="h-full bg-background flex flex-col">
       {isMobile ? (
@@ -235,15 +267,15 @@ const EmployeeDirectory: React.FC = () => {
             </div>
 
             {/* Tab buttons */}
-            <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 px-4 pb-3 overflow-x-auto custom-scrollbar">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex-shrink-0 flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  className={`flex-shrink-0 flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm border ${
                     activeTab === tab.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      ? "bg-blue-600 text-white border-blue-500"
+                      : "bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600"
                   }`}
                 >
                   {tab.label}
@@ -266,12 +298,33 @@ const EmployeeDirectory: React.FC = () => {
             <User className="h-6 w-6 text-foreground" />
             <h2 className="text-xl font-semibold">Employee Directory</h2>
           </div>
-          <div className="flex-1 overflow-auto px-4 pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
-              {renderDesktopTable("Executives", "yellow", executives)}
-              {renderDesktopTable("Managers",   "orange", managers)}
-              {renderDesktopTable("SAO",        "red",    sao)}
-              {renderDesktopTable("OPS LEAD",   "blue",   opsLead)}
+          <div className="flex-1 overflow-hidden px-4 pb-4">
+            <div className="mt-4 grid grid-cols-12 gap-4">
+              <Card className="col-span-12 lg:col-span-3 bg-card border-border/80 shadow-sm rounded-xl h-fit">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base tracking-wide">Employee Type</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`w-full text-left px-3 py-2 rounded-md border transition-colors text-sm font-medium ${
+                          activeTab === tab.key
+                            ? "bg-blue-600 text-white border-blue-500"
+                            : "bg-muted/30 text-foreground border-border hover:bg-muted/50"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="col-span-12 lg:col-span-9">
+                {renderDesktopTable(activeDesktopConfig.title, activeDesktopConfig.color, activeDesktopConfig.data)}
+              </div>
             </div>
           </div>
         </>

@@ -337,10 +337,21 @@ export const useCustomerForm = (
         grouped[type as 'GM' | 'AM' | 'SS' | 'OPS'].push({ employeeno: emp.employeeno, employeename: emp.employeename });
       });
       (Object.keys(grouped) as Array<keyof typeof grouped>).forEach((key) => {
-        const noLabel = key === 'OPS' ? 'NO OPS LEAD/ FIELD OFFICER:' : key === 'AM' ? 'NO GM/SAM/AM' : 'NO SAO/SUPERVISOR';
+        const isNoFallback = (name: string) => {
+          const n = (name || '').trim().toUpperCase();
+          if (key === 'GM') return n.startsWith('NO EXECUTIVE');
+          if (key === 'AM') return n.startsWith('NO GM/SAM/AM');
+          if (key === 'SS') return n.startsWith('NO SAO/SUPERVISOR');
+          if (key === 'OPS') return n.startsWith('NO OPS LEAD/ FIELD OFFICER');
+          return false;
+        };
+
         grouped[key].sort((a, b) => {
           const aUp = a.employeename.toUpperCase(), bUp = b.employeename.toUpperCase();
-          if (aUp === noLabel) return -1; if (bUp === noLabel) return 1;
+          const aNo = isNoFallback(a.employeename);
+          const bNo = isNoFallback(b.employeename);
+          if (aNo && !bNo) return -1;
+          if (!aNo && bNo) return 1;
           return aUp.localeCompare(bUp);
         });
       });

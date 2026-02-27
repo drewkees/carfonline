@@ -16,8 +16,7 @@ interface CarfSidebarProps {
 const CarfSidebar: React.FC<CarfSidebarProps> = ({ 
   activeTab, 
   onTabChange, 
-  userEmail, 
-  onLogout,
+  userEmail,
   onUserId,
   onAuthorizationStatus,
   onMenuClick // ✅ NEW
@@ -25,7 +24,9 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
   const [fullName, setFullName] = useState('');
   const [userId, setUserId] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [navigationItems, setNavigationItems] = useState<any[]>([]);
+  const [userGroup, setUserGroup] = useState<string>('');
 
   const toggleMenu = (id: string) => {
     setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
@@ -37,13 +38,14 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       if (!userEmail) return;
       const { data, error } = await supabase
         .from('users')
-        .select('userid, fullname')
+        .select('userid, fullname, avatar_url')
         .eq('email', userEmail)
         .single();
 
       if (!error && data) {
         setFullName(data.fullname);
         setUserId(data.userid);
+        setAvatarUrl((data as any).avatar_url || null);
         if (onUserId) onUserId(data.userid);
       }
     };
@@ -131,6 +133,9 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
         if (onAuthorizationStatus) {
           onAuthorizationStatus(navItems.length > 0);
         }
+
+        // Set user group for conditional rendering
+        setUserGroup(userData.usergroup);
       } catch (error) {
         console.error('Error fetching navigation:', error);
         if (onAuthorizationStatus) onAuthorizationStatus(false);
@@ -147,10 +152,31 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
 };
 
   // Render navigation recursively
-  const renderNavItem = (item: any, depth = 0) => {
+  const handleLeafClick = (ancestors: string[]) => {
+    // Keep only selected branch expanded (auto-close other open main menus).
+    const nextOpen: { [key: string]: boolean } = {};
+    ancestors.forEach((id) => {
+      nextOpen[id] = true;
+    });
+    setOpenMenus(nextOpen);
+  };
+
+  const hasActiveDescendant = (item: any): boolean => {
+    if (!item?.children?.length) return false;
+    return item.children.some((child: any) =>
+      activeTab === child.id || hasActiveDescendant(child)
+    );
+  };
+
+  const renderNavItem = (item: any, depth = 0, ancestors: string[] = []) => {
     const isActive = activeTab === item.id;
     const hasChildren = item.children?.length > 0;
     const isOpen = openMenus[item.id] || false;
+    const isBranchActive = hasActiveDescendant(item);
+    const isHighlighted = isActive || isBranchActive;
+    const activeClass = hasChildren
+      ? 'bg-white/10 text-white font-medium'
+      : 'bg-accent text-accent-foreground font-medium';
 
     return (
       <div key={item.id}>
@@ -158,13 +184,13 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
           variant="ghost"
           className={`w-full justify-start text-left mb-1 flex items-center text-white ${
             depth > 0 ? 'pl-8 py-1.5 md:py-2 h-auto text-xs md:text-sm' : 'py-2 md:py-3 h-auto text-sm md:text-base'
-          } ${isActive ? 'bg-accent font-medium' : 'hover:bg-gray-700 hover:text-[#635e5e]'}`}
+          } ${isHighlighted ? activeClass : 'hover:bg-accent hover:text-accent-foreground'}`}
           onClick={() => {
             if (hasChildren) {
               toggleMenu(item.id);
             } else {
+              handleLeafClick(ancestors);
               onTabChange(item.id);
-              // ✅ NEW: Call onMenuClick when actual menu item is clicked (not parent with children)
               if (onMenuClick) onMenuClick();
             }
           }}
@@ -179,7 +205,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
         </Button>
         {hasChildren && isOpen && (
           <div className="ml-1 md:ml-2">
-            {item.children.map((child: any) => renderNavItem(child, 1))}
+            {item.children.map((child: any) => renderNavItem(child, depth + 1, [...ancestors, item.id]))}
           </div>
         )}
       </div>
@@ -218,50 +244,48 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       >
         <nav className="space-y-0.5 md:space-y-1">
           {navigationItems.length > 0 ? (
-            navigationItems.map(item => renderNavItem(item))
-          ) : (
-            <div className="text-gray-400 text-xs md:text-sm text-center py-4">
-              No authorized menu items
-            </div>
-          )}
+            <>
+              {navigationItems.map(item => renderNavItem(item))}
+              {userGroup === 'ADMIN' && (
+                <div className="mt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left mb-1 flex items-center text-white py-2 md:py-3 h-auto text-sm md:text-base hover:bg-gray-700 hover:text-[#635e5e]"
+                    onClick={() => {
+                      onTabChange('monthly-themes');
+                      if (onMenuClick) onMenuClick();
+                    }}
+                  >
+                    <LucideIcons.Sun className="h-4 w-4 mr-2" />
+                    <span className="truncate">Monthly Themes</span>
+                  </Button>
+                </div>
+              )}
+            </>
+           ) : (
+             <div className="text-gray-400 text-xs md:text-sm text-center py-4">
+               No authorized menu items
+             </div>
+           )}
         </nav>
       </div>
 
-      {/* Submit Ticket Button - Compact on mobile */}
-      <div className="p-2 md:p-4 border-t border-gray-700 flex-shrink-0">
-        <Button 
-          className="w-full bg-destructive hover:bg-destructive/90 text-white font-bold py-2 md:py-3 text-xs md:text-sm"
-          onClick={() => {
-            onTabChange('submit-ticket');
-            // ✅ NEW: Also hide sidebar when submit ticket is clicked
-            if (onMenuClick) onMenuClick();
-          }}
-        >
-          📋 SUBMIT A TICKET
-        </Button>
-      </div>
 
       {/* User Section - Always visible at bottom */}
       <div className="p-2 md:p-4 border-t border-gray-700 text-white flex-shrink-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 min-w-0 flex-1">
-            <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-600 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
               <span className="text-xs font-medium text-white">
                 {userEmail.charAt(0).toUpperCase()}
               </span>
-            </div>
-            <span className="text-xs md:text-sm truncate">
-              {userEmail}
-            </span>
+            )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="text-white hover:text-gray-300 text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 flex-shrink-0"
-          >
-            Logout
-          </Button>
+          <span className="text-xs md:text-sm break-all leading-tight">
+            {userEmail}
+          </span>
         </div>
       </div>
     </div>
@@ -269,3 +293,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
 };
 
 export default CarfSidebar;
+
+
+
+

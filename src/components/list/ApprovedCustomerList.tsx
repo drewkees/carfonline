@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, User } from 'lucide-react';
+import { Search, User, Workflow } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSystemSettings } from '../SystemSettings/SystemSettingsContext';
+import ApprovalFlowModal from '../ApprovalModalFlow';
+import ListLoadingSkeleton from './ListLoadingSkeleton';
 
 interface Customer {
   id: string;
@@ -32,6 +34,35 @@ type TooltipState = {
   flipUp: boolean;
 } | null;
 
+const ApprovalIcon: React.FC<{ customer: Customer; onClick: (e: React.MouseEvent) => void }> = ({
+  customer,
+  onClick,
+}) => {
+  const status = (customer.approvestatus || '').toUpperCase();
+  const isApproved = status === 'APPROVED';
+  const isCancelled = status === 'CANCELLED';
+  const isReturned = status === 'RETURN TO MAKER';
+
+  const color = isApproved
+    ? '#22c55e'
+    : isCancelled
+    ? '#ef4444'
+    : isReturned
+    ? '#f59e0b'
+    : 'hsl(var(--primary))';
+
+  return (
+    <button
+      onClick={onClick}
+      title="View Approval Flow"
+      className="inline-flex items-center justify-center w-7 h-7 rounded-md transition-all hover:scale-110 active:scale-95 border flex-shrink-0"
+      style={{ background: `${color}12`, borderColor: `${color}35`, color }}
+    >
+      <Workflow className="w-3.5 h-3.5" />
+    </button>
+  );
+};
+
 const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +76,7 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
   const [activeFilter, setActiveFilter] = useState('All');
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [approvalCustomer, setApprovalCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -273,12 +305,13 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading customers...</p>
-        </div>
-      </div>
+      <ListLoadingSkeleton
+        isMobile={isMobile}
+        title="APPROVED CUSTOMERS"
+        tableColumns={udfFields.filter((f) => f.visible).length + 1}
+        mainClassName="p-6"
+        showFilters
+      />
     );
   }
 
@@ -348,8 +381,19 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
                       >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
-                            <div className="text-primary font-semibold text-sm">
-                              {customer.carfno || customer.id}
+                            <div className="flex items-center gap-2">
+                              {customer.approvestatus && (
+                                <ApprovalIcon
+                                  customer={customer}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setApprovalCustomer(customer);
+                                  }}
+                                />
+                              )}
+                              <div className="text-primary font-semibold text-sm">
+                                {customer.carfno || customer.id}
+                              </div>
                             </div>
                             {customer.requestfor && (
                               <div
@@ -469,6 +513,10 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
                   <table className="min-w-max w-full border-collapse">
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-muted">
+                        <th
+                          className="text-foreground font-medium text-left px-2 py-2 whitespace-nowrap text-sm"
+                          style={{ width: '44px', minWidth: '44px' }}
+                        />
                         {udfFields
                           .filter((f) => f.visible)
                           .map((field) => (
@@ -489,6 +537,21 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
                           className="border-b border-border hover:bg-muted/50 cursor-pointer"
                           onDoubleClick={() => onEditCustomer(customer)}
                         >
+                          <td
+                            className="px-2 py-2"
+                            style={{ width: '44px', minWidth: '44px' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {customer.approvestatus && (
+                              <ApprovalIcon
+                                customer={customer}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setApprovalCustomer(customer);
+                                }}
+                              />
+                            )}
+                          </td>
                           {udfFields
                             .filter((f) => f.visible)
                             .map((field) => {
@@ -576,6 +639,14 @@ const ApprovedCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }) =
         >
           {tooltip.value}
         </div>
+      )}
+
+      {approvalCustomer && (
+        <ApprovalFlowModal
+          customer={approvalCustomer}
+          usersMap={usersMap}
+          onClose={() => setApprovalCustomer(null)}
+        />
       )}
     </div>
   );

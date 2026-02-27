@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import ListLoadingSkeleton from './ListLoadingSkeleton';
 
 type CompanyRow = Database['public']['Tables']['company']['Row'];
 
@@ -117,12 +118,14 @@ export default function CompanyList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading companies...</p>
-        </div>
-      </div>
+      <ListLoadingSkeleton
+        isMobile={isMobile}
+        title="COMPANY LIST"
+        tableColumns={4}
+        mainClassName="p-6"
+        showFilters={false}
+        showActionButton
+      />
     );
   }
 
