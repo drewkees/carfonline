@@ -55,6 +55,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   const [previousTab, setPreviousTab] = useState<string>('home');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [hasAuthorization, setHasAuthorization] = useState<boolean>(true);
   const [userGroup, setUserGroup] = useState<string>('');
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -307,6 +308,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     await openCustomerByGencode(notification.gencode.toString());
   };
 
+  const handleRequestLogout = () => {
+    setShowUserMenu(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    onLogout();
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'APPROVAL':
@@ -351,7 +362,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         <ProfilePage
           userEmail={userEmail}
           onBack={handleProfileBack}
-          onLogout={onLogout}
+          onLogout={handleRequestLogout}
         />
       );
     }
@@ -450,7 +461,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
             activeTab={activeTab}
             onTabChange={handleTabChange}
             userEmail={userEmail}
-            onLogout={onLogout}
+            onLogout={handleRequestLogout}
             onAuthorizationStatus={handleAuthorizationStatus}
             onMenuClick={handleMenuClick}
           />
@@ -702,8 +713,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
 
                   <button
                     onClick={() => {
-                      setShowUserMenu(false);
-                      onLogout();
+                      handleRequestLogout();
                     }}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 w-full text-left border-t border-border"
                   >
@@ -832,6 +842,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-medium"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-2xl p-5">
+              <h3 className="text-base font-semibold text-foreground">Confirm Logout</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Are you sure you want to logout?</p>
+              <div className="mt-5 flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors text-sm font-medium"
+                >
+                  No
+                </button>
+                <button
+                  onClick={handleConfirmLogout}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all text-sm font-medium"
+                >
+                  Yes
                 </button>
               </div>
             </div>
