@@ -58,6 +58,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [hasAuthorization, setHasAuthorization] = useState<boolean>(true);
   const [userGroup, setUserGroup] = useState<string>('');
+  const [fullName, setFullName] = useState<string>('');
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -86,13 +87,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
       
       const { data, error } = await supabase
         .from('users')
-        .select('usergroup, avatar_url')
+        .select('usergroup, avatar_url, fullname')
         .eq('email', userEmail)
         .single();
 
       if (!error && data) {
         setUserGroup(data.usergroup || '');
         setAvatarUrl((data as any).avatar_url || null);
+        setFullName((data as any).fullname || '');
       }
     };
 
@@ -648,7 +650,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setShowUserMenu((prev) => !prev)}
-                className="flex items-center space-x-2 p-1 md:p-2 rounded-full hover:bg-muted transition-colors"
+                className="flex items-center gap-2 p-1.5 md:p-2 rounded-lg hover:bg-muted transition-colors"
               >
                 {/* Avatar — shows photo if set, otherwise gradient + initial */}
                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden bg-gradient-to-r from-indigo-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -658,6 +660,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                     userEmail?.charAt(0).toUpperCase() || 'U'
                   )}
                 </div>
+                {isCollapsed && (
+                  <div className="hidden sm:flex items-center min-w-0">
+                    <span className="text-xs md:text-sm font-medium text-foreground truncate max-w-[170px]">
+                      {fullName || userEmail}
+                    </span>
+                  </div>
+                )}
               </button>
 
               {/* Dropdown Menu */}
