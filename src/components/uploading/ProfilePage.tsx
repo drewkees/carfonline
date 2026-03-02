@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ArrowLeft, Camera, Save, User, Mail, Hash, Shield,
-  Building2, CheckCircle, Loader2, LogOut, ZoomIn, ZoomOut,
+  Building2, CheckCircle, Loader2, ZoomIn, ZoomOut,
   RotateCw, X, CropIcon,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProfilePageProps {
   userEmail: string;
   onBack: () => void;
-  onLogout?: () => void;
 }
 
 interface UserProfile {
@@ -289,7 +288,7 @@ const CropModal: React.FC<CropModalProps> = ({ imageSrc, onConfirm, onCancel }) 
 };
 
 // ─── ProfilePage ─────────────────────────────────────────────────────────────
-const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -298,9 +297,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
   const [editName, setEditName] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null); // triggers crop modal
+  const [showAvatarActions, setShowAvatarActions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchProfile(); }, [userEmail]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target as Node)) {
+        setShowAvatarActions(false);
+      }
+    };
+
+    if (showAvatarActions) {
+      document.addEventListener('mousedown', onClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+    };
+  }, [showAvatarActions]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -466,21 +483,43 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
 
           <div className="w-px h-5 bg-border flex-shrink-0" />
 
-          {/* Avatar — click to open file picker */}
-          <div className="relative group flex-shrink-0 cursor-pointer" onClick={handlePhotoClick}>
-            <div className="w-10 h-10 rounded-full border-2 border-border bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center overflow-hidden">
-              {uploadingPhoto ? (
-                <Loader2 className="h-4 w-4 text-white animate-spin" />
-              ) : avatarPreview ? (
-                <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-sm select-none">
-                  {getInitials(profile.fullname || profile.email)}
-                </span>
-              )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
-                <Camera className="h-3 w-3 text-white" />
+          {/* Avatar — click to expand actions */}
+          <div ref={avatarMenuRef} className="relative flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowAvatarActions((prev) => !prev)}
+              className="relative group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-full border-2 border-border bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center overflow-hidden">
+                {uploadingPhoto ? (
+                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                ) : avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold text-sm select-none">
+                    {getInitials(profile.fullname || profile.email)}
+                  </span>
+                )}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                  <Camera className="h-3 w-3 text-white" />
+                </div>
               </div>
+            </button>
+            <div
+              className={`absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 transition-all duration-200 ${
+                showAvatarActions ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-1 pointer-events-none'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAvatarActions(false);
+                  handlePhotoClick();
+                }}
+                className="whitespace-nowrap px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-500 transition-colors border border-blue-500/60"
+              >
+                Change Photo
+              </button>
             </div>
           </div>
 
@@ -594,8 +633,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
           </div>
 
           {/* ── Actions ───────────────────────────────────────────── */}
-          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 mt-auto border-t border-border w-full">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 mt-auto border-t border-border w-full">
+            <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto justify-end">
               <button
                 onClick={handleSave}
                 disabled={saving || !editName.trim() || editName.trim() === profile.fullname}
@@ -612,15 +651,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userEmail, onBack, onLogout }
                 </span>
               )}
             </div>
-
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-all"
-              >
-                <LogOut className="h-4 w-4" /> Logout
-              </button>
-            )}
           </div>
         </div>
       </div>

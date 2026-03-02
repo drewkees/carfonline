@@ -364,7 +364,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         <ProfilePage
           userEmail={userEmail}
           onBack={handleProfileBack}
-          onLogout={handleRequestLogout}
         />
       );
     }
@@ -453,8 +452,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     <div className="flex bg-background" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 bg-gray-800 transition-all duration-300 ease-in-out z-40 md:z-30 ${
-          isCollapsed ? 'w-0 overflow-hidden' : 'w-[300px]'
+        className={`fixed top-0 left-0 w-[300px] bg-gray-800 transition-transform duration-300 ease-in-out z-40 md:z-30 ${
+          isCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
         }`}
         style={{ height: 'calc(var(--vh, 1vh) * 100)' }}
       >
@@ -650,23 +649,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setShowUserMenu((prev) => !prev)}
-                className="flex items-center gap-2 p-1.5 md:p-2 rounded-lg hover:bg-muted transition-colors"
+                className="group flex items-center gap-2 p-1.5 md:p-2 rounded-lg hover:bg-muted transition-colors"
               >
                 {/* Avatar — shows photo if set, otherwise gradient + initial */}
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden bg-gradient-to-r from-indigo-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden bg-slate-600 ring-1 ring-white/15 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover scale-105" />
                   ) : (
                     userEmail?.charAt(0).toUpperCase() || 'U'
                   )}
                 </div>
-                {isCollapsed && (
-                  <div className="hidden sm:flex items-center min-w-0">
-                    <span className="text-xs md:text-sm font-medium text-foreground truncate max-w-[170px]">
-                      {fullName || userEmail}
-                    </span>
-                  </div>
-                )}
+                <div
+                  className={`hidden sm:flex flex-col items-start min-w-0 overflow-hidden transition-all duration-300 ease-in-out ${
+                    isCollapsed ? 'max-w-[170px] opacity-100 translate-x-0 ml-0.5' : 'max-w-0 opacity-0 -translate-x-1 ml-0'
+                  }`}
+                >
+                  <span className="text-xs md:text-sm font-medium text-foreground truncate max-w-[170px]">
+                    {fullName || userEmail}
+                  </span>
+                  <span
+                    className={`text-[10px] leading-3 text-muted-foreground transition-all duration-200 ${
+                      showUserMenu ? 'opacity-100 max-h-4 mt-0.5' : 'opacity-0 max-h-0 mt-0 group-hover:opacity-100 group-hover:max-h-4 group-hover:mt-0.5'
+                    }`}
+                  >
+                    Change profile
+                  </span>
+                </div>
               </button>
 
               {/* Dropdown Menu */}
@@ -742,11 +750,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
 
         {/* Footer */}
         <footer
-          className="h-10 bg-card border-t border-border flex justify-between items-center px-3 md:px-6 text-xs text-muted-foreground flex-shrink-0 z-10"
+          className="h-10 bg-card border-t border-border flex items-center px-3 md:px-6 text-xs text-muted-foreground flex-shrink-0 z-10"
         >
-          <span className="truncate">Online CARF</span>
-          <span className="hidden sm:inline">Version 3.0</span>
-          <span className="text-[10px] sm:text-xs">{today}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="truncate text-foreground">Online CARF</span>
+            <span className="hidden sm:inline text-[10px] font-semibold tracking-wide text-cyan-600 dark:text-cyan-300">
+              @2025 SoftDev Team
+            </span>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden sm:inline text-foreground">Version 3.0</span>
+            <span className="text-[10px] sm:text-xs text-foreground">{today}</span>
+          </div>
         </footer>
 
         {/* Full Notifications Modal */}

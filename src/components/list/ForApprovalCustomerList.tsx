@@ -742,7 +742,7 @@ const ForApprovalCustomerList: React.FC<CustomerListProps> = ({ onEditCustomer }
             <textarea
               value={returnDialog.remarks}
               onChange={(e) => setReturnDialog((prev) => ({ ...prev, remarks: e.target.value }))}
-              className="text-gray-900 w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-300 resize-none"
+              className="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 resize-none"
               placeholder="Enter your remarks here..."
             />
 

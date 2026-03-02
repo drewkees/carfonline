@@ -71,13 +71,13 @@ function ApproverMultiSelect({
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</label>
+      <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">{label}</label>
       <button
         type="button"
         onClick={handleOpen}
-        className="w-full px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm flex justify-between items-center hover:border-gray-500 transition-colors min-h-[42px] text-left"
+        className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm flex justify-between items-center hover:border-gray-500 transition-colors min-h-[42px] text-left"
       >
-        <span className={`truncate pr-2 ${selectedValues.length === 0 ? 'text-gray-500' : 'text-white'}`}>
+        <span className={`truncate pr-2 ${selectedValues.length === 0 ? 'text-gray-500' : 'text-slate-900 dark:text-white'}`}>
           {selectedValues.length === 0 ? `- Select ${label} -` : selectedValues.join(', ')}
         </span>
         <span className="flex items-center gap-1.5 flex-shrink-0">
@@ -86,18 +86,18 @@ function ApproverMultiSelect({
               {selectedValues.length}
             </span>
           )}
-          {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+          {open ? <ChevronUp size={14} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={14} className="text-slate-500 dark:text-gray-400" />}
         </span>
       </button>
 
       {open && (
-        <div className="rounded-lg border border-gray-600 bg-gray-850 overflow-hidden" style={{ background: '#1a1f2e' }}>
-          <div className="p-2 border-b border-gray-700">
+        <div className="rounded-lg border border-slate-300 dark:border-gray-600 bg-gray-850 overflow-hidden" style={{ background: '#1a1f2e' }}>
+          <div className="p-2 border-b border-slate-200 dark:border-gray-700">
             <input
               ref={searchRef}
               type="text"
               placeholder="Search users..."
-              className="w-full px-3 py-1.5 rounded-md bg-gray-900 border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 custom-scrollbar"
+              className="w-full px-3 py-1.5 rounded-md bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 custom-scrollbar"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -114,21 +114,21 @@ function ApproverMultiSelect({
                     key={u.userid}
                     onClick={() => toggle(u.userid)}
                     className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
-                      selected ? 'bg-blue-600/20' : 'hover:bg-gray-700/60'
+                      selected ? 'bg-blue-600/20' : 'hover:bg-slate-100 dark:hover:bg-gray-700/60'
                     }`}
                   >
                     <div className={`w-4 h-4 rounded flex items-center justify-center border flex-shrink-0 transition-colors ${
-                      selected ? 'bg-blue-600 border-blue-600' : 'border-gray-600'
+                      selected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-gray-600'
                     }`}>
                       {selected && (
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+                        <svg className="w-2.5 h-2.5 text-slate-900 dark:text-white" fill="none" viewBox="0 0 10 8">
                           <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm text-white font-medium truncate">{u.userid}</div>
-                      <div className="text-xs text-gray-400 truncate">{u.fullname}</div>
+                      <div className="text-sm text-slate-900 dark:text-white font-medium truncate">{u.userid}</div>
+                      <div className="text-xs text-slate-500 dark:text-gray-400 truncate">{u.fullname}</div>
                     </div>
                   </div>
                 );
@@ -136,14 +136,14 @@ function ApproverMultiSelect({
             )}
           </div>
 
-          <div className="px-3 py-2 border-t border-gray-700 flex justify-end">
+          <div className="px-3 py-2 border-t border-slate-200 dark:border-gray-700 flex justify-end">
             <button
               type="button"
               onClick={() => {
                 setOpen(false);
                 setSearch('');
               }}
-              className="text-xs text-gray-400 hover:text-white px-3 py-1 rounded-md hover:bg-gray-700 transition-colors"
+              className="text-xs text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white px-3 py-1 rounded-md hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors"
             >
               Done
             </button>
@@ -452,7 +452,7 @@ export default function BCApprovalMatrix() {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">BC Approval Matrix</h2>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -476,19 +476,19 @@ export default function BCApprovalMatrix() {
           </div>
 
           <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar">
+            <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-900 sticky top-0 z-10">
+                <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                   <tr>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">COMPANY</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">APPROVAL TYPE</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">FIRST APPROVER</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EXCEPTION</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">EXCEPTION APPROVER</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">ACTIONS</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">COMPANY</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">APPROVAL TYPE</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">FIRST APPROVER</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">EXCEPTION</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">EXCEPTION APPROVER</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 w-32 whitespace-nowrap">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                   {filteredSchemas.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-10 text-center text-gray-500 italic text-sm">
@@ -497,24 +497,24 @@ export default function BCApprovalMatrix() {
                     </tr>
                   ) : (
                     filteredSchemas.map((schema) => (
-                      <tr key={schema.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
-                        <td className="px-6 py-4 text-gray-400 whitespace-nowrap text-sm">{(schema as any).company || '-'}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.approvaltype}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.firstapprover || '-'}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.exception || '-'}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.exceptionapprover || '-'}</td>
+                      <tr key={schema.id} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(schema)}>
+                        <td className="px-6 py-4 text-slate-500 dark:text-gray-400 whitespace-nowrap text-sm">{(schema as any).company || '-'}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.approvaltype}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.firstapprover || '-'}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.exception || '-'}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.exceptionapprover || '-'}</td>
                         <td className="px-6 py-4 w-32">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEdit(schema)}
-                              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Edit"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(schema.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -533,24 +533,24 @@ export default function BCApprovalMatrix() {
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: '92vh' }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 bg-gray-800 rounded-t-xl flex-shrink-0">
+          <div className="bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: '92vh' }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <GitMerge size={16} className="text-white" />
+                  <GitMerge size={16} className="text-slate-900 dark:text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {editingSchema ? 'Edit BC Approval Matrix' : 'New BC Approval Matrix'}
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500 dark:text-gray-400">
                     {editingSchema ? `Editing: ${editingSchema.approvaltype}` : 'Define BC approval workflow'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-1.5 text-gray-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X size={18} />
               </button>
@@ -564,11 +564,11 @@ export default function BCApprovalMatrix() {
                 </div>
                 <div className="space-y-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">
                       Company <span className="text-red-400">*</span>
                     </label>
                     <select
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer"
                       value={newSchema.company || ''}
                       onChange={(e) => setNewSchema({ ...newSchema, company: e.target.value, approvaltype: '' })}
                     >
@@ -582,11 +582,11 @@ export default function BCApprovalMatrix() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">
                       Approval Type <span className="text-red-400">*</span>
                     </label>
                     <select
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer disabled:opacity-50"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer disabled:opacity-50"
                       value={newSchema.approvaltype}
                       onChange={(e) => setNewSchema({ ...newSchema, approvaltype: e.target.value })}
                       disabled={!newSchema.company}
@@ -605,7 +605,7 @@ export default function BCApprovalMatrix() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-700/60" />
+              <div className="border-t border-slate-200 dark:border-gray-700/60" />
 
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -621,10 +621,10 @@ export default function BCApprovalMatrix() {
                   />
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Exception</label>
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">Exception</label>
                     <input
                       type="text"
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={newSchema.exception}
                       onChange={(e) => setNewSchema({ ...newSchema, exception: e.target.value })}
                       placeholder="Enter exception condition/value"
@@ -641,18 +641,18 @@ export default function BCApprovalMatrix() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-700 bg-gray-800/50 rounded-b-xl flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-gray-700 bg-slate-100/60 dark:bg-gray-800/50 rounded-b-xl flex-shrink-0">
               <p className="text-xs text-gray-500"><span className="text-red-400">*</span> Required fields</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveSchema}
-                  className="px-5 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors shadow-lg shadow-blue-900/30"
+                  className="px-5 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-white font-medium transition-colors shadow-lg shadow-blue-900/30"
                 >
                   {editingSchema ? 'Save Changes' : 'Create Matrix'}
                 </button>
@@ -664,3 +664,6 @@ export default function BCApprovalMatrix() {
     </div>
   );
 }
+
+
+

@@ -60,7 +60,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         label: 'For Approval',
         value: counts.forApproval,
         icon: Clock3,
-        className: 'bg-slate-50 border-slate-200 text-slate-700',
+        className: 'bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-900/50 text-slate-800 dark:text-slate-100',
+        valueClassName: 'text-blue-700 dark:text-blue-300',
+        iconClassName: 'text-blue-600 dark:text-blue-400',
+        stripClassName: 'bg-blue-500',
         tab: 'forapproval',
       });
     }
@@ -69,28 +72,40 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         label: 'Approved Customers',
         value: counts.approved,
         icon: CheckCircle2,
-        className: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+        className: 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 text-slate-800 dark:text-slate-100',
+        valueClassName: 'text-emerald-700 dark:text-emerald-300',
+        iconClassName: 'text-emerald-600 dark:text-emerald-400',
+        stripClassName: 'bg-emerald-500',
         tab: 'approved',
       },
       {
         label: 'Pending Customers',
         value: counts.pending,
         icon: Clock3,
-        className: 'bg-amber-50 border-amber-200 text-amber-700',
+        className: 'bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/50 text-slate-800 dark:text-slate-100',
+        valueClassName: 'text-amber-700 dark:text-amber-300',
+        iconClassName: 'text-amber-600 dark:text-amber-400',
+        stripClassName: 'bg-amber-500',
         tab: 'pending',
       },
       {
         label: 'Returned Customers',
         value: counts.returned,
         icon: Undo2,
-        className: 'bg-orange-50 border-orange-200 text-orange-700',
+        className: 'bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 text-slate-800 dark:text-slate-100',
+        valueClassName: 'text-orange-700 dark:text-orange-300',
+        iconClassName: 'text-orange-600 dark:text-orange-400',
+        stripClassName: 'bg-orange-500',
         tab: 'returntomaker',
       },
       {
         label: 'Cancelled Customers',
         value: counts.cancelled,
         icon: XCircle,
-        className: 'bg-rose-50 border-rose-200 text-rose-700',
+        className: 'bg-white dark:bg-slate-900 border-rose-200 dark:border-rose-900/50 text-slate-800 dark:text-slate-100',
+        valueClassName: 'text-rose-700 dark:text-rose-300',
+        iconClassName: 'text-rose-600 dark:text-rose-400',
+        stripClassName: 'bg-rose-500',
         tab: 'cancelled',
       }
     );
@@ -324,12 +339,24 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
   };
 
   return (
-    <div className="w-full h-full overflow-auto p-2 md:p-4 custom-scrollbar relative">
-      <div className="mb-3 rounded-xl border border-border bg-card px-4 py-3 md:px-4 md:py-3 shadow-sm">
-        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-tight">Dashboard</h2>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Overview of customer request statuses
-        </p>
+    <div className="w-full h-full overflow-auto p-2 md:p-4 custom-scrollbar relative bg-gradient-to-b from-background via-background to-muted/20">
+      <div className="mb-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold text-foreground leading-tight">Customer Overview</h2>
+            <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+              Overview of customer request statuses
+            </p>
+          </div>
+          <div className="hidden md:flex items-center gap-3">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Requests</p>
+              <p className="text-sm font-semibold text-foreground">
+                {loading ? '...' : mixTotal.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className={`grid grid-cols-1 sm:grid-cols-2 ${isApprover ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-3 md:gap-4`}>
@@ -340,13 +367,14 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
               type="button"
               key={card.label}
               onClick={() => onNavigateTab?.(card.tab)}
-              className={`rounded-xl border p-3 md:p-4 shadow-sm bg-white ${card.className}`}
+              className={`relative rounded-xl border p-3 md:p-4 ${card.className} transition-all duration-200 hover:-translate-y-0.5`}
             >
+              <div className={`absolute left-0 top-0 h-1.5 w-full rounded-t-xl ${card.stripClassName}`} />
               <div className="flex items-center justify-between">
-                <p className="text-xs md:text-sm font-medium">{card.label}</p>
-                <Icon className="w-5 h-5" />
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">{card.label}</p>
+                <Icon className={`w-5 h-5 ${card.iconClassName}`} />
               </div>
-              <p className="text-2xl md:text-3xl font-bold mt-2 md:mt-3">
+              <p className={`text-2xl md:text-3xl font-bold mt-2 md:mt-3 ${card.valueClassName}`}>
                 {loading ? '...' : card.value.toLocaleString()}
               </p>
             </button>
@@ -355,8 +383,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden md:h-[430px] flex flex-col">
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden md:h-[430px] flex flex-col">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-base font-semibold text-foreground">Customer List</h3>
               <button
@@ -380,7 +408,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                       <div className="mt-1 flex items-center justify-between gap-2 text-xs">
                         <button
                           type="button"
-                          className="text-primary hover:underline font-medium truncate"
+                          className="text-primary hover:underline font-medium truncate whitespace-nowrap"
                           onClick={() => onOpenCustomerByGencode?.(item.gencode)}
                         >
                           {item.gencode || '-'}
@@ -397,7 +425,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <thead>
                   <tr className="text-muted-foreground text-xs border-b border-border">
                     <th className="text-left py-3 px-4">Customer</th>
-                    <th className="text-left py-3 px-4">CARF No</th>
+                    <th className="text-left py-3 px-4 whitespace-nowrap">CARF No</th>
                     <th className="text-left py-3 px-4">Status</th>
                     <th className="text-left py-3 px-4">Date</th>
                   </tr>
@@ -406,11 +434,11 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                   {customerList.map((item) => (
                     <tr key={item.id} className="border-b border-border/60">
                       <td className="py-3 px-4 text-foreground">{item.soldToParty}</td>
-                      <td className="py-3 px-4 text-foreground">
+                      <td className="py-3 px-4 text-foreground whitespace-nowrap">
                         {item.gencode && item.gencode !== '-' ? (
                           <button
                             type="button"
-                            className="text-primary hover:underline font-medium"
+                            className="text-primary hover:underline font-medium whitespace-nowrap"
                             onClick={() => onOpenCustomerByGencode?.(item.gencode)}
                           >
                             {item.gencode}
@@ -432,14 +460,14 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden md:h-[430px] flex flex-col">
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden md:h-[430px] flex flex-col">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
             <h3 className="text-base font-semibold text-foreground">For Approval</h3>
           </div>
           <div className="p-4 flex-1 overflow-auto custom-scrollbar">
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mb-4">
-              <p className="text-xs text-muted-foreground">Total Pending For You</p>
-              <p className="text-3xl font-bold text-foreground mt-1">
+            <div className="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4 mb-4">
+              <p className="text-xs text-indigo-700 dark:text-indigo-300">Total Pending For You</p>
+              <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mt-1">
                 {loading ? '...' : forApprovalTotal.toLocaleString()}
               </p>
             </div>
@@ -454,7 +482,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                 </div>
               ) : (
                 forApprovalList.map((item) => (
-                  <div key={`fa-${item.id}`} className="py-2 flex items-center justify-between gap-2">
+                  <div key={`fa-${item.id}`} className="py-2 flex items-center justify-between gap-2 hover:bg-slate-100/60 dark:hover:bg-slate-800/30 rounded-md px-2 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm text-foreground truncate">{item.soldToParty}</p>
                       <p className="text-xs text-muted-foreground truncate">{item.gencode}</p>
@@ -475,8 +503,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden md:h-[430px] flex flex-col">
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden md:h-[430px] flex flex-col">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-base font-semibold text-foreground">Customer Chart</h3>
               <button
@@ -502,8 +530,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden md:h-[430px] flex flex-col">
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden md:h-[430px] flex flex-col">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
             <h3 className="text-base font-semibold text-foreground">Notification Summary</h3>
           </div>
           <div className="divide-y divide-border flex-1 overflow-auto custom-scrollbar">
@@ -515,7 +543,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                   key={n.id}
                   type="button"
                   onClick={() => onNotificationClick?.(n)}
-                  className="w-full text-left px-4 py-3 hover:bg-muted/40 transition-colors"
+                  className="w-full text-left px-4 py-3 hover:bg-slate-100/60 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">{n.title || '-'}</p>
                   <p className="text-xs text-muted-foreground mt-1">{n.message || '-'}</p>
@@ -532,7 +560,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
 
       {showMixModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 md:p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto custom-scrollbar rounded-xl border border-border bg-card shadow-lg">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-auto custom-scrollbar rounded-xl border border-border bg-card">
             <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
               <h3 className="text-base font-semibold text-foreground">Customer Chart</h3>
               <button

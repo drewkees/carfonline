@@ -332,7 +332,7 @@ export default function UsersList() {
       ) : (
         /* Desktop Layout */
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">USER LIST</h2>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -356,27 +356,27 @@ export default function UsersList() {
           </div>
 
           {/* ✅ FIX: overflow-x-auto added so table scrolls horizontally on zoom */}
-          <div className="flex flex-col bg-gray-800 mx-4 mb-4 mt-4 rounded-lg shadow overflow-hidden flex-1">
+          <div className="flex flex-col bg-white dark:bg-gray-800 mx-4 mb-4 mt-4 rounded-lg shadow overflow-hidden flex-1">
             <div className="flex-1 overflow-y-auto overflow-x-auto custom-scrollbar">
               <table className="w-full table-auto">
-                <thead className="bg-gray-900 sticky top-0 z-10">
+                <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                   <tr>
                     {/* ✅ FIX: whitespace-nowrap on all <th> to prevent text wrapping */}
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">User ID</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Email</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Full Name</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Approver</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">All Access</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Edit Access</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Custom Limit Access</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Company</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">User Group</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">All Company Access</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Compliance & Final Approver</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 whitespace-nowrap">Actions</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">User ID</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Email</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Full Name</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Approver</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">All Access</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Edit Access</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Custom Limit Access</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Company</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">User Group</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">All Company Access</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Compliance & Final Approver</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                   {filteredUsers.length === 0 ? (
                     <tr>
                       <td colSpan={12} className="px-6 py-10 text-center text-gray-500 italic text-sm">
@@ -385,31 +385,31 @@ export default function UsersList() {
                     </tr>
                   ) : (
                     filteredUsers.map((user) => (
-                      <tr key={user.userid} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(user)}>
+                      <tr key={user.userid} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(user)}>
                         {/* ✅ FIX: whitespace-nowrap on all <td> to prevent text wrapping */}
-                        <td className="px-6 py-4 text-gray-300 whitespace-nowrap">{user.userid}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{user.email}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{user.fullname}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.approver)}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.allaccess)}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.editaccess)}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.customlimitaccess)}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{user.company}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{user.usergroup}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.allcompanyaccess)}</td>
-                        <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(user.complianceandfinalapprover)}</td>
+                        <td className="px-6 py-4 text-slate-700 dark:text-gray-200 whitespace-nowrap">{user.userid}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{user.email}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{user.fullname}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.approver)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.allaccess)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.editaccess)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.customlimitaccess)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{user.company}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{user.usergroup}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.allcompanyaccess)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.complianceandfinalapprover)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEdit(user)}
-                              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Edit"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(user.userid)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -431,26 +431,26 @@ export default function UsersList() {
       ======================== */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+          <div className="bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
 
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 bg-gray-800 rounded-t-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <User size={16} className="text-white" />
+                  <User size={16} className="text-slate-900 dark:text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {editingUser ? 'Edit User Account' : 'New User Account'}
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500 dark:text-gray-400">
                     {editingUser ? `Editing: ${editingUser.userid}` : 'Fill in all required fields to create a new user'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-1.5 text-gray-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X size={18} />
               </button>
@@ -467,13 +467,13 @@ export default function UsersList() {
                 </div>
                 <div className="space-y-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">
                       User ID <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. jdoe"
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition"
                       value={newUser.userid}
                       onChange={(e) => setNewUser({ ...newUser, userid: e.target.value })}
                       disabled={!!editingUser}
@@ -481,20 +481,20 @@ export default function UsersList() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">
                       Full Name <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. Juan Dela Cruz"
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       value={newUser.fullname}
                       onChange={(e) => setNewUser({ ...newUser, fullname: e.target.value })}
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">
                       Email Address <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
@@ -502,7 +502,7 @@ export default function UsersList() {
                       <input
                         type="email"
                         placeholder="e.g. jdoe@bounty.com.ph"
-                        className="pl-9 pr-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full"
+                        className="pl-9 pr-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full"
                         value={newUser.email}
                         onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                       />
@@ -512,7 +512,7 @@ export default function UsersList() {
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-700/60" />
+              <div className="border-t border-slate-200 dark:border-gray-700/60" />
 
               {/* Section: Assignment */}
               <div>
@@ -522,9 +522,9 @@ export default function UsersList() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Company</label>
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">Company</label>
                     <select
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none cursor-pointer"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none cursor-pointer"
                       value={newUser.company || ''}
                       onChange={(e) => setNewUser({ ...newUser, company: e.target.value })}
                     >
@@ -538,9 +538,9 @@ export default function UsersList() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">User Group</label>
+                    <label className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">User Group</label>
                     <select
-                      className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none cursor-pointer"
+                      className="px-3 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none cursor-pointer"
                       value={newUser.usergroup || ''}
                       onChange={(e) => setNewUser({ ...newUser, usergroup: e.target.value })}
                     >
@@ -556,7 +556,7 @@ export default function UsersList() {
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-700/60" />
+              <div className="border-t border-slate-200 dark:border-gray-700/60" />
 
               {/* Section: Permissions */}
               <div>
@@ -586,9 +586,9 @@ export default function UsersList() {
                           onChange={(e) => setNewUser({ ...newUser, [key]: e.target.checked })}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-gray-700 border border-gray-600 rounded-full peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                        <div className="w-9 h-5 bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                       </div>
-                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors leading-tight">{label}</span>
+                      <span className="text-sm text-slate-700 dark:text-gray-200 group-hover:text-slate-900 dark:hover:text-white transition-colors leading-tight">{label}</span>
                     </label>
                   ))}
                 </div>
@@ -596,18 +596,18 @@ export default function UsersList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-700 bg-gray-800/50 rounded-b-xl mt-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-gray-700 bg-slate-100/60 dark:bg-gray-800/50 rounded-b-xl mt-auto">
               <p className="text-xs text-gray-500"><span className="text-red-400">*</span> Required fields</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveUser}
-                  className="px-5 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors shadow-lg shadow-blue-900/30"
+                  className="px-5 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-white font-medium transition-colors shadow-lg shadow-blue-900/30"
                 >
                   {editingUser ? 'Save Changes' : 'Create User'}
                 </button>
@@ -619,3 +619,6 @@ export default function UsersList() {
     </div>
   );
 }
+
+
+

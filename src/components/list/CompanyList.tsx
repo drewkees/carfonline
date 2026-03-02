@@ -203,7 +203,7 @@ export default function CompanyList() {
       ) : (
         /* ── Desktop Layout ── */
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">COMPANY LIST</h2>
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -225,18 +225,18 @@ export default function CompanyList() {
             </div>
           </div>
 
-          <div className="flex flex-col bg-gray-800 mx-4 mb-4 mt-4 rounded-lg shadow overflow-hidden flex-1">
+          <div className="flex flex-col bg-white dark:bg-gray-800 mx-4 mb-4 mt-4 rounded-lg shadow overflow-hidden flex-1">
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <table className="w-full table-auto">
-                <thead className="bg-gray-900 sticky top-0 z-10">
+                <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                   <tr>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 w-20">ID</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Company Code</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300">Company Name</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 w-32">Actions</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 w-20">ID</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200">Company Code</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200">Company Name</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 w-32">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                   {filteredCompanies.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-10 text-center text-gray-500 italic text-sm">
@@ -245,22 +245,22 @@ export default function CompanyList() {
                     </tr>
                   ) : (
                     filteredCompanies.map((c) => (
-                      <tr key={c.id} className="hover:bg-gray-700 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(c)}>
-                        <td className="px-6 py-4 text-gray-400 text-sm">{c.id}</td>
-                        <td className="px-6 py-4 text-gray-200">{c.company}</td>
-                        <td className="px-6 py-4 text-gray-200">{c.company_name}</td>
+                      <tr key={c.id} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onDoubleClick={() => handleEdit(c)}>
+                        <td className="px-6 py-4 text-slate-500 dark:text-gray-400 text-sm">{c.id}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200">{c.company}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200">{c.company_name}</td>
                         <td className="px-6 py-4 w-32">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEdit(c)}
-                              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Edit"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(c.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -279,24 +279,35 @@ export default function CompanyList() {
 
       {/* ── Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
-                {editingCompany ? 'Edit Company' : 'Add Company'}
-              </h3>
-              <button onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-[95vw] max-w-3xl rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-gray-100 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl px-6 py-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Plus size={16} className="text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {editingCompany ? 'Edit Company' : 'Add Company'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">Maintain company master data</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1.5 text-gray-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-3">
               {editingCompany && (
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-400">ID (auto-generated)</label>
+                <div className="flex flex-col md:col-span-2">
+                  <label className="text-sm mb-1 text-slate-500 dark:text-gray-400">ID (auto-generated)</label>
                   <input
                     type="number"
-                    className="px-3 py-2 rounded bg-gray-600 text-gray-400 cursor-not-allowed opacity-60"
+                    className="px-3 py-2 rounded bg-gray-600 text-slate-500 dark:text-gray-400 cursor-not-allowed opacity-60"
                     value={editingCompany.id}
                     disabled
                   />
@@ -306,7 +317,7 @@ export default function CompanyList() {
                 <label className="text-sm mb-1">Company Code</label>
                 <input
                   type="text"
-                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 />
@@ -315,23 +326,23 @@ export default function CompanyList() {
                 <label className="text-sm mb-1">Company Name</label>
                 <input
                   type="text"
-                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={formData.company_name}
                   onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 rounded-b-xl mt-auto flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveCompany}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-white font-medium transition-colors"
               >
                 {editingCompany ? 'Update' : 'Save'}
               </button>
@@ -342,3 +353,7 @@ export default function CompanyList() {
     </div>
   );
 }
+
+
+
+

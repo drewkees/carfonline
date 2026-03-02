@@ -24,7 +24,7 @@ const TYPE_CONFIG: Record<string, {
 };
 
 const getTypeConfig = (type: string) =>
-  TYPE_CONFIG[type] ?? { label: type || 'Unknown', icon: <FileCode size={14} />, badgeClass: 'bg-gray-500/20 text-gray-300 border border-gray-500/30', rowBg: '#1a1a2e', headerBg: '#111122', textClass: 'text-gray-300', borderClass: 'border-gray-500/30' };
+  TYPE_CONFIG[type] ?? { label: type || 'Unknown', icon: <FileCode size={14} />, badgeClass: 'bg-gray-500/20 text-slate-700 dark:text-gray-200 border border-gray-500/30', rowBg: '#1a1a2e', headerBg: '#111122', textClass: 'text-slate-700 dark:text-gray-200', borderClass: 'border-gray-500/30' };
 
 const TypeBadge = ({ type }: { type: string }) => {
   const cfg = getTypeConfig(type);
@@ -43,14 +43,14 @@ const SelectField = ({ label, value, onChange, options, placeholder, accentClass
   options: { value: string; label: string }[]; placeholder: string; accentClass?: string;
 }) => (
   <div>
-    <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">{label}</label>
+    <label className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">{label}</label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full px-3 py-2 rounded-lg bg-gray-700/60 border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-white appearance-none cursor-pointer ${value ? accentClass || 'border-blue-500/50' : 'border-gray-600'}`}
+      className={`w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-gray-700/60 border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-slate-900 dark:text-white appearance-none cursor-pointer ${value ? accentClass || 'border-blue-500/50' : 'border-slate-300 dark:border-gray-600'}`}
     >
-      <option value="" className="bg-gray-800 text-gray-400">{placeholder}</option>
-      {options.map((o) => <option key={o.value} value={o.value} className="bg-gray-800 text-white">{o.label}</option>)}
+      <option value="" className="bg-white dark:bg-gray-800 text-slate-500 dark:text-gray-400">{placeholder}</option>
+      {options.map((o) => <option key={o.value} value={o.value} className="bg-white dark:bg-gray-800 text-slate-900 dark:text-white">{o.label}</option>)}
     </select>
   </div>
 );
@@ -201,20 +201,20 @@ export default function SchemaList() {
 
     return (
       <div className="fixed inset-0 flex items-center justify-center z-[60] bg-black/70 p-4 backdrop-blur-sm">
-        <div className="bg-gray-800 rounded-xl w-full max-w-2xl border border-gray-700 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl border border-slate-200 dark:border-gray-700 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 flex-shrink-0">
-            <h4 className="text-sm font-semibold text-white">Select Icon</h4>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-gray-700 flex-shrink-0">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Select Icon</h4>
             <button
               onClick={() => { setShowIconPicker(false); setIconSearch(''); }}
-              className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors"
+              className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white p-1 rounded hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors"
             >
               <X size={16} />
             </button>
           </div>
 
           {/* Search */}
-          <div className="px-4 py-3 border-b border-gray-700 flex-shrink-0">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-gray-700 flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
@@ -223,7 +223,7 @@ export default function SchemaList() {
                 placeholder="Search icons... (e.g. User, Home, Settings)"
                 value={iconSearch}
                 onChange={(e) => setIconSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <p className="text-xs text-gray-500 mt-1.5">
@@ -251,7 +251,7 @@ export default function SchemaList() {
                     className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all text-center group ${
                       isSelected
                         ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                        : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                        : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <IconComp size={18} />
@@ -263,7 +263,7 @@ export default function SchemaList() {
           </div>
 
           {/* Footer — selected icon */}
-          <div className="px-4 py-2.5 border-t border-gray-700 flex items-center gap-3 flex-shrink-0 bg-gray-900/50">
+          <div className="px-4 py-2.5 border-t border-slate-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0 bg-slate-100/70 dark:bg-slate-100 dark:bg-gray-900/50">
             {newSchema.menuicon ? (
               <>
                 {(() => {
@@ -335,7 +335,7 @@ export default function SchemaList() {
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="w-4 h-4 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xs text-blue-300 font-bold flex-shrink-0">1</span>
-            <span className="text-xs text-gray-400">Select the Menu</span>
+            <span className="text-xs text-slate-500 dark:text-gray-400">Select the Menu</span>
           </div>
           <SelectField
             label=""
@@ -357,7 +357,7 @@ export default function SchemaList() {
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 mb-1">
               <span className="w-4 h-4 rounded-full bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-xs text-yellow-300 font-bold flex-shrink-0">2</span>
-              <span className="text-xs text-gray-400">Select the Submenu</span>
+              <span className="text-xs text-slate-500 dark:text-gray-400">Select the Submenu</span>
             </div>
             <SelectField
               label=""
@@ -407,9 +407,9 @@ export default function SchemaList() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">SCHEMA LIST</h2>
               <div className="flex items-center gap-2">
-                <div className="flex items-center bg-gray-700 rounded-lg p-0.5">
-                  <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}><List size={15} /></button>
-                  <button onClick={() => setViewMode('tree')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'tree' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}><GitBranch size={15} /></button>
+                <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-lg p-0.5">
+                  <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}><List size={15} /></button>
+                  <button onClick={() => setViewMode('tree')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'tree' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}><GitBranch size={15} /></button>
                 </div>
                 <button onClick={() => openAdd()} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"><Plus size={16} /> Add</button>
               </div>
@@ -460,12 +460,12 @@ export default function SchemaList() {
                         <button onClick={(e) => { e.stopPropagation(); openAdd(type); }} className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${cfg.badgeClass}`}><Plus size={11} /> Add</button>
                       </div>
                       {isOpen && items.map((schema) => (
-                        <div key={schema.itemid} className="px-4 py-3 border-t border-gray-700/50" style={{ backgroundColor: cfg.rowBg }} onClick={() => handleEdit(schema)}>
+                        <div key={schema.itemid} className="px-4 py-3 border-t border-slate-200 dark:border-gray-700/50" style={{ backgroundColor: cfg.rowBg }} onClick={() => handleEdit(schema)}>
                           <div className="flex justify-between items-center">
-                            <div><div className={`text-sm font-semibold ${cfg.textClass}`}>{schema.menuid}</div><div className="text-xs text-gray-400 mt-0.5">{schema.menuname}</div></div>
+                            <div><div className={`text-sm font-semibold ${cfg.textClass}`}>{schema.menuid}</div><div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">{schema.menuname}</div></div>
                             <div className="flex gap-1">
-                              <button onClick={(e) => { e.stopPropagation(); handleEdit(schema); }} className="p-1.5 text-gray-400 hover:text-blue-400 rounded"><Edit2 size={13} /></button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(schema.itemid); }} className="p-1.5 text-gray-400 hover:text-red-400 rounded"><Trash2 size={13} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleEdit(schema); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 rounded"><Edit2 size={13} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(schema.itemid); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 rounded"><Trash2 size={13} /></button>
                             </div>
                           </div>
                         </div>
@@ -479,7 +479,7 @@ export default function SchemaList() {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-semibold text-foreground">Schema List</h2>
               <div className="flex items-center gap-2">
@@ -495,44 +495,44 @@ export default function SchemaList() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80" />
               </div>
-              <div className="flex items-center bg-gray-700 rounded-lg p-0.5 gap-0.5">
-                <button onClick={() => setViewMode('table')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'table' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}><List size={15} /> Table</button>
-                <button onClick={() => setViewMode('tree')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'tree' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}><GitBranch size={15} /> Grouped</button>
+              <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-lg p-0.5 gap-0.5">
+                <button onClick={() => setViewMode('table')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'table' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}><List size={15} /> Table</button>
+                <button onClick={() => setViewMode('tree')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'tree' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}><GitBranch size={15} /> Grouped</button>
               </div>
               <button onClick={() => openAdd()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"><Plus size={18} /> Add</button>
             </div>
           </div>
           <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
             {viewMode === 'table' ? (
-              <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar">
+              <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
                 <table className="min-w-full table-auto">
-                  <thead className="bg-gray-900 sticky top-0 z-10">
+                  <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                     <tr>
                       {['MENU ID','MENU NAME','TYPE','MENU COMMAND','OBJECT CODE','ICON','UDF','Actions'].map((h) => (
-                        <th key={h} className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">{h}</th>
+                        <th key={h} className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700">
-                    {sortedFilteredSchemas.length === 0 ? <tr><td colSpan={8} className="text-center py-12 text-gray-400">No schemas found</td></tr>
+                  <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
+                    {sortedFilteredSchemas.length === 0 ? <tr><td colSpan={8} className="text-center py-12 text-slate-500 dark:text-gray-400">No schemas found</td></tr>
                       : sortedFilteredSchemas.map((schema) => (
-                        <tr key={schema.itemid} className="hover:bg-gray-700/50 transition-colors group">
-                          <td className="px-6 py-3 text-gray-200 whitespace-nowrap font-mono text-sm">{schema.menuid}</td>
-                          <td className="px-6 py-3 text-gray-200 whitespace-nowrap">{schema.menuname}</td>
+                        <tr key={schema.itemid} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors group">
+                          <td className="px-6 py-3 text-slate-900 dark:text-gray-200 whitespace-nowrap font-mono text-sm">{schema.menuid}</td>
+                          <td className="px-6 py-3 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.menuname}</td>
                           <td className="px-6 py-3 whitespace-nowrap"><TypeBadge type={schema.menutype} /></td>
-                          <td className="px-6 py-3 text-gray-400 whitespace-nowrap font-mono text-sm">{schema.menucmd || '-'}</td>
-                          <td className="px-6 py-3 text-gray-400 whitespace-nowrap font-mono text-sm">{schema.objectcode || '-'}</td>
-                          <td className="px-6 py-3 text-gray-400 whitespace-nowrap text-sm">
+                          <td className="px-6 py-3 text-slate-500 dark:text-gray-400 whitespace-nowrap font-mono text-sm">{schema.menucmd || '-'}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-gray-400 whitespace-nowrap font-mono text-sm">{schema.objectcode || '-'}</td>
+                          <td className="px-6 py-3 text-slate-500 dark:text-gray-400 whitespace-nowrap text-sm">
                             <div className="flex items-center gap-1.5">
-                              {schema.menuicon && (() => { const I = (LucideIcons as any)[schema.menuicon]; return I ? <I size={14} className="text-gray-300" /> : null; })()}
+                              {schema.menuicon && (() => { const I = (LucideIcons as any)[schema.menuicon]; return I ? <I size={14} className="text-slate-700 dark:text-gray-200" /> : null; })()}
                               <span>{schema.menuicon || '-'}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-3 whitespace-nowrap"><span className={`text-xs px-2 py-0.5 rounded-full ${schema.udfmaintained ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-700 text-gray-400'}`}>{boolText(schema.udfmaintained)}</span></td>
+                          <td className="px-6 py-3 whitespace-nowrap"><span className={`text-xs px-2 py-0.5 rounded-full ${schema.udfmaintained ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400'}`}>{boolText(schema.udfmaintained)}</span></td>
                           <td className="px-6 py-3 w-28">
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => handleEdit(schema)} className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={15} /></button>
-                              <button onClick={() => handleDelete(schema.itemid)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={15} /></button>
+                              <button onClick={() => handleEdit(schema)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={15} /></button>
+                              <button onClick={() => handleDelete(schema.itemid)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={15} /></button>
                             </div>
                           </td>
                         </tr>
@@ -543,7 +543,7 @@ export default function SchemaList() {
             ) : (
               <div className="flex-1 overflow-auto custom-scrollbar pb-4">
                 {groupKeys.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400 bg-gray-800 rounded-lg">No schemas found</div>
+                  <div className="text-center py-12 text-slate-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No schemas found</div>
                 ) : (() => {
                   const menus = [...(grouped['M'] || [])].sort((a, b) => (a.menuid || '').localeCompare(b.menuid || ''));
                   const submenus = [...(grouped['S'] || [])].sort((a, b) => (a.menuid || '').localeCompare(b.menuid || ''));
@@ -558,8 +558,8 @@ export default function SchemaList() {
                   const matchedProgIds = new Set<number>();
 
                   return (
-                    <div className="space-y-1 bg-gray-900 rounded-xl border border-gray-700/50 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900 border-b border-gray-700/50">
+                    <div className="space-y-1 bg-slate-100 dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-700/50 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-100 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-700/50">
                         <div className="flex items-center gap-3">
                           {['M','S','P'].map((t) => {
                             const cfg = getTypeConfig(t);
@@ -572,8 +572,8 @@ export default function SchemaList() {
                           })}
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => setExpandedGroups(new Set(['M','S','P','menus','subs']))} className="text-xs px-2.5 py-1 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600 transition-colors">Expand All</button>
-                          <button onClick={() => setExpandedGroups(new Set())} className="text-xs px-2.5 py-1 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600 transition-colors">Collapse All</button>
+                          <button onClick={() => setExpandedGroups(new Set(['M','S','P','menus','subs']))} className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-gray-600 border border-slate-300 dark:border-gray-600 transition-colors">Expand All</button>
+                          <button onClick={() => setExpandedGroups(new Set())} className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-gray-600 border border-slate-300 dark:border-gray-600 transition-colors">Collapse All</button>
                         </div>
                       </div>
 
@@ -588,7 +588,7 @@ export default function SchemaList() {
                           return (
                             <div key={menu.itemid}>
                               <div
-                                className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer group/menu hover:bg-gray-800 transition-colors"
+                                className="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer group/menu hover:bg-white dark:bg-gray-800 transition-colors"
                                 onClick={() => toggleGroup(menuKey)}
                               >
                                 <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
@@ -604,7 +604,7 @@ export default function SchemaList() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className="text-blue-300 font-semibold text-sm font-mono">{menu.menuid}</span>
-                                    <span className="text-gray-200 text-sm truncate">{menu.menuname}</span>
+                                    <span className="text-slate-800 dark:text-gray-200 text-sm truncate">{menu.menuname}</span>
                                   </div>
                                   {(menuSubs.length > 0 || totalProgs > 0) && (
                                     <div className="flex items-center gap-2 mt-0.5">
@@ -615,15 +615,15 @@ export default function SchemaList() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover/menu:opacity-100 transition-opacity flex-shrink-0">
-                                  {menu.menuicon && <span className="text-xs text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">{menu.menuicon}</span>}
-                                  <button onClick={(e) => { e.stopPropagation(); handleEdit(menu); }} className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={13} /></button>
-                                  <button onClick={(e) => { e.stopPropagation(); handleDelete(menu.itemid); }} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={13} /></button>
+                                  {menu.menuicon && <span className="text-xs text-gray-500 bg-slate-100 dark:bg-gray-700/60 px-1.5 py-0.5 rounded">{menu.menuicon}</span>}
+                                  <button onClick={(e) => { e.stopPropagation(); handleEdit(menu); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={13} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleDelete(menu.itemid); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={13} /></button>
                                   <button onClick={(e) => { e.stopPropagation(); openAdd('S'); }} className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 hover:bg-yellow-500/20 transition-colors"><Plus size={11} /> Sub</button>
                                 </div>
                               </div>
 
                               {isMenuOpen && (
-                                <div className="ml-5 pl-4 border-l-2 border-gray-700/60 space-y-1 my-1">
+                                <div className="ml-5 pl-4 border-l-2 border-slate-200 dark:border-gray-700/60 space-y-1 my-1">
                                   {menuSubs.map((sub) => {
                                     const subProgs = getProgramsForSubmenu(sub.menuid || '');
                                     subProgs.forEach((p) => matchedProgIds.add(p.itemid));
@@ -633,7 +633,7 @@ export default function SchemaList() {
                                     return (
                                       <div key={sub.itemid}>
                                         <div
-                                          className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group/sub hover:bg-gray-800/80 transition-colors"
+                                          className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group/sub hover:bg-white dark:bg-gray-800/80 transition-colors"
                                           onClick={() => toggleGroup(subKey)}
                                         >
                                           <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
@@ -649,24 +649,24 @@ export default function SchemaList() {
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                               <span className="text-yellow-300 font-semibold text-xs font-mono">{sub.menuid}</span>
-                                              <span className="text-gray-300 text-sm truncate">{sub.menuname}</span>
+                                              <span className="text-slate-700 dark:text-gray-200 text-sm truncate">{sub.menuname}</span>
                                             </div>
                                             {subProgs.length > 0 && <span className="text-xs text-gray-500">{subProgs.length} program{subProgs.length !== 1 ? 's' : ''}</span>}
                                           </div>
                                           <div className="flex items-center gap-1.5 opacity-0 group-hover/sub:opacity-100 transition-opacity flex-shrink-0">
-                                            {sub.menuicon && <span className="text-xs text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">{sub.menuicon}</span>}
-                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(sub); }} className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={12} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(sub.itemid); }} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={12} /></button>
+                                            {sub.menuicon && <span className="text-xs text-gray-500 bg-slate-100 dark:bg-gray-700/60 px-1.5 py-0.5 rounded">{sub.menuicon}</span>}
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(sub); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={12} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(sub.itemid); }} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={12} /></button>
                                             <button onClick={(e) => { e.stopPropagation(); openAdd('P'); }} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20 transition-colors"><Plus size={11} /> Prog</button>
                                           </div>
                                         </div>
 
                                         {isSubOpen && subProgs.length > 0 && (
-                                          <div className="ml-5 pl-4 border-l-2 border-gray-700/40 space-y-0.5 my-1">
+                                          <div className="ml-5 pl-4 border-l-2 border-slate-200 dark:border-gray-700/40 space-y-0.5 my-1">
                                             {subProgs.map((prog) => (
                                               <div
                                                 key={prog.itemid}
-                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg group/prog hover:bg-gray-800/60 transition-colors"
+                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg group/prog hover:bg-white dark:bg-gray-800/60 transition-colors"
                                               >
                                                 <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                                                   {prog.menuicon && (LucideIcons as any)[prog.menuicon]
@@ -675,15 +675,15 @@ export default function SchemaList() {
                                                 </div>
                                                 <div className="flex-1 min-w-0 flex items-center gap-2">
                                                   <span className="text-emerald-300 text-xs font-mono font-semibold flex-shrink-0">{prog.menuid}</span>
-                                                  <span className="text-gray-300 text-sm truncate">{prog.menuname}</span>
+                                                  <span className="text-slate-700 dark:text-gray-200 text-sm truncate">{prog.menuname}</span>
                                                   {prog.menucmd && <span className="text-xs text-gray-600 font-mono hidden xl:block truncate max-w-32">{prog.menucmd}</span>}
-                                                  {prog.objectcode && <span className="text-xs bg-gray-700/50 text-gray-400 px-1.5 py-0.5 rounded font-mono hidden 2xl:block">{prog.objectcode}</span>}
+                                                  {prog.objectcode && <span className="text-xs bg-slate-100/80 dark:bg-gray-700/50 text-slate-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-mono hidden 2xl:block">{prog.objectcode}</span>}
                                                 </div>
                                                 <div className="flex items-center gap-1 opacity-0 group-hover/prog:opacity-100 transition-opacity flex-shrink-0">
                                                   {prog.udfmaintained && <span className="text-xs bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">UDF</span>}
-                                                  {prog.menuicon && <span className="text-xs text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">{prog.menuicon}</span>}
-                                                  <button onClick={() => handleEdit(prog)} className="p-1 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={12} /></button>
-                                                  <button onClick={() => handleDelete(prog.itemid)} className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={12} /></button>
+                                                  {prog.menuicon && <span className="text-xs text-gray-500 bg-slate-100 dark:bg-gray-700/60 px-1.5 py-0.5 rounded">{prog.menuicon}</span>}
+                                                  <button onClick={() => handleEdit(prog)} className="p-1 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"><Edit2 size={12} /></button>
+                                                  <button onClick={() => handleDelete(prog.itemid)} className="p-1 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"><Trash2 size={12} /></button>
                                                 </div>
                                               </div>
                                             ))}
@@ -709,21 +709,21 @@ export default function SchemaList() {
                         </button>
 
                         {submenus.filter((s) => !matchedSubIds.has(s.itemid)).length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-gray-700/40">
+                          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-gray-700/40">
                             <div className="text-xs text-gray-500 px-3 mb-2 flex items-center gap-2">
                               <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
                               Unlinked Submenus
                             </div>
                             {submenus.filter((s) => !matchedSubIds.has(s.itemid)).map((sub) => (
-                              <div key={sub.itemid} className="flex items-center gap-2 px-3 py-2 rounded-lg group/sub hover:bg-gray-800/80 transition-colors">
+                              <div key={sub.itemid} className="flex items-center gap-2 px-3 py-2 rounded-lg group/sub hover:bg-white dark:bg-gray-800/80 transition-colors">
                                 <div className="w-6 h-6 rounded-md bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center flex-shrink-0"><FolderOpen size={12} className="text-yellow-400" /></div>
                                 <div className="flex-1 flex items-center gap-2">
                                   <span className="text-yellow-300 text-xs font-mono font-semibold">{sub.menuid}</span>
-                                  <span className="text-gray-300 text-sm">{sub.menuname}</span>
+                                  <span className="text-slate-700 dark:text-gray-200 text-sm">{sub.menuname}</span>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                                  <button onClick={() => handleEdit(sub)} className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md"><Edit2 size={12} /></button>
-                                  <button onClick={() => handleDelete(sub.itemid)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md"><Trash2 size={12} /></button>
+                                  <button onClick={() => handleEdit(sub)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md"><Edit2 size={12} /></button>
+                                  <button onClick={() => handleDelete(sub.itemid)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md"><Trash2 size={12} /></button>
                                 </div>
                               </div>
                             ))}
@@ -731,21 +731,21 @@ export default function SchemaList() {
                         )}
 
                         {programs.filter((p) => !matchedProgIds.has(p.itemid)).length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-gray-700/40">
+                          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-gray-700/40">
                             <div className="text-xs text-gray-500 px-3 mb-2 flex items-center gap-2">
                               <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
                               Unlinked Programs
                             </div>
                             {programs.filter((p) => !matchedProgIds.has(p.itemid)).map((prog) => (
-                              <div key={prog.itemid} className="flex items-center gap-2 px-3 py-1.5 rounded-lg group/prog hover:bg-gray-800/60 transition-colors">
+                              <div key={prog.itemid} className="flex items-center gap-2 px-3 py-1.5 rounded-lg group/prog hover:bg-white dark:bg-gray-800/60 transition-colors">
                                 <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0"><FileCode size={11} className="text-emerald-400" /></div>
                                 <div className="flex-1 flex items-center gap-2">
                                   <span className="text-emerald-300 text-xs font-mono font-semibold">{prog.menuid}</span>
-                                  <span className="text-gray-300 text-sm">{prog.menuname}</span>
+                                  <span className="text-slate-700 dark:text-gray-200 text-sm">{prog.menuname}</span>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover/prog:opacity-100 transition-opacity">
-                                  <button onClick={() => handleEdit(prog)} className="p-1 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md"><Edit2 size={12} /></button>
-                                  <button onClick={() => handleDelete(prog.itemid)} className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md"><Trash2 size={12} /></button>
+                                  <button onClick={() => handleEdit(prog)} className="p-1 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md"><Edit2 size={12} /></button>
+                                  <button onClick={() => handleDelete(prog.itemid)} className="p-1 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md"><Trash2 size={12} /></button>
                                 </div>
                               </div>
                             ))}
@@ -764,20 +764,20 @@ export default function SchemaList() {
       {/* ═══════════════════ MODAL ═══════════════════ */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 p-4 backdrop-blur-sm">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg text-white border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-lg text-slate-900 dark:text-white border border-slate-200 dark:border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-semibold">{editingSchema ? 'Edit Schema' : 'Add Schema'}</h3>
                 {newSchema.menutype && <TypeBadge type={newSchema.menutype} />}
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-gray-700 transition-colors"><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white p-1 rounded-md hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors"><X size={20} /></button>
             </div>
 
             <div className="space-y-4">
               {/* Type selector — only when adding */}
               {!editingSchema && (
                 <div>
-                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Menu Type</label>
+                  <label className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">Menu Type</label>
                   <div className="flex gap-2">
                     {['M', 'S', 'P'].map((t) => {
                       const cfg = getTypeConfig(t); const isSelected = newSchema.menutype === t;
@@ -787,7 +787,7 @@ export default function SchemaList() {
                           setSelectedParentMenu('');
                           setSelectedParentSubmenu('');
                         }}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${isSelected ? `${cfg.badgeClass} ring-2 ring-offset-1 ring-offset-gray-800` : 'border-gray-600 text-gray-400 hover:border-gray-500 bg-gray-700/40'}`}>
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${isSelected ? `${cfg.badgeClass} ring-2 ring-offset-1 ring-offset-gray-800` : 'border-slate-300 dark:border-gray-600 text-slate-500 dark:text-gray-400 hover:border-gray-500 bg-slate-100 dark:bg-gray-700/40'}`}>
                           {cfg.icon}{cfg.label}
                         </button>
                       );
@@ -799,7 +799,7 @@ export default function SchemaList() {
               {/* Dynamic parent selection */}
               {renderParentSelection()}
 
-              <div className="h-px bg-gray-700" />
+              <div className="h-px bg-slate-100 dark:bg-gray-700" />
 
               {/* Fields */}
               <div className="grid grid-cols-2 gap-3">
@@ -810,9 +810,9 @@ export default function SchemaList() {
                   { key: 'objectcode', label: 'Object Code', full: false },
                 ].map(({ key, label, full }) => (
                   <div key={key} className={full ? 'col-span-2' : ''}>
-                    <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">{label}</label>
+                    <label className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">{label}</label>
                     <input type="text"
-                      className="w-full px-3 py-2 rounded-lg bg-gray-700/60 border border-gray-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-gray-700/60 border border-slate-300 dark:border-gray-600 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       value={newSchema[key] as string}
                       onChange={(e) => setNewSchema({ ...newSchema, [key]: e.target.value })}
                       placeholder={label}
@@ -822,16 +822,16 @@ export default function SchemaList() {
 
                 {/* Icon Picker Field */}
                 <div>
-                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Menu Icon</label>
+                  <label className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">Menu Icon</label>
                   <button
                     type="button"
                     onClick={() => setShowIconPicker(true)}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-700/60 border border-gray-600 text-sm text-left flex items-center gap-2 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-gray-700/60 border border-slate-300 dark:border-gray-600 text-sm text-left flex items-center gap-2 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
                     {newSchema.menuicon ? (
                       <>
                         {(() => { const I = (LucideIcons as any)[newSchema.menuicon]; return I ? <I size={15} className="text-blue-400 flex-shrink-0" /> : null; })()}
-                        <span className="text-white truncate">{newSchema.menuicon}</span>
+                        <span className="text-slate-900 dark:text-white truncate">{newSchema.menuicon}</span>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setNewSchema((prev) => ({ ...prev, menuicon: '' })); }}
@@ -848,8 +848,8 @@ export default function SchemaList() {
               </div>
 
               {/* UDF toggle */}
-              <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-gray-700/40 border border-gray-600">
-                <label className="text-sm text-gray-300">UDF Maintained</label>
+              <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-100 dark:bg-gray-700/40 border border-slate-300 dark:border-gray-600">
+                <label className="text-sm text-slate-700 dark:text-gray-200">UDF Maintained</label>
                 <button onClick={() => setNewSchema({ ...newSchema, udfmaintained: !newSchema.udfmaintained })}
                   className={`relative w-10 h-5 rounded-full transition-colors ${newSchema.udfmaintained ? 'bg-emerald-500' : 'bg-gray-600'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${newSchema.udfmaintained ? 'translate-x-5' : ''}`} />
@@ -858,7 +858,7 @@ export default function SchemaList() {
             </div>
 
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm transition-colors">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-gray-700 hover:bg-gray-600 text-sm transition-colors">Cancel</button>
               <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium transition-colors">{editingSchema ? 'Update' : 'Save'}</button>
             </div>
           </div>
@@ -868,20 +868,20 @@ export default function SchemaList() {
       {/* ═══════════════════ ICON PICKER ═══════════════════ */}
       {showIconPicker && (
         <div className="fixed inset-0 flex items-center justify-center z-[60] bg-black/70 p-4 backdrop-blur-sm">
-          <div className="bg-gray-800 rounded-xl w-full max-w-2xl border border-gray-700 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl border border-slate-200 dark:border-gray-700 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 flex-shrink-0">
-              <h4 className="text-sm font-semibold text-white">Select Icon</h4>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-gray-700 flex-shrink-0">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Select Icon</h4>
               <button
                 onClick={() => { setShowIconPicker(false); setIconSearch(''); }}
-                className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors"
+                className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white p-1 rounded hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
 
             {/* Search */}
-            <div className="px-4 py-3 border-b border-gray-700 flex-shrink-0">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-gray-700 flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <input
@@ -890,7 +890,7 @@ export default function SchemaList() {
                   placeholder="Search icons... (e.g. User, Home, Settings, Arrow)"
                   value={iconSearch}
                   onChange={(e) => setIconSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-100 dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1.5">
@@ -923,7 +923,7 @@ export default function SchemaList() {
                         className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all text-center ${
                           isSelected
                             ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1 ring-offset-gray-800'
-                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <IconComp size={18} />
@@ -935,7 +935,7 @@ export default function SchemaList() {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-2.5 border-t border-gray-700 flex items-center gap-3 flex-shrink-0 bg-gray-900/50 rounded-b-xl">
+            <div className="px-4 py-2.5 border-t border-slate-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0 bg-slate-100/70 dark:bg-slate-100 dark:bg-gray-900/50 rounded-b-xl">
               {newSchema.menuicon ? (
                 <>
                   {(() => { const I = (LucideIcons as any)[newSchema.menuicon]; return I ? <I size={16} className="text-blue-400 flex-shrink-0" /> : null; })()}
@@ -957,3 +957,6 @@ export default function SchemaList() {
     </div>
   );
 }
+
+
+

@@ -218,7 +218,7 @@ export default function UdfMaintenance() {
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
                     selectedTable
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-600 text-slate-500 dark:text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   <Save size={18} />
@@ -365,7 +365,7 @@ export default function UdfMaintenance() {
           {/* Add Field Modal */}
           {showAddModal && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-              <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto text-white">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto text-slate-900 dark:text-white">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Add Field</h3>
                   <button onClick={() => setShowAddModal(false)}>
@@ -379,7 +379,7 @@ export default function UdfMaintenance() {
                     <select
                       value={newRow.fieldid}
                       onChange={(e) => setNewRow({ ...newRow, fieldid: e.target.value })}
-                      className="w-full px-3 py-2 border bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-2 border bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                       <option value="">-- Select a field --</option>
                       {customerColumns.map((col) => (
@@ -397,7 +397,7 @@ export default function UdfMaintenance() {
                       placeholder="Custom field name"
                       value={newRow.fieldnames}
                       onChange={(e) => setNewRow({ ...newRow, fieldnames: e.target.value })}
-                      className="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -406,7 +406,7 @@ export default function UdfMaintenance() {
                     <select
                       value={newRow.datatype}
                       onChange={(e) => setNewRow({ ...newRow, datatype: e.target.value })}
-                      className="w-full px-3 py-2 border bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-2 border bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                       {dataTypes.map((type) => (
                         <option key={type} value={type}>
@@ -422,7 +422,7 @@ export default function UdfMaintenance() {
                       id="visible"
                       checked={newRow.visible}
                       onChange={(e) => setNewRow({ ...newRow, visible: e.target.checked })}
-                      className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      className="w-4 h-4 rounded bg-slate-100 dark:bg-gray-700 border-slate-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
                     <label htmlFor="visible" className="text-sm cursor-pointer">
                       Visible
@@ -435,7 +435,7 @@ export default function UdfMaintenance() {
                       id="truncate"
                       checked={newRow.truncatecolumn}
                       onChange={(e) => setNewRow({ ...newRow, truncatecolumn: e.target.checked })}
-                      className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      className="w-4 h-4 rounded bg-slate-100 dark:bg-gray-700 border-slate-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
                     <label htmlFor="truncate" className="text-sm cursor-pointer">
                       Truncate Column
@@ -465,7 +465,7 @@ export default function UdfMaintenance() {
       ) : (
         /* Desktop Layout */
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">UDF MAINTENANCE</h2>
             <div className="flex items-center gap-4">
               {selectedTable && (
@@ -483,13 +483,13 @@ export default function UdfMaintenance() {
           </div>
 
           <div className="px-4 py-4">
-            <div className="bg-gray-900 rounded-lg shadow-sm p-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
+            <div className="bg-slate-100 dark:bg-gray-900 rounded-lg shadow-sm p-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#F5F5F5] mb-2">Select Table</label>
                 <select
                   value={selectedTable}
                   onChange={(e) => setSelectedTable(e.target.value)}
-                  className="px-4 py-2 border bg-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full xl:w-[620px] max-w-full"
+                  className="px-4 py-2 border bg-white dark:bg-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full xl:w-[620px] max-w-full"
                 >
                   <option value="">-- Choose a table --</option>
                   {tablelist.map((table) => (
@@ -505,8 +505,8 @@ export default function UdfMaintenance() {
                 disabled={!selectedTable}
                 className={`flex items-center gap-3 px-6 py-2.5 rounded-xl text-base font-semibold transition-all duration-200 self-start xl:self-auto
                           ${selectedTable
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
-                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}
+                    ? 'bg-blue-600 hover:bg-blue-700 text-slate-900 dark:text-white shadow-md hover:shadow-lg'
+                    : 'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400 cursor-not-allowed'}`}
               >
                 <Save size={22} />
                 Save
@@ -516,14 +516,14 @@ export default function UdfMaintenance() {
 
           {selectedTable ? (
             <div className="flex-1 mx-4 mb-4 overflow-hidden flex flex-col">
-              <div className="custom-scrollbar bg-gray-900 rounded-lg shadow-sm relative overflow-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+              <div className="custom-scrollbar bg-slate-100 dark:bg-gray-900 rounded-lg shadow-sm relative overflow-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                 <table className="w-full min-w-[980px] table-auto border-collapse">
                   <thead>
-                    <tr className="bg-gray-900 border-b border-gray-200">
+                    <tr className="bg-slate-100 dark:bg-gray-900 border-b border-gray-200">
                       {['Field ID', 'Field Name', 'Data Type', 'Visible', 'Truncate', 'Actions'].map((col) => (
                         <th
                           key={col}
-                          className="px-6 py-3 text-left text-xs font-medium text-[#f5f5f5] uppercase tracking-wider sticky top-0 z-10 bg-gray-900"
+                          className="px-6 py-3 text-left text-xs font-medium text-[#f5f5f5] uppercase tracking-wider sticky top-0 z-10 bg-slate-100 dark:bg-gray-900"
                         >
                           {col}
                         </th>
@@ -534,7 +534,7 @@ export default function UdfMaintenance() {
                   <DragDropContext onDragEnd={handleDragEnd}>
                     <Droppable droppableId="fields">
                       {(provided) => (
-                        <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-gray-800 divide-y">
+                        <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white dark:bg-gray-800 divide-y">
                           {filteredFields.map((field, index) => (
                             <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
                               {(provided, snapshot) => (
@@ -542,7 +542,7 @@ export default function UdfMaintenance() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`hover:bg-gray-600 ${snapshot.isDragging ? 'bg-gray-700' : ''}`}
+                                  className={`hover:bg-gray-600 ${snapshot.isDragging ? 'bg-slate-100 dark:bg-gray-700' : ''}`}
                                 >
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#f5f5f5]">{field.fieldid}</td>
                                   <td className="px-6 py-4 text-sm text-[#f5f5f5]">
@@ -643,7 +643,7 @@ export default function UdfMaintenance() {
                           {provided.placeholder}
 
                           {/* Inline Add Row (Sticky Bottom) */}
-                          <tr className="bg-gray-800 border-t-2 border-blue-200 sticky bottom-0 z-10">
+                          <tr className="bg-white dark:bg-gray-800 border-t-2 border-blue-200 sticky bottom-0 z-10">
                             <td className="px-6 py-4 whitespace-nowrap pr-2">
                               <select
                                 value={newRow.fieldid}

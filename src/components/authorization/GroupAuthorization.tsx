@@ -228,19 +228,19 @@ export default function GroupAuthorization() {
     return programs.map(program => (
       <div
         key={program.itemid}
-        className="flex items-center justify-between py-2 hover:bg-gray-700/50 transition-colors"
+        className="flex items-center justify-between py-2 hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors"
         style={{
           paddingLeft: isMobile ? `${(level + 2) * 1}rem` : `${(level + 2) * 1.5}rem`,
           paddingRight: '1rem',
         }}
       >
-        <span className={`text-gray-200 ${isMobile ? 'text-xs' : 'text-sm'} flex-1 mr-2`}>
+        <span className={`text-slate-800 dark:text-gray-200 ${isMobile ? 'text-xs' : 'text-sm'} flex-1 mr-2`}>
           {program.menuname}
         </span>
         <select
           value={getAccessLevel(program.menucmd)}
           onChange={(e) => handleAccessChange(program.menucmd, e.target.value as 'FULL' | 'NONE')}
-          className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           disabled={!selectedGroup}
         >
           <option value="NONE">None</option>
@@ -258,7 +258,7 @@ export default function GroupAuthorization() {
       return (
         <div key={subMenu.itemid}>
           <div
-            className="flex items-center justify-between py-2 hover:bg-gray-700/50 transition-colors cursor-pointer"
+            className="flex items-center justify-between py-2 hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
             style={{
               paddingLeft: isMobile ? `${(level + 1) * 1}rem` : `${(level + 1) * 1.5}rem`,
               paddingRight: '1rem',
@@ -267,7 +267,7 @@ export default function GroupAuthorization() {
           >
             <div className="flex items-center gap-2 flex-1 mr-2">
               {isExpanded ? <ChevronDown size={isMobile ? 14 : 16} /> : <ChevronRight size={isMobile ? 14 : 16} />}
-              <span className={`text-gray-200 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              <span className={`text-slate-800 dark:text-gray-200 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
                 {subMenu.menuname}
               </span>
             </div>
@@ -277,7 +277,7 @@ export default function GroupAuthorization() {
                 e.stopPropagation();
                 handleAccessChange(subMenu.menucmd, e.target.value as 'FULL' | 'NONE');
               }}
-              className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
               disabled={!selectedGroup}
             >
               <option value="NONE">None</option>
@@ -293,12 +293,12 @@ export default function GroupAuthorization() {
   const hierarchy = getMenuHierarchy();
 
   const GroupSelectionPanel = () => (
-    <div className={`${isMobile ? 'w-full' : 'w-80'} bg-gray-800 rounded-lg p-4 shadow`}>
-      <label className="block text-sm font-semibold text-gray-200 mb-2">GROUPS</label>
+    <div className={`${isMobile ? 'w-full' : 'w-80'} bg-white dark:bg-gray-800 rounded-lg p-4 shadow`}>
+      <label className="block text-sm font-semibold text-slate-800 dark:text-gray-200 mb-2">GROUPS</label>
       <select
         value={selectedGroup}
         onChange={(e) => setSelectedGroup(e.target.value)}
-        className="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Select a group...</option>
         {userGroups.map((group) => (
@@ -309,9 +309,9 @@ export default function GroupAuthorization() {
       </select>
 
       {selectedGroup && (
-        <div className="mt-4 p-3 bg-gray-700/50 rounded">
-          <p className="text-xs text-gray-400 mb-1">Selected Group:</p>
-          <p className="text-sm text-gray-200 font-medium">
+        <div className="mt-4 p-3 bg-slate-100/80 dark:bg-gray-700/50 rounded">
+          <p className="text-xs text-slate-500 dark:text-gray-400 mb-1">Selected Group:</p>
+          <p className="text-sm text-slate-800 dark:text-gray-200 font-medium">
             {userGroups.find(g => g.groupcode === selectedGroup)?.groupname}
           </p>
         </div>
@@ -385,7 +385,7 @@ export default function GroupAuthorization() {
                       const hasChildren = item.subMenus.length > 0 || item.programs.length > 0;
 
                       return (
-                        <Card key={item.itemid} className="bg-gray-800 border-gray-700">
+                        <Card key={item.itemid} className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700">
                           <CardContent className="p-3">
                             <div
                               className="flex items-center justify-between"
@@ -394,7 +394,7 @@ export default function GroupAuthorization() {
                             >
                               <div className="flex items-center gap-2 flex-1 mr-2">
                                 {hasChildren && (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-                                <span className={`text-gray-100 font-semibold text-sm ${!hasChildren ? 'ml-6' : ''}`}>
+                                <span className={`text-slate-800 dark:text-gray-100 font-semibold text-sm ${!hasChildren ? 'ml-6' : ''}`}>
                                   {item.menuname}
                                 </span>
                               </div>
@@ -404,7 +404,7 @@ export default function GroupAuthorization() {
                                   e.stopPropagation();
                                   handleAccessChange(item.menucmd, e.target.value as 'FULL' | 'NONE');
                                 }}
-                                className="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="px-2 py-1 text-xs rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 disabled={!selectedGroup}
                               >
                                 <option value="NONE">None</option>
@@ -413,7 +413,7 @@ export default function GroupAuthorization() {
                             </div>
 
                             {isExpanded && hasChildren && (
-                              <div className="mt-2 pt-2 border-t border-gray-700">
+                              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-gray-700">
                                 {item.subMenus.length > 0 && renderSubMenus(item.subMenus, item.menucmd)}
                                 {item.programs.length > 0 && renderPrograms(item.programs)}
                               </div>
@@ -431,7 +431,7 @@ export default function GroupAuthorization() {
       ) : (
         /* ── DESKTOP ── */
         <>
-          <div className="px-4 py-4 bg-background border-b border-gray-700">
+          <div className="px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">GROUP AUTHORIZATION</h2>
           </div>
 
@@ -440,11 +440,11 @@ export default function GroupAuthorization() {
             <GroupSelectionPanel />
 
             {/* Right Panel */}
-            <div className="flex-1 bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
-              <div className="bg-gray-900 px-4 py-3 border-b border-gray-700">
+            <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
+              <div className="bg-slate-100 dark:bg-gray-900 px-4 py-3 border-b border-slate-200 dark:border-gray-700">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-gray-200">MODULE / PROGRAM</span>
-                  <span className="text-sm font-semibold text-gray-200">ACCESS LEVEL</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-gray-200">MODULE / PROGRAM</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-gray-200">ACCESS LEVEL</span>
                 </div>
               </div>
 
@@ -454,7 +454,7 @@ export default function GroupAuthorization() {
                     Please select a group to manage authorizations
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-700">
+                  <div className="divide-y divide-slate-200 dark:divide-gray-700">
                     {hierarchy.map(item => {
                       const isExpanded = expandedMenus.has(item.menucmd);
                       const hasChildren = item.subMenus.length > 0 || item.programs.length > 0;
@@ -463,14 +463,14 @@ export default function GroupAuthorization() {
                         <div key={item.itemid}>
                           {/* Main Menu or Top-Level Program */}
                           <div
-                            className="flex items-center justify-between py-3 px-4 hover:bg-gray-700/50 transition-colors bg-gray-800/50"
+                            className="flex items-center justify-between py-3 px-4 hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors bg-slate-100/60 dark:bg-gray-800/50"
                             style={{ cursor: hasChildren ? 'pointer' : 'default' }}
                             onClick={() => hasChildren && toggleMenu(item.menucmd)}
                           >
                             <div className="flex items-center gap-2">
                               {hasChildren && (isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />)}
                               <span
-                                className="text-gray-100 font-semibold"
+                                className="text-slate-800 dark:text-gray-100 font-semibold"
                                 style={{ marginLeft: hasChildren ? '0' : '26px' }}
                               >
                                 {item.menuname}
@@ -482,7 +482,7 @@ export default function GroupAuthorization() {
                                 e.stopPropagation();
                                 handleAccessChange(item.menucmd, e.target.value as 'FULL' | 'NONE');
                               }}
-                              className="px-3 py-1 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="px-3 py-1 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={!selectedGroup}
                             >
                               <option value="NONE">None</option>
@@ -492,7 +492,7 @@ export default function GroupAuthorization() {
 
                           {/* Expanded Content */}
                           {isExpanded && hasChildren && (
-                            <div className="bg-gray-800">
+                            <div className="bg-white dark:bg-gray-800">
                               {item.subMenus.length > 0 && renderSubMenus(item.subMenus, item.menucmd)}
                               {item.programs.length > 0 && renderPrograms(item.programs)}
                             </div>
@@ -510,3 +510,5 @@ export default function GroupAuthorization() {
     </div>
   );
 }
+
+

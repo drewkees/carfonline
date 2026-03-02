@@ -224,11 +224,11 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       }}
     >
       {/* Header with Logo - Responsive sizing */}
-      <div className="border-b border-gray-700 flex flex-col items-center py-2 md:py-3 flex-shrink-0">
+      <div className="border-b border-gray-700 flex flex-col items-center py-1.5 md:py-2 flex-shrink-0">
         <img 
           src="https://bounty.com.ph/wp-content/uploads/2022/07/Site-Logo-Bounty.webp" 
           alt="Bounty Logo" 
-          className="h-12 md:h-16 lg:max-h-20 object-contain mb-1"
+          className="h-14 md:h-20 lg:h-24 object-contain mb-0"
         />
         <p className="text-xs md:text-sm font-semibold text-white leading-tight px-2 text-center">
           Bounty day {fullName || 'Loading...'}
@@ -274,9 +274,9 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
       {/* User Section - Always visible at bottom */}
       <div className="p-2 md:p-4 border-t border-gray-700 text-white flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-600 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+          <div className="w-7 h-7 md:w-8 md:h-8 bg-slate-600 rounded-full overflow-hidden ring-1 ring-white/15 flex items-center justify-center flex-shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover scale-105" />
             ) : (
               <span className="text-xs font-medium text-white">
                 {userEmail.charAt(0).toUpperCase()}

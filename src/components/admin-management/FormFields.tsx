@@ -240,7 +240,7 @@ export default function FormFields() {
       ) : (
         /* Desktop Layout */
         <>
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">Form Fields</h2>
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -263,32 +263,32 @@ export default function FormFields() {
           </div>
 
           <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar">
+            <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-900 sticky top-0 z-10">
+                <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                   <tr>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">FIELDS</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">IS REQUIRED</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">Actions</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">FIELDS</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">IS REQUIRED</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 w-32 whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                   {filteredSchemas.map((schema) => (
-                    <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
-                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.fields}</td>
-                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{boolText(schema.isrequired)}</td>
+                    <tr key={schema.id} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.fields}</td>
+                      <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(schema.isrequired)}</td>
                       <td className="px-6 py-4 w-32">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEdit(schema)}
-                            className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                            className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                             title="Edit"
                           >
                             <Edit2 size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(schema.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                            className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                             title="Delete"
                           >
                             <Trash2 size={18} />
@@ -306,22 +306,33 @@ export default function FormFields() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
-                {editingSchema ? 'Edit Form Field' : 'Add Form Field'}
-              </h3>
-              <button onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-[95vw] max-w-2xl rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-gray-100 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl px-6 py-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Plus size={16} className="text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {editingSchema ? 'Edit Form Field' : 'Add Form Field'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">Manage dynamic field settings</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1.5 text-gray-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex flex-col">
                 <label className="text-sm mb-1">Field Name</label>
                 <input
                   type="text"
-                  className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={newSchema.fields}
                   onChange={(e) =>
                     setNewSchema({ ...newSchema, fields: e.target.value })
@@ -330,7 +341,7 @@ export default function FormFields() {
               </div>
 
               {/* Is Required Checkbox */}
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2 md:col-span-2">
                 <input
                   type="checkbox"
                   id="isrequired"
@@ -338,23 +349,23 @@ export default function FormFields() {
                   onChange={(e) =>
                     setNewSchema({ ...newSchema, isrequired: e.target.checked })
                   }
-                  className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 rounded bg-slate-100 dark:bg-gray-700 border-slate-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
                 />
                 <label htmlFor="isrequired" className="text-sm cursor-pointer">
                   Is Required
                 </label>
               </div>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 rounded-b-xl mt-auto flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveSchema}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-white font-medium transition-colors"
               >
                 {editingSchema ? 'Update' : 'Save'}
               </button>
@@ -365,3 +376,7 @@ export default function FormFields() {
     </div>
   );
 }
+
+
+
+

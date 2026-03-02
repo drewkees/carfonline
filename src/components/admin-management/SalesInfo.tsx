@@ -283,7 +283,7 @@ const SalesInfo: React.FC = () => {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
-                        activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-gray-600'
                       }`}
                     >
                       {tab.label}
@@ -351,7 +351,7 @@ const SalesInfo: React.FC = () => {
           /* ─── DESKTOP ─── */
           <div className="w-full h-full bg-background flex flex-col px-4 pb-4 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-background border-b border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 bg-background border-b border-slate-200 dark:border-gray-700">
               <div>
                 <p className="text-gray-500 uppercase tracking-widest mb-0.5" style={{ fontSize: '10px', letterSpacing: '0.12em' }}>Configuration</p>
                 <h2 className="text-lg font-semibold text-foreground">Sales Info</h2>
@@ -378,17 +378,17 @@ const SalesInfo: React.FC = () => {
             </div>
 
             {/* Card */}
-            <div className="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-xl shadow-md overflow-hidden mt-3">
+            <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl shadow-md overflow-hidden mt-3">
               {/* Tabs */}
-              <div className="flex border-b border-gray-700 bg-gray-900">
+              <div className="flex border-b border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-900">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-5 py-2.5 text-sm font-medium transition-all border-r border-gray-700 last:border-r-0 ${
+                    className={`px-5 py-2.5 text-sm font-medium transition-all border-r border-slate-200 dark:border-gray-700 last:border-r-0 ${
                       activeTab === tab.id
                         ? 'bg-blue-600 text-white'
-                        : 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+                        : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-800 dark:hover:text-gray-200'
                     }`}
                   >
                     {tab.label}
@@ -399,13 +399,13 @@ const SalesInfo: React.FC = () => {
               {/* Content */}
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Sub-header */}
-                <div className="flex items-center justify-between bg-gray-900 px-4 py-2 border-b border-gray-700">
-                  <span className="text-sm font-semibold text-gray-100">{activeTabData?.label}</span>
+                <div className="flex items-center justify-between bg-slate-100 dark:bg-gray-900 px-4 py-2 border-b border-slate-200 dark:border-gray-700">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-gray-100">{activeTabData?.label}</span>
                   <span className="text-xs text-gray-500">{filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}</span>
                 </div>
 
                 {/* List */}
-                <div className="si-scrollbar flex-1 bg-gray-800 overflow-y-auto">
+                <div className="si-scrollbar flex-1 bg-white dark:bg-gray-800 overflow-y-auto">
                   {filteredItems.length === 0 ? (
                     <div className="py-10 text-sm text-gray-500 text-center italic">No items found</div>
                   ) : (
@@ -424,7 +424,7 @@ const SalesInfo: React.FC = () => {
                           <>
                             <span
                               onDoubleClick={() => handleDoubleClick(index, item)}
-                              className="flex-1 text-sm text-gray-200 select-none"
+                              className="flex-1 text-sm text-slate-800 dark:text-gray-200 select-none"
                             >
                               {item}
                             </span>
@@ -439,7 +439,7 @@ const SalesInfo: React.FC = () => {
                 </div>
 
                 {/* Input footer */}
-                <div className="border-t border-gray-700 p-3 bg-gray-900 flex gap-2">
+                <div className="border-t border-slate-200 dark:border-gray-700 p-3 bg-slate-100 dark:bg-gray-900 flex gap-2">
                   <input
                     className="si-add-input"
                     value={inputValue}
@@ -465,3 +465,6 @@ const SalesInfo: React.FC = () => {
 };
 
 export default SalesInfo;
+
+
+

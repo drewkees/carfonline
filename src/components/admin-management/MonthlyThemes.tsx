@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -230,12 +230,28 @@ const MonthlyThemes: React.FC = () => {
 
       {/* modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-card rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingRow ? 'Edit' : 'Add'} Monthly Theme
-            </h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-[95vw] max-w-3xl rounded-xl border border-gray-700 bg-gray-900 text-gray-100 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 rounded-t-xl px-6 py-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Plus size={16} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    {editingRow ? 'Edit' : 'Add'} Monthly Theme
+                  </h3>
+                  <p className="text-xs text-gray-400">Manage month-to-theme mapping</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-200 mb-1">Month</label>
                 <Input
@@ -252,7 +268,7 @@ const MonthlyThemes: React.FC = () => {
                   placeholder="Color theme or description"
                 />
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center md:col-span-2">
                 <input
                   type="checkbox"
                   checked={newRow.isactivate}
@@ -263,16 +279,16 @@ const MonthlyThemes: React.FC = () => {
                 <label htmlFor="active-checkbox" className="text-sm text-gray-200">Active</label>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-gray-700 bg-gray-800/40 rounded-b-xl mt-auto flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
               >
                 Save
               </button>
@@ -285,3 +301,4 @@ const MonthlyThemes: React.FC = () => {
 };
 
 export default MonthlyThemes;
+

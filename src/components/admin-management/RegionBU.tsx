@@ -192,11 +192,11 @@ export default function DashboardLayoutProps() {
                 <h2 className="text-lg font-semibold text-foreground">REGION / BU</h2>
                 <div className="flex items-center gap-2">
                   {/* View toggle */}
-                  <div className="flex items-center bg-gray-700 rounded-lg p-0.5">
+                  <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-lg p-0.5">
                     <button
                       onClick={() => setViewMode('table')}
                       className={`p-1.5 rounded-md transition-colors ${
-                        viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                        viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                       title="Table view"
                     >
@@ -205,7 +205,7 @@ export default function DashboardLayoutProps() {
                     <button
                       onClick={() => setViewMode('tree')}
                       className={`p-1.5 rounded-md transition-colors ${
-                        viewMode === 'tree' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                        viewMode === 'tree' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                       title="Tree view"
                     >
@@ -288,10 +288,10 @@ export default function DashboardLayoutProps() {
                   const isRegionOpen = expandedRegions.has(region);
                   const totalDistricts = Object.values(bus).flat().length;
                   return (
-                    <div key={region} className="rounded-lg overflow-hidden border border-gray-700">
+                    <div key={region} className="rounded-lg overflow-hidden border border-slate-200 dark:border-gray-700">
                       {/* Region */}
                       <button
-                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-900 text-left"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-slate-100 dark:bg-gray-900 text-left"
                         onClick={() => toggleRegion(region)}
                       >
                         <div className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export default function DashboardLayoutProps() {
                           <div key={buKey}>
                             {/* BU Center */}
                             <button
-                              className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-800 text-left border-t border-gray-700"
+                              className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-gray-800 text-left border-t border-slate-200 dark:border-gray-700"
                               onClick={() => toggleBU(buKey)}
                             >
                               <div className="flex items-center gap-2 pl-4">
@@ -324,18 +324,18 @@ export default function DashboardLayoutProps() {
                             {isBUOpen && districts.map((row) => (
                               <div
                                 key={row.id}
-                                className="flex items-center justify-between px-4 py-2 border-t border-gray-700"
+                                className="flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-gray-700"
                                 style={{ backgroundColor: '#111827' }}
                               >
                                 <div className="flex items-center gap-2 pl-10">
                                   <span className="text-gray-600 text-xs">└</span>
-                                  <span className="text-gray-200 text-sm">{row.district || '-'}</span>
+                                  <span className="text-slate-800 dark:text-gray-200 text-sm">{row.district || '-'}</span>
                                 </div>
                                 <div className="flex gap-1">
-                                  <button onClick={() => handleEdit(row)} className="p-1.5 text-gray-400 hover:text-blue-400 rounded transition-colors">
+                                  <button onClick={() => handleEdit(row)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 rounded transition-colors">
                                     <Edit2 size={14} />
                                   </button>
-                                  <button onClick={() => handleDelete(row.id)} className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors">
+                                  <button onClick={() => handleDelete(row.id)} className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 rounded transition-colors">
                                     <Trash2 size={14} />
                                   </button>
                                 </div>
@@ -355,7 +355,7 @@ export default function DashboardLayoutProps() {
         /* ══════════════════════════ DESKTOP LAYOUT ═══════════════════════════ */
         <>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-gray-700">
+          <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-foreground">REGION / BU</h2>
             <div className="flex items-center gap-3">
               {/* Search */}
@@ -370,13 +370,13 @@ export default function DashboardLayoutProps() {
               </div>
 
               {/* View toggle */}
-              <div className="flex items-center bg-gray-700 rounded-lg p-0.5 gap-0.5">
+              <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-lg p-0.5 gap-0.5">
                 <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'table'
                       ? 'bg-blue-600 text-white shadow'
-                      : 'text-gray-400 hover:text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   <List size={15} />
@@ -387,7 +387,7 @@ export default function DashboardLayoutProps() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'tree'
                       ? 'bg-blue-600 text-white shadow'
-                      : 'text-gray-400 hover:text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   <GitBranch size={15} />
@@ -410,39 +410,39 @@ export default function DashboardLayoutProps() {
           <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
             {viewMode === 'table' ? (
               /* ── Desktop Table View ── */
-              <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar">
+              <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
                 <table className="min-w-full table-auto">
-                  <thead className="bg-gray-900 sticky top-0 z-10">
+                  <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                     <tr>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">REGION</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">BU CENTER</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 whitespace-nowrap">DISTRICT</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-200 w-32 whitespace-nowrap">Actions</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">REGION</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">BU CENTER</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">DISTRICT</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-slate-800 dark:text-gray-200 w-32 whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700">
+                  <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                     {filteredSchemas.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="text-center py-12 text-gray-400">No regions found</td>
+                        <td colSpan={4} className="text-center py-12 text-slate-500 dark:text-gray-400">No regions found</td>
                       </tr>
                     ) : (
                       filteredSchemas.map((schema) => (
-                        <tr key={schema.id} className="hover:bg-gray-700 transition-colors">
-                          <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.region}</td>
-                          <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.bucenter}</td>
-                          <td className="px-6 py-4 text-gray-200 whitespace-nowrap">{schema.district}</td>
+                        <tr key={schema.id} className="hover:bg-slate-100/80 dark:hover:bg-gray-700/50 transition-colors">
+                          <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.region}</td>
+                          <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.bucenter}</td>
+                          <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{schema.district}</td>
                           <td className="px-6 py-4 w-32">
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleEdit(schema)}
-                                className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                                className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 size={18} />
                               </button>
                               <button
                                 onClick={() => handleDelete(schema.id)}
-                                className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                                className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded transition-colors"
                                 title="Delete"
                               >
                                 <Trash2 size={18} />
@@ -457,22 +457,22 @@ export default function DashboardLayoutProps() {
               </div>
             ) : (
               /* ── Desktop Tree View ── */
-              <div className="flex-1 overflow-auto bg-gray-800 rounded-lg shadow custom-scrollbar flex flex-col">
+              <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar flex flex-col">
                 {/* Tree toolbar */}
-                <div className="flex items-center justify-between px-5 py-2.5 bg-gray-900 border-b border-gray-700 sticky top-0 z-10 rounded-t-lg flex-shrink-0">
-                  <span className="text-xs text-gray-400">
+                <div className="flex items-center justify-between px-5 py-2.5 bg-slate-100 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-700 sticky top-0 z-10 rounded-t-lg flex-shrink-0">
+                  <span className="text-xs text-slate-500 dark:text-gray-400">
                     {Object.keys(tree).length} region{Object.keys(tree).length !== 1 ? 's' : ''} · {filteredSchemas.length} total rows
                   </span>
                   <div className="flex gap-2">
                     <button
                       onClick={expandAll}
-                      className="text-xs px-3 py-1.5 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors border border-gray-600"
+                      className="text-xs px-3 py-1.5 rounded-md bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-gray-600 transition-colors border border-slate-300 dark:border-gray-600"
                     >
                       Expand All
                     </button>
                     <button
                       onClick={collapseAll}
-                      className="text-xs px-3 py-1.5 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors border border-gray-600"
+                      className="text-xs px-3 py-1.5 rounded-md bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-gray-600 transition-colors border border-slate-300 dark:border-gray-600"
                     >
                       Collapse All
                     </button>
@@ -480,7 +480,7 @@ export default function DashboardLayoutProps() {
                 </div>
 
                 {filteredSchemas.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">No regions found</div>
+                  <div className="text-center py-12 text-slate-500 dark:text-gray-400">No regions found</div>
                 ) : (
                   <div className="flex-1 overflow-auto p-3 space-y-2">
                     {Object.entries(tree).map(([region, bus]) => {
@@ -489,7 +489,7 @@ export default function DashboardLayoutProps() {
                       const districtCount = Object.values(bus).flat().length;
 
                       return (
-                        <div key={`region-${region}`} className="rounded-lg overflow-hidden border border-gray-700">
+                        <div key={`region-${region}`} className="rounded-lg overflow-hidden border border-slate-200 dark:border-gray-700">
                           {/* ── Region row ── */}
                           <button
                             className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors select-none group"
@@ -507,7 +507,7 @@ export default function DashboardLayoutProps() {
                                 <span className="text-xs bg-blue-500/15 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/20">
                                   {buCount} BU{buCount !== 1 ? 's' : ''}
                                 </span>
-                                <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full border border-gray-600">
+                                <span className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-400 px-2 py-0.5 rounded-full border border-slate-300 dark:border-gray-600">
                                   {districtCount} district{districtCount !== 1 ? 's' : ''}
                                 </span>
                               </div>
@@ -516,23 +516,23 @@ export default function DashboardLayoutProps() {
 
                           {/* ── BU rows ── */}
                           {isRegionOpen && (
-                            <div className="border-t border-gray-700">
+                            <div className="border-t border-slate-200 dark:border-gray-700">
                               {Object.entries(bus).map(([bu, districts], buIdx, buArr) => {
                                 const buKey = `${region}__${bu}`;
                                 const isBUOpen = expandedBUs.has(buKey);
                                 const isLastBU = buIdx === buArr.length - 1;
 
                                 return (
-                                  <div key={`bu-${buKey}`} className={!isLastBU || isBUOpen ? 'border-b border-gray-700/60' : ''}>
+                                  <div key={`bu-${buKey}`} className={!isLastBU || isBUOpen ? 'border-b border-slate-200 dark:border-gray-700/60' : ''}>
                                     <button
-                                      className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors select-none hover:bg-gray-700/50"
+                                      className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors select-none hover:bg-slate-100/80 dark:bg-gray-700/50"
                                       style={{ backgroundColor: '#131f2e' }}
                                       onClick={() => toggleBU(buKey)}
                                     >
                                       <div className="flex items-center gap-3 pl-7">
                                         {/* connector line */}
                                         <div className="flex items-center gap-2">
-                                          <div className="w-4 h-5 border-l-2 border-b-2 border-gray-600 rounded-bl-md flex-shrink-0 -mt-2" />
+                                          <div className="w-4 h-5 border-l-2 border-b-2 border-slate-300 dark:border-gray-600 rounded-bl-md flex-shrink-0 -mt-2" />
                                           <div className="w-4 h-4 rounded flex items-center justify-center bg-yellow-500/15 flex-shrink-0">
                                             {isBUOpen
                                               ? <ChevronDown size={11} className="text-yellow-400" />
@@ -548,31 +548,31 @@ export default function DashboardLayoutProps() {
 
                                     {/* ── District rows ── */}
                                     {isBUOpen && (
-                                      <div className="divide-y divide-gray-700/40" style={{ backgroundColor: '#0c1520' }}>
+                                      <div className="divide-y divide-slate-200 dark:divide-gray-700/40" style={{ backgroundColor: '#0c1520' }}>
                                         {districts.map((row, dIdx) => (
                                           <div
                                             key={`district-${row.id}`}
-                                            className="flex items-center justify-between px-4 py-2 hover:bg-gray-700/40 transition-colors group/row"
+                                            className="flex items-center justify-between px-4 py-2 hover:bg-slate-100 dark:hover:bg-gray-700/40 transition-colors group/row"
                                           >
                                             <div className="flex items-center gap-2 pl-16">
                                               {/* leaf connector */}
                                               <div className="flex items-center gap-2 flex-shrink-0">
-                                                <div className="w-4 h-5 border-l-2 border-b-2 border-gray-700 rounded-bl-md -mt-2 flex-shrink-0" />
+                                                <div className="w-4 h-5 border-l-2 border-b-2 border-slate-200 dark:border-gray-700 rounded-bl-md -mt-2 flex-shrink-0" />
                                               </div>
                                               <div className="w-1.5 h-1.5 rounded-full bg-gray-500 flex-shrink-0" />
-                                              <span className="text-gray-200 text-sm">{row.district || '-'}</span>
+                                              <span className="text-slate-800 dark:text-gray-200 text-sm">{row.district || '-'}</span>
                                             </div>
                                             <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
                                               <button
                                                 onClick={() => handleEdit(row)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"
+                                                className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"
                                                 title="Edit"
                                               >
                                                 <Edit2 size={14} />
                                               </button>
                                               <button
                                                 onClick={() => handleDelete(row.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                                                className="p-1.5 text-slate-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
                                                 title="Delete"
                                               >
                                                 <Trash2 size={14} />
@@ -600,43 +600,51 @@ export default function DashboardLayoutProps() {
 
       {/* ══════════════════════════════ MODAL ══════════════════════════════════ */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
-                {editingSchema ? 'Edit Region / BU' : 'Add Region / BU'}
-              </h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-[95vw] max-w-3xl rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-gray-100 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl px-6 py-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Plus size={16} className="text-slate-900 dark:text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {editingSchema ? 'Edit Region / BU' : 'Add Region / BU'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-gray-400">Maintain region and BU mapping</p>
+                </div>
+              </div>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-gray-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
                 { key: 'region', label: 'Region', type: 'text' },
                 { key: 'bucenter', label: 'BU Center', type: 'text' },
                 { key: 'district', label: 'District', type: 'text' },
               ].map(({ key, label, type }) => (
                 <div key={key} className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-300">{label}</label>
+                  <label className="text-sm mb-1 text-slate-700 dark:text-gray-200">{label}</label>
                   <input
                     type={type}
-                    className="px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newSchema[key]}
                     onChange={(e) => setNewSchema({ ...newSchema, [key]: e.target.value })}
                   />
                 </div>
               ))}
             </div>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 rounded-b-xl mt-auto flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500 transition-colors"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveSchema}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-white font-medium transition-colors"
               >
                 {editingSchema ? 'Update' : 'Save'}
               </button>
@@ -647,3 +655,7 @@ export default function DashboardLayoutProps() {
     </div>
   );
 }
+
+
+
+
