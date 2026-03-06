@@ -344,13 +344,13 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         <div className="flex items-center justify-between gap-2">
           <div>
             <h2 className="text-lg md:text-xl font-semibold text-foreground leading-tight">Customer Overview</h2>
-            <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+            <p className="text-xs md:text-sm text-slate-700 dark:text-muted-foreground mt-0.5">
               Overview of customer request statuses
             </p>
           </div>
           <div className="hidden md:flex items-center gap-3">
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Requests</p>
+              <p className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-muted-foreground">Total Requests</p>
               <p className="text-sm font-semibold text-foreground">
                 {loading ? '...' : mixTotal.toLocaleString()}
               </p>
@@ -371,7 +371,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             >
               <div className={`absolute left-0 top-0 h-1.5 w-full rounded-t-xl ${card.stripClassName}`} />
               <div className="flex items-center justify-between">
-                <p className="text-xs md:text-sm font-medium text-muted-foreground">{card.label}</p>
+                <p className="text-xs md:text-sm font-medium text-slate-700 dark:text-muted-foreground">{card.label}</p>
                 <Icon className={`w-5 h-5 ${card.iconClassName}`} />
               </div>
               <p className={`text-2xl md:text-3xl font-bold mt-2 md:mt-3 ${card.valueClassName}`}>
@@ -415,7 +415,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                         </button>
                         <span className="text-muted-foreground truncate">{item.status}</span>
                       </div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
+                      <p className="mt-1 text-[11px] text-slate-600 dark:text-muted-foreground">
                         {item.dateCreated ? new Date(item.dateCreated).toLocaleString() : '-'}
                       </p>
                     </div>
@@ -423,7 +423,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                 </div>
                 <table className="hidden md:table w-full text-sm">
                 <thead>
-                  <tr className="text-muted-foreground text-xs border-b border-border">
+                  <tr className="text-slate-600 dark:text-muted-foreground text-xs border-b border-border">
                     <th className="text-left py-3 px-4">Customer</th>
                     <th className="text-left py-3 px-4 whitespace-nowrap">CARF No</th>
                     <th className="text-left py-3 px-4">Status</th>
@@ -466,7 +466,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
           </div>
           <div className="p-4 flex-1 overflow-auto custom-scrollbar">
             <div className="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4 mb-4">
-              <p className="text-xs text-indigo-700 dark:text-indigo-300">Total Pending For You</p>
+              <p className="text-xs text-indigo-800 dark:text-indigo-300">Total Pending For You</p>
               <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mt-1">
                 {loading ? '...' : forApprovalTotal.toLocaleString()}
               </p>
@@ -485,7 +485,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                   <div key={`fa-${item.id}`} className="py-2 flex items-center justify-between gap-2 hover:bg-slate-100/60 dark:hover:bg-slate-800/30 rounded-md px-2 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm text-foreground truncate">{item.soldToParty}</p>
-                      <p className="text-xs text-muted-foreground truncate">{item.gencode}</p>
+                      <p className="text-xs text-slate-600 dark:text-muted-foreground truncate">{item.gencode}</p>
                     </div>
                     <button
                       type="button"
@@ -522,7 +522,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <div className="w-full mt-4 space-y-2 text-sm">
               {mixItems.map((item) => (
                 <div key={`mix-${item.label}`} className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{item.label}</span>
+                  <span className="text-slate-700 dark:text-muted-foreground">{item.label}</span>
                   <span className="font-medium text-foreground">{loading ? '...' : item.value.toLocaleString()}</span>
                 </div>
               ))}
@@ -546,8 +546,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                   className="w-full text-left px-4 py-3 hover:bg-slate-100/60 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">{n.title || '-'}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{n.message || '-'}</p>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <p className="text-xs text-slate-700 dark:text-muted-foreground mt-1">{n.message || '-'}</p>
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-600 dark:text-muted-foreground">
                     <span>{n.notification_type || 'OTHER'}</span>
                     <span>{n.created_at ? new Date(n.created_at).toLocaleString() : '-'}</span>
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, Bell, ChevronDown, User, MessageSquare, Settings, X, Sun, Moon } from 'lucide-react';
+import { Menu, Bell, ChevronDown, User, MessageSquare, Settings, X, Sun, Moon, Megaphone } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import CarfSidebar from '@/components/CarfSidebar';
 import CustomerList from '@/components/list/CustomerList';
@@ -37,6 +37,7 @@ import ProfilePage from './uploading/ProfilePage';
 import SalesAgentList from './admin-management/SalesAgentList';
 import MonthlyThemes from './admin-management/MonthlyThemes';
 import DashboardHome from './DashboardHome';
+import AnnouncementList from './AnnouncementList';
 
 interface DashboardLayoutProps {
   userEmail: string;
@@ -55,6 +56,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   const [previousTab, setPreviousTab] = useState<string>('home');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [showAllAnnouncements, setShowAllAnnouncements] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [hasAuthorization, setHasAuthorization] = useState<boolean>(true);
   const [userGroup, setUserGroup] = useState<string>('');
@@ -302,12 +304,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     }
     setShowNotifications(false);
     setShowAllNotifications(false);
+
+    if (typeof notification.gencode === 'string' && notification.gencode.startsWith('ANNOUNCEMENT-')) {
+      setShowAllAnnouncements(true);
+      return;
+    }
     
     if (!notification.gencode) {
       console.error('No gencode in notification');
       return;
     }
     await openCustomerByGencode(notification.gencode.toString());
+  };
+
+  const handleDeleteNotification = async (notification: any) => {
+    try {
+      if (typeof notification.gencode === 'string' && notification.gencode.startsWith('ANNOUNCEMENT-')) {
+        const announcementId =
+          Number(notification.refid) ||
+          Number(String(notification.gencode).replace('ANNOUNCEMENT-', ''));
+
+        if (!Number.isNaN(announcementId) && announcementId > 0) {
+          await supabase.from('announcements').delete().eq('id', announcementId);
+        }
+      }
+
+      await deleteNotification(notification.id);
+    } catch (err) {
+      console.error('Error deleting announcement notification cascade:', err);
+      await deleteNotification(notification.id);
+    }
   };
 
   const handleRequestLogout = () => {
@@ -347,6 +373,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     weekday: 'long',
     month: 'long',
     day: 'numeric',
+    year: 'numeric',
   });
 
   const UnauthorizedAccess = () => (
@@ -441,6 +468,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
         return <CompanyList />;
       case 'salesagent':
         return <SalesAgentList />;
+      case 'annoucement':
+        return <AnnouncementList canManage />;
       case 'customerlist':
       case 'customer-list':
       default:
@@ -512,6 +541,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-4 relative flex-shrink-0">
+            <button
+              onClick={() => {
+                setShowNotifications(false);
+                setShowAllAnnouncements(true);
+              }}
+              className="relative p-1.5 md:p-2 rounded-full hover:bg-muted transition-colors"
+              aria-label="Announcements"
+              title="Announcements"
+            >
+              <Megaphone className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
+            </button>
+
             {/* Notification Bell with Dropdown */}
             <div className="relative">
               <button
@@ -612,7 +653,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      deleteNotification(notification.id);
+                                      handleDeleteNotification(notification);
                                     }}
                                     className="text-xs text-red-500 hover:text-red-600"
                                   >
@@ -753,14 +794,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
           className="h-10 bg-card border-t border-border flex items-center px-3 md:px-6 text-xs text-muted-foreground flex-shrink-0 z-10"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="truncate text-foreground">Online CARF</span>
+            <span className="truncate text-slate-900 dark:text-foreground">Online CARF</span>
             <span className="hidden sm:inline text-[10px] font-semibold tracking-wide text-cyan-600 dark:text-cyan-300">
               @2025 SoftDev Team
             </span>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden sm:inline text-foreground">Version 3.0</span>
-            <span className="text-[10px] sm:text-xs text-foreground">{today}</span>
+            <span className="hidden sm:inline text-slate-900 dark:text-foreground">Version 3.0</span>
+            <span className="text-[10px] sm:text-xs text-slate-900 dark:text-foreground">{today}</span>
           </div>
         </footer>
 
@@ -838,7 +879,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  deleteNotification(notification.id);
+                                  handleDeleteNotification(notification);
                                 }}
                                 className="text-xs text-red-500 hover:text-red-600 font-medium"
                               >
@@ -863,6 +904,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
                 </span>
                 <button
                   onClick={() => setShowAllNotifications(false)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAllAnnouncements && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="px-4 md:px-6 py-4 border-b border-border flex items-center justify-between sticky top-0 bg-card z-10">
+                <h2 className="text-lg md:text-xl font-bold text-foreground">All Announcements</h2>
+                <button
+                  onClick={() => setShowAllAnnouncements(false)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  aria-label="Close announcements"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto custom-scrollbar flex-1 p-4">
+                <AnnouncementList embedded />
+              </div>
+
+              <div className="px-4 md:px-6 py-3 border-t border-border bg-card sticky bottom-0 z-10 flex justify-end">
+                <button
+                  onClick={() => setShowAllAnnouncements(false)}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-medium"
                 >
                   Close

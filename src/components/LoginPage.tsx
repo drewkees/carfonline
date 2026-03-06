@@ -8,6 +8,7 @@ import { User, AlertCircle, Building2, ArrowRight, ShieldCheck } from 'lucide-re
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import HowToUseCarfModal from '@/components/HowToUseCarfModal';
+import LoginAnnouncement from '@/components/LoginAnnouncement';
 
 type CompanyRow = Database['public']['Tables']['company']['Row'];
 
@@ -436,6 +437,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           )}
 
           <HowToUseCarfModal />
+          <LoginAnnouncement />
         </CardContent>
       </Card>
     </div>

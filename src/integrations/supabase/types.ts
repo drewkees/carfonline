@@ -870,6 +870,38 @@ export type Database = {
           company_name: string 
         }
         Relationships: []
+      },announcements: {
+        Row: {
+          id: number
+          title: string
+          detail: string
+          type: string
+          is_active: boolean
+          published_at: string | null
+          imageurl: string | null
+          expires_at: string | null
+        }
+        Insert: {
+          id?: number
+          title: string
+          detail: string
+          type: string
+          is_active?: boolean
+          published_at?: string | null
+          imageurl?: string | null
+          expires_at?: string | null
+        }
+        Update: {
+          id?: number
+          title?: string
+          detail?: string
+          type?: string
+          is_active?: boolean
+          published_at?: string | null
+          imageurl?: string | null
+          expires_at?: string | null
+        }
+        Relationships: []
       },sales_agent: {
         Row: {
           id: number

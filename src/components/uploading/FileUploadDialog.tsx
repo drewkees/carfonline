@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Upload, File as FileIcon, Trash2, ExternalLink, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload, File as FileIcon, Trash2, ExternalLink, CheckCircle2, Loader2, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export interface DriveFile {
@@ -37,6 +37,11 @@ export default function FileUploadDialog({
   const [progress, setProgress] = useState(0);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [isStartingCamera, setIsStartingCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -59,8 +64,19 @@ export default function FileUploadDialog({
       setPreviewUrl(null);
       setProgress(0);
       setIsUploading(false);
+      setShowCameraModal(false);
+      setCameraError('');
     }
   }, [isOpen, initialFiles]);
+
+  useEffect(() => {
+    return () => {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedFile || !('id' in selectedFile)) {
@@ -90,6 +106,87 @@ export default function FileUploadDialog({
     const files = e.target.files ? Array.from(e.target.files) : [];
     addFilesWithoutDuplicates(files);
     e.target.value = '';
+  };
+
+  const handleCaptureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    addFilesWithoutDuplicates(files);
+    e.target.value = '';
+  };
+
+  const stopCamera = () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setShowCameraModal(false);
+    setCameraError('');
+  };
+
+  const startCamera = async () => {
+    setIsStartingCamera(true);
+    setCameraError('');
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera is not supported by this browser.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      setShowCameraModal(true);
+
+      setTimeout(async () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          try {
+            await videoRef.current.play();
+          } catch (e) {
+            // Ignore autoplay race; controls will still allow preview.
+          }
+        }
+      }, 0);
+    } catch (err: any) {
+      setCameraError(err?.message || 'Unable to access camera.');
+      toast({
+        title: 'Camera Error',
+        description: err?.message || 'Unable to access camera.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingCamera(false);
+    }
+  };
+
+  const captureFromCamera = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.92)
+    );
+    if (!blob) return;
+
+    const file = new File([blob], `scan-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    addFilesWithoutDuplicates([file]);
+    setSelectedFile(file);
+    stopCamera();
+    toast({ title: 'Captured', description: 'Photo captured and added.' });
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -226,16 +323,16 @@ export default function FileUploadDialog({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 md:p-4 z-[70]">
       <div
-        className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[1200px] h-[90vh] md:h-[82vh] flex flex-col md:flex-row overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-[95vw] md:max-w-[1200px] h-[94dvh] md:h-[82vh] flex flex-col md:flex-row overflow-hidden"
         style={{ boxShadow: '0 24px 60px -10px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06)' }}
       >
         {/* ── Left: Preview panel ── */}
-        <div className="flex-1 flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-gray-100">
+        <div className="flex-[1.1] min-h-[48%] flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-gray-100">
           {/* Accent bar */}
           <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-500 flex-shrink-0" />
 
           {/* Left header */}
-          <div className="px-5 pt-5 pb-4 flex items-center justify-between flex-shrink-0">
+          <div className="px-4 md:px-5 pt-4 md:pt-5 pb-3 md:pb-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                 <Upload className="w-4 h-4 text-blue-600" />
@@ -258,10 +355,10 @@ export default function FileUploadDialog({
             )}
           </div>
 
-          <div className="h-px bg-gray-100 mx-5 flex-shrink-0" />
+          <div className="h-px bg-gray-100 mx-4 md:mx-5 flex-shrink-0" />
 
           {/* Drop zone / preview area */}
-          <div className="flex-1 p-4 flex flex-col gap-3 overflow-hidden min-h-0">
+          <div className="flex-1 p-3 md:p-4 flex flex-col gap-2.5 md:gap-3 overflow-hidden min-h-0">
             <div
               className={`flex-1 rounded-xl border-2 border-dashed flex items-center justify-center transition-all relative overflow-hidden
                 ${canUpload ? 'cursor-pointer' : 'cursor-default'}
@@ -341,15 +438,27 @@ export default function FileUploadDialog({
 
             {/* Browse button */}
             {canUpload && (
-              <button
-                type="button"
-                onClick={() => document.getElementById('file-input')?.click()}
-                disabled={isUploading}
-                className="flex-shrink-0 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 border-dashed border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Upload className="w-4 h-4" />
-                Browse & Select Files
-              </button>
+              <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  disabled={isUploading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-semibold shadow-[0_8px_20px_rgba(37,99,235,0.28)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Upload className="w-4 h-4" />
+                  Browse & Select Files
+                </button>
+
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  disabled={isUploading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 transition-all text-sm font-semibold shadow-[0_8px_20px_rgba(5,150,105,0.28)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Camera className="w-4 h-4" />
+                  {isStartingCamera ? 'Opening Camera...' : 'Capture via Camera'}
+                </button>
+              </div>
             )}
 
             {canUpload && (
@@ -362,13 +471,25 @@ export default function FileUploadDialog({
                 disabled={isUploading}
               />
             )}
+
+            {canUpload && (
+              <input
+                type="file"
+                id="camera-input"
+                className="hidden"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCaptureSelect}
+                disabled={isUploading}
+              />
+            )}
           </div>
         </div>
 
         {/* ── Right: File list panel ── */}
-        <div className="w-full md:w-80 flex flex-col overflow-hidden bg-gray-50 max-h-[45vh] md:max-h-none">
+        <div className="w-full md:w-80 flex flex-col overflow-hidden bg-gray-50 h-[42%] md:h-auto md:max-h-none">
           {/* Right header */}
-          <div className="px-5 pt-5 pb-4 flex items-center justify-between flex-shrink-0">
+          <div className="px-4 md:px-5 pt-4 md:pt-5 pb-3 md:pb-4 flex items-center justify-between flex-shrink-0">
             <div>
               <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                 Files
@@ -391,12 +512,12 @@ export default function FileUploadDialog({
             </button>
           </div>
 
-          <div className="h-px bg-gray-200 mx-5 flex-shrink-0" />
+          <div className="h-px bg-gray-200 mx-4 md:mx-5 flex-shrink-0" />
 
           {/* File list */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 min-h-0">
+          <div className="flex-1 overflow-y-auto px-3 md:px-4 py-2.5 md:py-3 space-y-1.5 min-h-0 custom-scrollbar">
             {allFiles.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-8 md:py-12 gap-2 text-gray-400">
                 <FileIcon className="w-8 h-8 text-gray-300" />
                 <p className="text-sm font-medium text-gray-500">No files yet</p>
                 <p className="text-xs text-gray-400">
@@ -468,7 +589,7 @@ export default function FileUploadDialog({
           </div>
 
           {/* Footer actions */}
-          <div className="px-4 py-4 border-t border-gray-200 flex flex-col gap-2 flex-shrink-0">
+          <div className="px-3 md:px-4 py-3 md:py-4 border-t border-gray-200 flex flex-col gap-2 flex-shrink-0">
             {canUpload && (
               <button
                 onClick={handleUpload}
@@ -492,6 +613,52 @@ export default function FileUploadDialog({
           </div>
         </div>
       </div>
+
+      {showCameraModal && (
+        <div className="fixed inset-0 z-[90] bg-black/75 flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl rounded-xl bg-slate-900 border border-slate-700 overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Capture Document</h3>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-3 py-1.5 rounded bg-slate-700 text-white text-xs hover:bg-slate-600"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4">
+              {cameraError ? (
+                <p className="text-sm text-red-300">{cameraError}</p>
+              ) : (
+                <video
+                  ref={videoRef}
+                  className="w-full max-h-[65vh] rounded-lg bg-black object-contain"
+                  autoPlay
+                  playsInline
+                  muted
+                />
+              )}
+            </div>
+            <div className="px-4 py-3 border-t border-slate-700 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-4 py-2 rounded border border-slate-600 text-slate-200 text-sm hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={captureFromCamera}
+                className="px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+              >
+                Capture
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

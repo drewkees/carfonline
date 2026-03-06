@@ -27,6 +27,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [navigationItems, setNavigationItems] = useState<any[]>([]);
   const [userGroup, setUserGroup] = useState<string>('');
+  const [menuSearch, setMenuSearch] = useState('');
 
   const toggleMenu = (id: string) => {
     setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
@@ -171,7 +172,8 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
   const renderNavItem = (item: any, depth = 0, ancestors: string[] = []) => {
     const isActive = activeTab === item.id;
     const hasChildren = item.children?.length > 0;
-    const isOpen = openMenus[item.id] || false;
+    const isSearching = menuSearch.trim().length > 0;
+    const isOpen = isSearching ? true : (openMenus[item.id] || false);
     const isBranchActive = hasActiveDescendant(item);
     const isHighlighted = isActive || isBranchActive;
     const activeClass = hasChildren
@@ -212,6 +214,32 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
     );
   };
 
+  const filterNavigationTree = (items: any[], query: string): any[] => {
+    if (!query.trim()) return items;
+    const q = query.toLowerCase();
+
+    return items.reduce((acc: any[], item: any) => {
+      const children = item.children ? filterNavigationTree(item.children, query) : [];
+      const selfMatch =
+        (item.label || '').toLowerCase().includes(q) ||
+        (item.id || '').toLowerCase().includes(q) ||
+        (item.menucmd || '').toLowerCase().includes(q);
+
+      if (selfMatch || children.length > 0) {
+        acc.push({
+          ...item,
+          ...(children.length > 0 ? { children } : {}),
+        });
+      }
+      return acc;
+    }, []);
+  };
+
+  const filteredNavigationItems = filterNavigationTree(navigationItems, menuSearch);
+  const showMonthlyThemes =
+    userGroup === 'ADMIN' &&
+    (!menuSearch.trim() || 'monthly themes'.includes(menuSearch.toLowerCase()));
+
   return (
     <div
       className="h-full border-r border-gray-700 flex flex-col"
@@ -242,11 +270,24 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
           minHeight: 0, // Important for flex-1 with overflow to work properly
         }}
       >
+        <div className="mb-2 md:mb-3">
+          <div className="relative">
+            <LucideIcons.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-300" />
+            <input
+              type="text"
+              value={menuSearch}
+              onChange={(e) => setMenuSearch(e.target.value)}
+              placeholder="Search menu or program"
+              className="w-full rounded-md border border-gray-600 bg-gray-700/80 pl-8 pr-2 py-1.5 text-xs md:text-sm text-white placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+        </div>
+
         <nav className="space-y-0.5 md:space-y-1">
-          {navigationItems.length > 0 ? (
+          {filteredNavigationItems.length > 0 ? (
             <>
-              {navigationItems.map(item => renderNavItem(item))}
-              {userGroup === 'ADMIN' && (
+              {filteredNavigationItems.map(item => renderNavItem(item))}
+              {showMonthlyThemes && (
                 <div className="mt-2">
                   <Button
                     variant="ghost"
@@ -264,7 +305,7 @@ const CarfSidebar: React.FC<CarfSidebarProps> = ({
             </>
            ) : (
              <div className="text-gray-400 text-xs md:text-sm text-center py-4">
-               No authorized menu items
+               {menuSearch.trim() ? 'No matching menu or program' : 'No authorized menu items'}
              </div>
            )}
         </nav>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search, Building2, User, Mail, Shield } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus, Edit2, Trash2, X, Search, Building2, User, Mail, Shield, ImagePlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,13 @@ export default function UsersList() {
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [userGroups, setUserGroups] = useState<{id: number; groupcode: string; groupname: string}[]>([]);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [newUser, setNewUser] = useState<
     Database['public']['Tables']['users']['Insert']
   >({
@@ -34,6 +36,7 @@ export default function UsersList() {
     company: '',
     allcompanyaccess: false,
     complianceandfinalapprover: false,
+    avatar_url: '',
   });
 
   useEffect(() => {
@@ -95,6 +98,7 @@ export default function UsersList() {
       company: '',
       allcompanyaccess: false,
       complianceandfinalapprover: false,
+      avatar_url: '',
     });
     setShowModal(true);
   };
@@ -113,6 +117,7 @@ export default function UsersList() {
       company: user.company || '',
       allcompanyaccess: user.allcompanyaccess || false,
       complianceandfinalapprover: user.complianceandfinalapprover || false,
+      avatar_url: user.avatar_url || '',
     });
     setShowModal(true);
   };
@@ -152,6 +157,7 @@ export default function UsersList() {
         company: '',
         allcompanyaccess: false,
         complianceandfinalapprover: false,
+        avatar_url: '',
       });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to save user', variant: 'destructive' });
@@ -171,6 +177,29 @@ export default function UsersList() {
   };
 
   const boolText = (v: boolean) => (v ? 'Yes' : 'No');
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read image file.'));
+      reader.readAsDataURL(file);
+    });
+
+  const handleAvatarFile = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file', description: 'Please select an image file.', variant: 'destructive' });
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setNewUser({ ...newUser, avatar_url: dataUrl });
+      toast({ title: 'Profile picture added' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to process image.', variant: 'destructive' });
+    }
+  };
 
   const filteredUsers = users
     .filter((user) => {
@@ -431,10 +460,10 @@ export default function UsersList() {
       ======================== */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
+          <div className="bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl w-full max-w-lg max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
 
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
                   <User size={16} className="text-slate-900 dark:text-white" />
@@ -457,7 +486,58 @@ export default function UsersList() {
             </div>
 
             {/* Modal Body */}
-            <div className="px-6 py-5 space-y-5">
+            <div className="px-6 py-5 space-y-5 overflow-y-auto custom-scrollbar flex-1">
+
+              {/* Section: Profile Picture */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <ImagePlus size={13} className="text-blue-400" />
+                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-widest">Profile Picture</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                      await handleAvatarFile(file);
+                      e.target.value = '';
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors text-sm"
+                    >
+                      <ImagePlus size={14} />
+                      Upload Image
+                    </button>
+                    {newUser.avatar_url && (
+                      <button
+                        type="button"
+                        onClick={() => setNewUser({ ...newUser, avatar_url: '' })}
+                        className="px-3 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  {newUser.avatar_url && (
+                    <img
+                      src={newUser.avatar_url}
+                      alt="Profile preview"
+                      onClick={() => setShowAvatarPreview(true)}
+                      className="mt-2 h-16 w-16 rounded-full object-cover border border-slate-300 dark:border-gray-600 cursor-zoom-in hover:opacity-90 transition"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-slate-200 dark:border-gray-700/60" />
 
               {/* Section: Basic Information */}
               <div>
@@ -508,6 +588,7 @@ export default function UsersList() {
                       />
                     </div>
                   </div>
+
                 </div>
               </div>
 
@@ -613,6 +694,31 @@ export default function UsersList() {
                 </button>
               </div>
             </div>
+
+            {showAvatarPreview && newUser.avatar_url && (
+              <div
+                className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
+                onClick={() => setShowAvatarPreview(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarPreview(false)}
+                  className="fixed top-4 right-4 z-[61] px-3 py-1.5 rounded-md bg-white text-slate-800 text-sm font-medium hover:bg-slate-100 shadow"
+                >
+                  Close
+                </button>
+                <div
+                  className="max-w-[92vw] max-h-[88vh] rounded-xl border border-white/25 bg-black/40 p-2 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={newUser.avatar_url}
+                    alt="Profile preview enlarged"
+                    className="max-w-[88vw] max-h-[82vh] rounded-lg object-contain bg-black"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
