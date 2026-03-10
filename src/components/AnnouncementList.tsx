@@ -381,30 +381,81 @@ const AnnouncementList: React.FC<AnnouncementListProps> = ({ canManage = false, 
   if (canManage) {
     return (
       <div className="h-full bg-background flex flex-col">
-        <div className="flex items-center justify-between px-4 py-4 bg-background border-b border-slate-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-foreground">ANNOUNCEMENTS</h2>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64 bg-input border-border transition-all duration-300 hover:w-80 focus:w-80"
-              />
+        <div className="border-b border-slate-200 bg-background px-4 py-4 dark:border-gray-700">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground sm:text-xl">ANNOUNCEMENTS</h2>
+              <button
+                onClick={handleAdd}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 sm:hidden"
+              >
+                <Plus size={18} />
+                Add
+              </button>
             </div>
-            <button
-              onClick={handleAdd}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={20} />
-              Add
-            </button>
+
+            <div className="flex w-full items-center gap-2 sm:justify-end">
+              <div className="relative w-full sm:w-72 md:w-80">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search announcements"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full border-border bg-input pl-10 text-sm"
+                />
+              </div>
+              <button
+                onClick={handleAdd}
+                className="hidden items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 sm:flex"
+              >
+                <Plus size={20} />
+                Add
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="flex-1 mx-4 mb-4 mt-4 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
+          <div className="md:hidden flex-1 overflow-auto custom-scrollbar space-y-3 pr-1">
+            {filteredAnnouncements.length === 0 && (
+              <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                No announcements available.
+              </div>
+            )}
+            {filteredAnnouncements.map((item) => (
+              <article
+                key={`mobile-${item.id}`}
+                onDoubleClick={() => handleEdit(item)}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                      title="Edit"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-gray-400 dark:hover:bg-gray-700"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-gray-300">
+                  <p><span className="font-semibold">Type:</span> {labelByType[item.type]}</p>
+                  <p><span className="font-semibold">Published:</span> {formatDate(item.published_at)}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden md:block flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow custom-scrollbar">
             <table className="min-w-full table-auto">
               <thead className="bg-slate-100 dark:bg-gray-900 sticky top-0 z-10">
                 <tr>
@@ -469,126 +520,128 @@ const AnnouncementList: React.FC<AnnouncementListProps> = ({ canManage = false, 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 px-4 py-6 sm:items-center sm:p-6">
             <div
-              className="my-auto w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar rounded-lg border border-slate-200 bg-white p-6 text-slate-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="my-auto flex w-full max-w-3xl max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 sm:p-4 md:p-6 text-slate-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               onPaste={handlePasteImage}
             >
-              <div className="flex justify-between items-center mb-4">
+              <div className="sticky top-0 z-20 -mx-3 sm:-mx-4 md:-mx-6 mb-3 flex items-center justify-between border-b border-slate-200 bg-white px-3 pb-3 pt-1 sm:px-4 dark:border-gray-700 dark:bg-gray-800 md:px-6">
                 <h3 className="text-lg font-semibold">{editingId ? 'Edit Announcement' : 'Add Announcement'}</h3>
                 <button onClick={() => setShowModal(false)}>
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-[minmax(0,1fr)_14rem] gap-3 items-start">
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div className="space-y-3">
                   <div className="flex flex-col">
-                    <label className="text-sm mb-1">Detail</label>
-                    <RichAnnouncementEditor value={detail} onChange={setDetail} />
+                    <label className="text-sm mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
 
-                  <div className="flex flex-col">
-                    <label className="text-sm mb-1">Announcement Image (optional)</label>
-                    <input
-                      ref={imageInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageInputChange}
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => imageInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                      >
-                        <ImagePlus size={14} />
-                        Upload
-                      </button>
-                      {imageUrl && (
+                  <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_14rem] gap-3 items-start">
+                    <div className="flex flex-col">
+                      <label className="text-sm mb-1">Detail</label>
+                      <RichAnnouncementEditor value={detail} onChange={setDetail} />
+                    </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-sm mb-1">Announcement Image (optional)</label>
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageInputChange}
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setImageUrl('')}
-                          className="inline-flex items-center gap-1 rounded border border-red-200 px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
                         >
-                          <Trash2 size={14} />
-                          Remove
+                          <ImagePlus size={14} />
+                          Upload
                         </button>
+                        {imageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setImageUrl('')}
+                            className="inline-flex items-center gap-1 rounded border border-red-200 px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30"
+                          >
+                            <Trash2 size={14} />
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[10px] leading-tight text-slate-500 dark:text-gray-300">
+                        You can also paste an image with <span className="font-semibold">Ctrl+V</span>.
+                      </p>
+                      {imageUrl && (
+                      <div className="relative mt-2 w-full">
+                        <img
+                          src={imageUrl}
+                          alt="Announcement preview"
+                          className="h-28 w-full rounded-lg border border-slate-300 object-cover dark:border-gray-600"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setExpandedImageUrl(imageUrl)}
+                          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-1 text-[11px] font-semibold text-white hover:bg-black/80"
+                          title="Expand image"
+                        >
+                          <Maximize2 className="h-3.5 w-3.5" />
+                          Expand
+                        </button>
+                      </div>
                       )}
                     </div>
-                    <p className="mt-1 text-[10px] leading-tight text-slate-500 dark:text-gray-300">
-                      You can also paste an image with <span className="font-semibold">Ctrl+V</span>.
-                    </p>
-                  {imageUrl && (
-                    <div className="relative mt-2 w-full">
-                      <img
-                        src={imageUrl}
-                        alt="Announcement preview"
-                        className="h-28 w-full rounded-lg border border-slate-300 object-cover dark:border-gray-600"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setExpandedImageUrl(imageUrl)}
-                        className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-1 text-[11px] font-semibold text-white hover:bg-black/80"
-                        title="Expand image"
-                      >
-                        <Maximize2 className="h-3.5 w-3.5" />
-                        Expand
-                      </button>
-                    </div>
-                  )}
                   </div>
-                </div>
 
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-3">
-                  <div className="flex flex-col">
-                    <label className="text-sm mb-1">Type</label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value as AnnouncementType)}
-                      className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="update">System Update</option>
-                      <option value="bugfix">Bug Fix</option>
-                      <option value="change">Process Change</option>
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-3">
+                    <div className="flex flex-col">
+                      <label className="text-sm mb-1">Type</label>
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value as AnnouncementType)}
+                        className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="update">System Update</option>
+                        <option value="bugfix">Bug Fix</option>
+                        <option value="change">Process Change</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col min-w-[7rem]">
+                      <label className="text-sm mb-1">Status</label>
+                      <label className="inline-flex items-center justify-center gap-2 rounded border border-slate-300 dark:border-gray-600 px-3 py-2 text-sm">
+                        <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                        Active
+                      </label>
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-sm mb-1">Expiry Date (optional)</label>
+                      <input
+                        type="date"
+                        value={expiresAt}
+                        onChange={(e) => setExpiresAt(e.target.value)}
+                        className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col min-w-[7rem]">
-                    <label className="text-sm mb-1">Status</label>
-                    <label className="inline-flex items-center justify-center gap-2 rounded border border-slate-300 dark:border-gray-600 px-3 py-2 text-sm">
-                      <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                      Active
-                    </label>
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm mb-1">Expiry Date (optional)</label>
-                    <input
-                      type="date"
-                      value={expiresAt}
-                      onChange={(e) => setExpiresAt(e.target.value)}
-                      className="px-3 py-2 rounded bg-slate-100 dark:bg-gray-700 text-slate-900 dark:text-white border border-slate-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-gray-300">
+                    Expired announcements are hidden from login/public view.
+                  </p>
+                  {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-gray-300">
-                  Expired announcements are hidden from login/public view.
-                </p>
-                {error && <p className="text-sm text-red-500">{error}</p>}
               </div>
 
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="sticky bottom-0 z-20 -mx-3 sm:-mx-4 md:-mx-6 mt-3 flex justify-end gap-2 border-t border-slate-200 bg-white px-3 pb-1 pt-3 sm:px-4 dark:border-gray-700 dark:bg-gray-800 md:px-6">
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 rounded border border-slate-300 dark:border-gray-600 bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 hover:bg-slate-200 dark:hover:bg-gray-600"

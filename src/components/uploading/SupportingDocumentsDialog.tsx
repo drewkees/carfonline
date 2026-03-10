@@ -147,6 +147,7 @@ const SupportingDocumentsDialog: React.FC<SupportingDocumentsDialogProps> = ({
               )}
             </div>
             <button
+              type="button"
               onClick={onClose}
               disabled={loading || downloading}
               className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed ml-4 flex-shrink-0"

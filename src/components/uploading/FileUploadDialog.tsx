@@ -212,7 +212,9 @@ export default function FileUploadDialog({
 
       if (!response.ok) throw new Error('Failed to delete file');
 
-      setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+      const updatedUploadedFiles = uploadedFiles.filter((_, i) => i !== index);
+      setUploadedFiles(updatedUploadedFiles);
+      onFileSelect([...updatedUploadedFiles, ...newFiles]);
       if (selectedFile && 'id' in selectedFile && selectedFile.id === fileId) {
         setSelectedFile(null);
         setPreviewUrl(null);
@@ -504,6 +506,7 @@ export default function FileUploadDialog({
               )}
             </div>
             <button
+              type="button"
               onClick={onClose}
               disabled={isUploading}
               className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-all disabled:opacity-40"
@@ -528,10 +531,17 @@ export default function FileUploadDialog({
 
             {/* Saved Drive files */}
             {uploadedFiles.map((file, idx) => (
-              <button
+              <div
                 key={`drive-${idx}`}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedFile(file)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedFile(file);
+                  }
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all group
                   ${selectedFile && 'id' in selectedFile && 'id' in file && selectedFile.id === file.id
                     ? 'bg-blue-50 border-blue-200'
@@ -547,7 +557,8 @@ export default function FileUploadDialog({
                 </div>
                 {canUpload && 'id' in file && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteUploadedFile(file.id, idx); }}
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteUploadedFile(file.id, idx); }}
                     disabled={isUploading}
                     className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-30 flex-shrink-0"
                     title="Delete file"
@@ -555,15 +566,22 @@ export default function FileUploadDialog({
                     <Trash2 className="w-3 h-3" />
                   </button>
                 )}
-              </button>
+              </div>
             ))}
 
             {/* New pending files */}
             {newFiles.map((file, idx) => (
-              <button
+              <div
                 key={`new-${idx}`}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedFile(file)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedFile(file);
+                  }
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all group
                   ${selectedFile && 'name' in selectedFile && selectedFile.name === file.name && !('id' in selectedFile)
                     ? 'bg-amber-50 border-amber-200'
@@ -578,13 +596,14 @@ export default function FileUploadDialog({
                   <p className="text-xs text-amber-600 mt-0.5">Pending upload</p>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleRemoveFile(idx); }}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveFile(idx); }}
                   disabled={isUploading}
                   className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-30 flex-shrink-0"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
-              </button>
+              </div>
             ))}
           </div>
 
@@ -592,6 +611,7 @@ export default function FileUploadDialog({
           <div className="px-3 md:px-4 py-3 md:py-4 border-t border-gray-200 flex flex-col gap-2 flex-shrink-0">
             {canUpload && (
               <button
+                type="button"
                 onClick={handleUpload}
                 disabled={newFiles.length === 0 || isUploading || !gencode}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2"
@@ -604,6 +624,7 @@ export default function FileUploadDialog({
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
               disabled={isUploading}
               className="w-full py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"

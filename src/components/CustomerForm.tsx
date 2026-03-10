@@ -112,7 +112,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     (formData.approvestatus === "PENDING" && !userPermissions.hasEditAccess);
   const currentUserId = ((window as any).getGlobal?.('userid') || '').toString();
   const isMaker = !!currentUserId && (formData.maker || '').toString() === currentUserId;
-  const canSubmit = isMaker;
+  const canSubmit = isMaker || !!userPermissions.hasAllAccess;
 
   const isSoldToParty = formData.ismother.includes('SOLD TO PARTY');
   const normalizeText = (value?: string | null) => (value || '').trim().toLowerCase();

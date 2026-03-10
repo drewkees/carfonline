@@ -134,7 +134,7 @@ export const useCustomerForm = (
     boardResolution: null, others: null,
   });
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-  const [userPermissions, setUserPermissions] = useState({ isApprover: false, hasEditAccess: false });
+  const [userPermissions, setUserPermissions] = useState({ isApprover: false, hasEditAccess: false, hasAllAccess: false });
   const [makerName, setMakerName] = useState<string>('');
 
   // ==================== COMPOSE CHILD HOOKS ====================
@@ -147,10 +147,20 @@ export const useCustomerForm = (
 
   const getUserPermissions = async (userid: string) => {
     try {
-      const { data, error } = await supabase.from('users').select('approver, editaccess').eq('userid', userid).single();
-      if (error) return { isApprover: false, hasEditAccess: false };
-      return { isApprover: data?.approver || false, hasEditAccess: data?.editaccess || false };
-    } catch { return { isApprover: false, hasEditAccess: false }; }
+      const { data, error } = await supabase
+        .from('users')
+        .select('approver, editaccess, allaccess')
+        .eq('userid', userid)
+        .single();
+      if (error) return { isApprover: false, hasEditAccess: false, hasAllAccess: false };
+      return {
+        isApprover: data?.approver || false,
+        hasEditAccess: data?.editaccess || false,
+        hasAllAccess: data?.allaccess || false,
+      };
+    } catch {
+      return { isApprover: false, hasEditAccess: false, hasAllAccess: false };
+    }
   };
 
   const getUserNameByUserId = async (userid: string): Promise<string> => {
@@ -195,12 +205,18 @@ export const useCustomerForm = (
               parseApprovers(matrixData.firstapprover).includes(userid) ||
               parseApprovers(matrixData.secondapprover).includes(userid) ||
               parseApprovers(matrixData.thirdapprover).includes(userid);
-            setUserPermissions({ isApprover: isInMatrix && basePermissions.isApprover, hasEditAccess: basePermissions.hasEditAccess });
+            setUserPermissions({
+              isApprover: isInMatrix && basePermissions.isApprover,
+              hasEditAccess: basePermissions.hasEditAccess,
+              hasAllAccess: basePermissions.hasAllAccess,
+            });
             return;
           }
         }
         setUserPermissions(basePermissions);
-      } catch { setUserPermissions({ isApprover: false, hasEditAccess: false }); }
+      } catch {
+        setUserPermissions({ isApprover: false, hasEditAccess: false, hasAllAccess: false });
+      }
     };
     if (dialogVisible) fetchUserPermissions();
   }, [dialogVisible, formData.custtype]);
