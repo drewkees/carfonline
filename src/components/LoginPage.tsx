@@ -4,13 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, AlertCircle, Building2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { User, AlertCircle, Building2, ArrowRight, ShieldCheck, LockKeyhole } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import HowToUseCarfModal from '@/components/HowToUseCarfModal';
 import LoginAnnouncement from '@/components/LoginAnnouncement';
 
 type CompanyRow = Database['public']['Tables']['company']['Row'];
+type UserRow = Database['public']['Tables']['users']['Row'];
+
+const ACCESS_DENIED_MESSAGE = 'Cannot access this system.';
 
 interface LoginPageProps {
   onLogin: (email: string, fullName: string, userid: string) => void;
@@ -39,6 +42,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   const isAllowedEmail = (email: string): boolean => getCompanyFromEmail(email) !== null;
+
+  const hasCarfNewAccess = (user: Pick<UserRow, 'carfnewaccess'> | null): boolean =>
+    user?.carfnewaccess === true;
+
+  const isAccessDenied = error === ACCESS_DENIED_MESSAGE;
 
   // Fetch companies for the dropdown
   useEffect(() => {
@@ -86,6 +94,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             const defaultCompany = getCompanyFromEmail(userEmail);
             if (defaultCompany) setSelectedCompany(defaultCompany);
             setIsFirstTimeUser(true);
+          } else if (!hasCarfNewAccess(existingUser)) {
+            setError(ACCESS_DENIED_MESSAGE);
+            await supabase.auth.signOut();
+            setEmail('');
+            return;
           } else {
             setAuthLoading(true);
             onLogin(existingUser.email, existingUser.fullname, existingUser.userid);
@@ -151,6 +164,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           userid,
           company: selectedCompany,
           usergroup,
+          carfnewaccess: false,
         }])
         .select()
         .single();
@@ -171,7 +185,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }),
       });
 
-      onLogin(data.email, data.fullname, data.userid);
+      setError(ACCESS_DENIED_MESSAGE);
+      await supabase.auth.signOut();
+      setEmail('');
+      setIsFirstTimeUser(false);
+      setAuthLoading(false);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to save user data');
@@ -336,6 +354,71 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <path d="M252.882,0c-37.781,0-68.686,29.953-70.245,67.358h-6.917v8.954c-26.109,2.163-45.463,10.011-45.463,19.366h9.993c-1.65,5.146-2.507,10.54-2.507,16.017c0,28.956,23.558,52.514,52.514,52.514c28.956,0,52.514-23.558,52.514-52.514c0-5.478-0.856-10.872-2.506-16.017h9.992c0-9.354-19.352-17.204-45.463-19.366v-8.954h-6.149C200.189,38.779,223.924,16,252.882,16c29.952,0,54.32,24.368,54.32,54.32c0,28.774-11.078,37.009-25.105,47.437c-17.444,12.968-37.216,27.667-37.216,78.884v113.914h-0.797c-5.068,0-9.174,4.108-9.174,9.177c0,2.844,1.293,5.383,3.321,7.066c-3.432,27.933-26.851,95.744-8.226,115.459v11.202h45.75v-11.202c18.625-19.715-4.794-87.527-8.227-115.459c2.029-1.683,3.322-4.223,3.322-7.066c0-5.068-4.107-9.177-9.176-9.177h-0.795V196.641c0-43.174,14.942-54.283,30.762-66.043c14.793-10.997,31.559-23.461,31.559-60.277C323.202,31.545,291.656,0,252.882,0zM232.77,111.694c0,23.442-19.071,42.514-42.514,42.514c-23.442,0-42.514-19.072-42.514-42.514c0-5.531,1.078-10.957,3.141-16.017h78.747C231.693,100.736,232.77,106.162,232.77,111.694z" />
             </svg>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAccessDenied) {
+    return (
+      <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
+        <style>{`
+          @keyframes accessDeniedCardIn {
+            0% {
+              opacity: 0;
+              transform: translateY(18px) scale(0.96);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          @keyframes accessDeniedIconPulse {
+            0%, 100% {
+              transform: scale(1);
+              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.18);
+            }
+            50% {
+              transform: scale(1.06);
+              box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+          }
+
+          .access-denied-card {
+            animation: accessDeniedCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+          }
+
+          .access-denied-icon {
+            animation: accessDeniedIconPulse 1.8s ease-in-out 0.35s infinite;
+          }
+        `}</style>
+
+        <div className="access-denied-card w-full max-w-[430px] rounded-2xl border border-slate-200 bg-white px-10 py-12 text-center shadow-sm">
+          <div className="access-denied-icon mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500">
+            <LockKeyhole className="h-8 w-8" />
+          </div>
+
+          <p className="mb-3 text-xs font-bold uppercase tracking-wide text-red-500">
+            Access Denied
+          </p>
+
+          <h2 className="text-xl font-bold text-slate-950">
+            No access to this module
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-[310px] text-sm leading-6 text-slate-600">
+            You don't have permission to view this page. Please contact your administrator to request access.
+          </p>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setError('')}
+            className="mt-8 h-11 w-full rounded-lg border-slate-300 bg-white text-sm font-medium text-slate-950 hover:bg-slate-50"
+          >
+            Request Access
+          </Button>
         </div>
       </div>
     );

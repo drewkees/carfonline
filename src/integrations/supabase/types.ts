@@ -265,6 +265,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          carfnewaccess: boolean
           avatar_url: string
         }
         Insert: {
@@ -279,6 +280,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          carfnewaccess?: boolean
           avatar_url: string
         }
         Update: {
@@ -293,6 +295,7 @@ export type Database = {
           company: string 
           allcompanyaccess: boolean
           complianceandfinalapprover:boolean
+          carfnewaccess?: boolean
           avatar_url: string
         }
         Relationships: []

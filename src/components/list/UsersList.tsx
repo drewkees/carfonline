@@ -36,6 +36,7 @@ export default function UsersList() {
     company: '',
     allcompanyaccess: false,
     complianceandfinalapprover: false,
+    carfnewaccess: false,
     avatar_url: '',
   });
 
@@ -98,6 +99,7 @@ export default function UsersList() {
       company: '',
       allcompanyaccess: false,
       complianceandfinalapprover: false,
+      carfnewaccess: false,
       avatar_url: '',
     });
     setShowModal(true);
@@ -117,6 +119,7 @@ export default function UsersList() {
       company: user.company || '',
       allcompanyaccess: user.allcompanyaccess || false,
       complianceandfinalapprover: user.complianceandfinalapprover || false,
+      carfnewaccess: user.carfnewaccess || false,
       avatar_url: user.avatar_url || '',
     });
     setShowModal(true);
@@ -157,6 +160,7 @@ export default function UsersList() {
         company: '',
         allcompanyaccess: false,
         complianceandfinalapprover: false,
+        carfnewaccess: false,
         avatar_url: '',
       });
     } catch (error) {
@@ -349,6 +353,10 @@ export default function UsersList() {
                             <span className="text-muted-foreground">Custom Limit:</span>
                             <span className={user.customlimitaccess ? 'text-green-500' : 'text-gray-500'}>{boolText(user.customlimitaccess)}</span>
                           </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground">CARFNEWACCESS:</span>
+                            <span className={user.carfnewaccess ? 'text-green-500' : 'text-gray-500'}>{boolText(user.carfnewaccess)}</span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -402,13 +410,14 @@ export default function UsersList() {
                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">User Group</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">All Company Access</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Compliance & Final Approver</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">CARFNEWACCESS</th>
                     <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700 dark:text-gray-200 whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="px-6 py-10 text-center text-gray-500 italic text-sm">
+                      <td colSpan={13} className="px-6 py-10 text-center text-gray-500 italic text-sm">
                         No users found
                       </td>
                     </tr>
@@ -427,6 +436,7 @@ export default function UsersList() {
                         <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{user.usergroup}</td>
                         <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.allcompanyaccess)}</td>
                         <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.complianceandfinalapprover)}</td>
+                        <td className="px-6 py-4 text-slate-800 dark:text-gray-200 whitespace-nowrap">{boolText(user.carfnewaccess)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <button
@@ -653,6 +663,7 @@ export default function UsersList() {
                     { key: 'customlimitaccess', label: 'Custom Limit Access' },
                     { key: 'allcompanyaccess', label: 'All Company Access' },
                     { key: 'complianceandfinalapprover', label: 'Compliance & Final Approver' },
+                    { key: 'carfnewaccess', label: 'CARFNEWACCESS' },
                   ].map(({ key, label }) => (
                     <label
                       key={key}
