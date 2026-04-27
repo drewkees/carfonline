@@ -404,11 +404,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </p>
 
           <h2 className="text-xl font-bold text-slate-950">
-            No access to this module
+            No access to this system
           </h2>
 
           <p className="mx-auto mt-3 max-w-[310px] text-sm leading-6 text-slate-600">
-            You don't have permission to view this page. Please contact your administrator to request access.
+            You don't have permission to access E-CARF. Please contact your administrator to request access.
           </p>
 
           <Button
