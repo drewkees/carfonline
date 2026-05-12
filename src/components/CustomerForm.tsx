@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerFormProps {
   dialogVisible: boolean;
-  onClose: () => void;
+  onClose: (shouldRefresh?: boolean) => void;
   onSubmit: (data: any) => void;
   initialData?: any | null;
 }
@@ -36,6 +36,16 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   onSubmit, 
   initialData 
 }) => {
+  const shouldRefreshOnCloseRef = useRef(false);
+  const closeForm = (shouldRefresh = false) => {
+    shouldRefreshOnCloseRef.current = false;
+    onClose(shouldRefresh);
+  };
+  const closeFormAfterMutation = () => {
+    const shouldRefresh = shouldRefreshOnCloseRef.current;
+    shouldRefreshOnCloseRef.current = false;
+    onClose(shouldRefresh);
+  };
   const {
     formData,
     setFormData,
@@ -80,7 +90,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     returntomakerForm,
     returnForm,
     getUserCompany
-  } = useCustomerForm(initialData, dialogVisible, onClose);
+  } = useCustomerForm(initialData, dialogVisible, closeFormAfterMutation);
 
   const [isDraftLoading, setIsDraftLoading] = useState(false);
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
@@ -293,8 +303,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       case 'update':
         setIsUpdateLoading(true);
         try {
+          shouldRefreshOnCloseRef.current = true;
           const success = await updateToGoogleSheet(formData);
-          if (success) onClose();
+          if (!success) shouldRefreshOnCloseRef.current = false;
         } finally {
           setIsUpdateLoading(false);
         }
@@ -303,8 +314,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       case 'submit':
         setIsSubmitLoading(true);
         try {
+          shouldRefreshOnCloseRef.current = true;
           const success = await postToGoogleSheet(formData);
-          if (success) onClose();
+          if (!success) shouldRefreshOnCloseRef.current = false;
         } finally {
           setIsSubmitLoading(false);
         }
@@ -313,8 +325,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       case 'cancel':
         setIsCancelLoading(true);
         try {
+          shouldRefreshOnCloseRef.current = true;
           const success = await cancelForm(formData);
-          if (success) onClose();
+          if (!success) shouldRefreshOnCloseRef.current = false;
         } finally {
           setIsCancelLoading(false);
         }
@@ -323,10 +336,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       case 'return':
         setIsReturnLoading(true);
         try {
+          shouldRefreshOnCloseRef.current = true;
           const success = await returnForm(formData,returnDialog.remarks);
           if (success) {
-            onClose();
             setReturnDialog({ isOpen: false, remarks: '' });
+          } else {
+            shouldRefreshOnCloseRef.current = false;
           }
         } finally {
           setIsReturnLoading(false);
@@ -336,8 +351,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       case 'approve':
         setIsApproveLoading(true);
         try {
+          shouldRefreshOnCloseRef.current = true;
           const success = await approveForm(formData);
-          if (success) onClose();
+          if (!success) shouldRefreshOnCloseRef.current = false;
         } finally {
           setIsApproveLoading(false);
         }
@@ -353,7 +369,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   const handleDraftClick = async () => {
     setIsDraftLoading(true);
     try {
-      await submitToGoogleSheet(formData);
+      shouldRefreshOnCloseRef.current = true;
+      const success = await submitToGoogleSheet(formData);
+      if (!success) shouldRefreshOnCloseRef.current = false;
     } finally {
       setIsDraftLoading(false);
     }
@@ -444,7 +462,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center pb-2 mb-4">
           <h2 className="text-lg md:text-xl font-bold">📄 CUSTOMER ACTIVATION REQUEST FORM</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-blue-700 text-xl">
+          <button onClick={() => closeForm(false)} className="text-gray-500 hover:text-blue-700 text-xl">
             ✕
           </button>
         </div>
@@ -1908,7 +1926,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => closeForm(false)}
                   className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base"
                 >
                   Close
@@ -1963,7 +1981,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 )}
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => closeForm(false)}
                   className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base"
                 >
                   Close
@@ -2016,7 +2034,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 </button>
               )}
 
-                <button type="button" onClick={onClose} className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base">
+                <button type="button" onClick={() => closeForm(false)} className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base">
                   Close
                 </button>
                 
@@ -2043,7 +2061,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                     {isSubmitLoading ? 'Submitting...' : 'Submit'}
                   </button>
                 )}
-                <button type="button" onClick={onClose} className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base">
+                <button type="button" onClick={() => closeForm(false)} className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm md:text-base">
                   Close
                 </button>
               </>
