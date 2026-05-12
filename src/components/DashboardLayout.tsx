@@ -61,6 +61,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
   const [hasAuthorization, setHasAuthorization] = useState<boolean>(true);
   const [userGroup, setUserGroup] = useState<string>('');
   const [fullName, setFullName] = useState<string>('');
+  const [customerListRefreshKey, setCustomerListRefreshKey] = useState(0);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -199,11 +200,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
     setShowNewCustomerForm(true);
   };
 
-  const handleBackToCustomerList = () => {
+  const handleBackToCustomerList = (shouldRefresh = false) => {
     setEditingCustomer(null);
     setShowNewCustomerForm(false);
     setShowSubmitTicketForm(false);
     setActiveTab(previousTab);
+    if (shouldRefresh) {
+      setCustomerListRefreshKey((prev) => prev + 1);
+    }
   };
 
   const handleAuthorizationStatus = (status: boolean) => {
@@ -417,15 +421,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
           />
         );
       case 'approved':
-        return <ApprovedCustomerList onEditCustomer={handleEditCustomer} />;
+        return <ApprovedCustomerList key={`approved-${customerListRefreshKey}`} onEditCustomer={handleEditCustomer} />;
       case 'returntomaker':
-        return <ReturnCustomerList onEditCustomer={handleEditCustomer} />;
+        return <ReturnCustomerList key={`returntomaker-${customerListRefreshKey}`} onEditCustomer={handleEditCustomer} />;
       case 'pending':
-        return <PendingCustomerList onEditCustomer={handleEditCustomer} />;
+        return <PendingCustomerList key={`pending-${customerListRefreshKey}`} onEditCustomer={handleEditCustomer} />;
       case 'cancelled':
-        return <CancelledCustomerList onEditCustomer={handleEditCustomer} />;
+        return <CancelledCustomerList key={`cancelled-${customerListRefreshKey}`} onEditCustomer={handleEditCustomer} />;
       case 'forapproval':
-        return <ForApprovalCustomerList onEditCustomer={handleEditCustomer} />;
+        return <ForApprovalCustomerList key={`forapproval-${customerListRefreshKey}`} onEditCustomer={handleEditCustomer} />;
       case 'employee':
         return <EmployeeDirectory />;
       case 'schema':
@@ -473,7 +477,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ userEmail, userId, on
       case 'customerlist':
       case 'customer-list':
       default:
-        return <CustomerList userId={userId} onNewCustomer={handleNewCustomer} onEditCustomer={handleEditCustomer} />;
+        return <CustomerList key={`customerlist-${customerListRefreshKey}`} userId={userId} onNewCustomer={handleNewCustomer} onEditCustomer={handleEditCustomer} />;
     }
   };
 
